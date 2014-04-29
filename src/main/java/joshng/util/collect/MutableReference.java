@@ -1,6 +1,6 @@
 package joshng.util.collect;
 
-import com.google.common.base.Supplier;
+import java.util.function.Supplier;
 
 /**
  * User: josh
