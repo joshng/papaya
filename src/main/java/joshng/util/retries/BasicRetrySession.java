@@ -1,9 +1,10 @@
 package joshng.util.retries;
 
-import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
-import joshng.util.blocks.Consumer;
 import joshng.util.exceptions.ExceptionPolicy;
+
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
 * User: josh
@@ -39,7 +40,7 @@ public class BasicRetrySession extends AbstractRetrySession {
 
     @Override
     protected RuntimeException onAborted(Exception exception) {
-        if(abortHandler != null) abortHandler.handle(exception);
+        if(abortHandler != null) abortHandler.accept(exception);
         return super.onAborted(exception);
     }
 
@@ -49,7 +50,7 @@ public class BasicRetrySession extends AbstractRetrySession {
 
     public boolean canRetryAfterDelay(long currentDelay) {
         return (!isMaxTryCountAttained() || shouldRetryOnMaxCountAttained())
-                && canRetryWithDelay(currentDelay) && additionalAbortPolicy.apply(currentDelay);
+                && canRetryWithDelay(currentDelay) && additionalAbortPolicy.test(currentDelay);
     }
 
     protected boolean sleepBeforeRetry(Exception e) {

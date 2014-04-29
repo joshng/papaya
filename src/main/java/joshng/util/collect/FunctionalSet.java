@@ -2,10 +2,10 @@ package joshng.util.collect;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import joshng.util.blocks.Consumer;
 
 import javax.annotation.Nullable;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import static joshng.util.Reflect.blindCast;
 
@@ -14,16 +14,14 @@ import static joshng.util.Reflect.blindCast;
  * Date: Aug 27, 2011
  * Time: 4:26:26 PM
  */
-public class FunctionalSet<T> extends FunctionalCollection<T> implements FunSet<T> {
-    private final ImmutableSet<T> delegate;
-
+public class FunctionalSet<T> extends FunctionalIterable<T> implements FunSet<T> {
     public FunctionalSet(ImmutableSet<T> delegate) {
-        this.delegate = delegate;
+        super(delegate);
     }
 
     @Override
     public ImmutableSet<T> delegate() {
-        return delegate;
+        return (ImmutableSet<T>) super.delegate();
     }
 
     public static <T> FunSet<T> copyOf(Iterable<T> delegate) {
@@ -32,7 +30,7 @@ public class FunctionalSet<T> extends FunctionalCollection<T> implements FunSet<
     }
 
     public static <T> FunSet<T> extend(ImmutableSet<T> delegate) {
-        if (delegate.isEmpty()) return emptySet();
+        if (delegate.isEmpty()) return Functional.emptySet();
         return new FunctionalSet<>(delegate);
     }
 
@@ -45,25 +43,7 @@ public class FunctionalSet<T> extends FunctionalCollection<T> implements FunSet<
         return new FunctionalSet<>(ImmutableSet.copyOf(Lists.asList(item1, items)));
     }
 
-    @Override
-    public FunSet<T> foreach(Consumer<? super T> visitor) {
-        super.foreach(visitor);
-        return this;
-    }
 
-    @Override
-    public FunList<T> toList() {
-        return new FunctionalList<>(delegate.asList());
-    }
-
-    public FunctionalSet<T> toSet() {
-        return this;
-    }
-
-    @Override
-    public <U> FunSet<U> cast() {
-        return blindCast(this);
-    }
 
     static final EmptySet EMPTY = new EmptySet();
     @SuppressWarnings({"unchecked"})

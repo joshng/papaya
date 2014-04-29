@@ -12,7 +12,7 @@ import java.lang.reflect.InvocationTargetException;
  * Date: Sep 6, 2010
  * Time: 1:24:13 PM
  */
-public class Generator<P, T> extends F<P, T> {
+public class Generator<P, T> implements F<P, T> {
     private final Constructor constructor;
 
     public static <P, T> Generator<P, T> on(Class<P> parameterClass, Class<T> generatedClass) {

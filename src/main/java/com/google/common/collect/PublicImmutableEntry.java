@@ -9,7 +9,7 @@ package com.google.common.collect;
 /**
  * Guava's {@link com.google.common.collect.ImmutableEntry} class is package-local, so we
  * need this public subclass inside the package to enable further subclasses outside
- * of the package.<br/><br/>
+ * of the package.<p>
  *
  * Subclassing their ImmutableEntry is desirable to reduce the number of copies involved
  * in creating ImmutableMaps.

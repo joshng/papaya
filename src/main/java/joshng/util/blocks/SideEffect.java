@@ -7,29 +7,13 @@ import joshng.util.collect.Nothing;
  * Date: 5/23/13
  * Time: 10:59 AM
  */
-public abstract class SideEffect extends Source<Nothing> implements Runnable {
-    public static final SideEffect NOOP = new SideEffect() {
-        @Override
-        public void run() {
-        }
-    };
-
-    public static final F<Runnable, SideEffect> RUNNABLE_WRAPPER = new F<Runnable, SideEffect>() {
-        @Override public SideEffect apply(Runnable input) {
-            return extendRunnable(input);
-        }
-    };
-
+public interface SideEffect extends Source<Nothing>, Runnable {
     public static SideEffect extendRunnable(final Runnable runnable) {
         if (runnable instanceof SideEffect) return (SideEffect)runnable;
-        return new SideEffect() {
-            @Override public void run() {
-                runnable.run();
-            }
-        };
+        return runnable::run;
     }
 
-    public <T> Tapper<T> asTapper() {
+    default <T> Tapper<T> asTapper() {
         return new Tapper<T>() {
             @Override public void tap(T value) {
                 run();
@@ -38,12 +22,12 @@ public abstract class SideEffect extends Source<Nothing> implements Runnable {
     }
 
     @Override
-    public Runnable asRunnable() {
+    default Runnable asRunnable() {
         return this;
     }
 
     @Override
-    public Nothing get() {
+    default Nothing get() {
         run();
         return Nothing.NOTHING;
     }

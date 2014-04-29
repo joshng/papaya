@@ -3,10 +3,8 @@ package joshng.util.collect;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multiset;
 import joshng.util.blocks.F;
-import joshng.util.blocks.FBuilder;
 import joshng.util.blocks.Source;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -20,9 +18,6 @@ import static com.google.common.base.Preconditions.checkArgument;
  * Time: 9:40:12 PM
  */
 public class MoreMaps {
-    private static final FBuilder<Map> MAP_FB = FBuilder.on(Map.class);
-    private static final F GET_VALUES = MAP_FB.returning(MAP_FB.input.values());
-
     private static final Source MAP_FACTORY = new Source<Map>() { public Map get() {
         return Maps.newHashMap();
     } };
@@ -109,10 +104,5 @@ public class MoreMaps {
             frequencies.put(item, count + 1);
         }
         return frequencies;
-    }
-
-    @SuppressWarnings("unchecked")
-    public static <V> F<Map<?,V>, Collection<V>> valueGetter() {
-        return GET_VALUES;
     }
 }

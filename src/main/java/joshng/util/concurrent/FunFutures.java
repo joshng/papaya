@@ -1,30 +1,11 @@
 package joshng.util.concurrent;
 
-import com.google.common.base.Function;
 import com.google.common.base.Objects;
-import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.AsyncFunction;
-import com.google.common.util.concurrent.ForwardingListenableFuture;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.FutureFallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListenableFutureTask;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.UncheckedExecutionException;
-import com.google.common.util.concurrent.Uninterruptibles;
-import joshng.util.blocks.Consumer;
-import joshng.util.blocks.F;
-import joshng.util.blocks.Pred;
-import joshng.util.blocks.SideEffect;
-import joshng.util.blocks.Sink;
-import joshng.util.blocks.Source;
-import joshng.util.blocks.Tapper;
-import joshng.util.blocks.ThrowingFunction;
+import com.google.common.util.concurrent.*;
+import joshng.util.blocks.*;
 import joshng.util.collect.FunIterable;
-import joshng.util.collect.Functional;
 import joshng.util.collect.Maybe;
 import joshng.util.collect.Pair;
 import org.slf4j.Logger;
@@ -34,12 +15,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static joshng.util.collect.Maybe.definitely;
 
@@ -220,17 +199,14 @@ public class FunFutures {
         }
     }
 
-    public static Consumer<Future> cancelUnlessRunning() {
-        return new Sink<Future>() {
-            @Override
-            public void handle(Future value) {
-                value.cancel(false);
-            }
+    public static Sink<Future> cancelUnlessRunning() {
+        return value -> {
+            value.cancel(false);
         };
     }
 
     public static <T> FunIterable<T> getAll(Iterable<? extends Future<? extends T>> futures) {
-        return Functional.map(futures, FunFutures.<T>getFromFuture());
+        return FunIterable.map(futures, FunFutures.<T>getFromFuture());
     }
 
     @SuppressWarnings("unchecked")
@@ -270,19 +246,15 @@ public class FunFutures {
     }
 
     public static <I, O> FunFuture<O> map(ListenableFuture<I> future, Function<? super I, ? extends O> f) {
-        return new FunctionalFuture<O>(Futures.transform(future, f));
+        return new FunctionalFuture<>(Futures.transform(future, (com.google.common.base.Function<? super I, ? extends O>)f::apply));
     }
 
     public static <I, O> FunFuture<O> map(ListenableFuture<I> future, Executor executor, Function<? super I, ? extends O> f) {
-        return new FunctionalFuture<O>(Futures.transform(future, f, executor));
+        return new FunctionalFuture<O>(Futures.transform(future, (com.google.common.base.Function<? super I, ? extends O>)f::apply, executor));
     }
 
     public static <I, O> AsyncF<ListenableFuture<? extends I>, O> mapper(final Function<? super I, ? extends O> mapper) {
-        return new AsyncF<ListenableFuture<? extends I>, O>() {
-            @Override protected FunFuture<O> applyAsync(ListenableFuture<? extends I> input) throws Throwable {
-                return map(input, mapper);
-            }
-        };
+        return input -> map(input, mapper);
     }
 
     public static <I, O> FunFuture<O> flatMap(ListenableFuture<I> future, AsyncFunction<? super I, ? extends O> f) {
@@ -290,11 +262,7 @@ public class FunFutures {
     }
 
     public static <I, O> AsyncF<ListenableFuture<? extends I>, O> flatMapper(final AsyncFunction<? super I, ? extends O> transformer) {
-        return new AsyncF<ListenableFuture<? extends I>, O>() {
-            protected FunFuture<O> applyAsync(ListenableFuture<? extends I> input) throws Throwable {
-                return flatMap(input, transformer);
-            }
-        };
+        return input -> flatMap(input, transformer);
     }
 
     public static <T, O> FunFuture<O> flatMap(ListenableFuture<T> future, Executor executor, AsyncFunction<? super T, ? extends O> f) {
@@ -321,7 +289,7 @@ public class FunFutures {
     public static <T> FunFuture<T> filter(ListenableFuture<T> future, final Predicate<? super T> filter) {
         return FunFutures.map(future, new Tapper<T>() {
             public void tap(T value) {
-                if (!filter.apply(value)) throw new FilteredFutureException();
+                if (!filter.test(value)) throw new FilteredFutureException();
             }
         });
     }
@@ -398,7 +366,7 @@ public class FunFutures {
     public static <T> FunFuture<T> uponSuccess(final ListenableFuture<T> future, Executor executor, final Consumer<? super T> successObserver) {
         return uponCompletion(future, executor, new FutureCallback<T>() {
             @Override public void onSuccess(T result) {
-                successObserver.handle(result);
+                successObserver.accept(result);
             }
 
             @Override public void onFailure(Throwable t) {
@@ -412,7 +380,7 @@ public class FunFutures {
             }
 
             @Override public void onFailure(Throwable t) {
-                failureObserver.handle(t);
+                failureObserver.accept(t);
             }
         });
     }

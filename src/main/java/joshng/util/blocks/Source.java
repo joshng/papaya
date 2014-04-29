@@ -1,7 +1,5 @@
 package joshng.util.blocks;
 
-import com.google.common.base.Function;
-import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
 import joshng.util.collect.Either;
@@ -10,6 +8,8 @@ import joshng.util.exceptions.ExceptionPolicy;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static joshng.util.collect.Maybe.definitely;
 
@@ -18,19 +18,9 @@ import static joshng.util.collect.Maybe.definitely;
  * Date: Sep 23, 2011
  * Time: 9:10:50 AM
  */
-public abstract class Source<T> extends F<Object, T> implements Callable<T>, Supplier<T> {
-    private static final F GETTER = new F<Supplier, Object>() {
-        public Object apply(Supplier from) {
-            return from.get();
-        }
-    };
-    public static final F<Source<?>, Runnable> AS_RUNNABLE = new F<Source<?>, Runnable>() {
-        public Runnable apply(Source<?> input) {
-            return input.asRunnable();
-        }
-    };
-
-    private static final Source NULL_SOURCE = Source.<Object>ofInstance(null);
+@FunctionalInterface
+public interface Source<T> extends F<Object, T>, Callable<T>, Supplier<T>, com.google.common.base.Supplier<T> {
+    static final Source NULL_SOURCE = Source.ofInstance(null);
 
     @SuppressWarnings("unchecked")
     public static <T> Source<T> nullSource() {
@@ -44,74 +34,59 @@ public abstract class Source<T> extends F<Object, T> implements Callable<T>, Sup
     @SuppressWarnings("unchecked")
     public static <T> Source<T> extendSupplier(final Supplier<? extends T> supplier) {
         if (supplier instanceof Source) return (Source<T>) supplier;
-        return new Source<T>() { public T get() {
-            return supplier.get();
-        } };
+        return supplier::get;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> Source<T> extendGuava(final com.google.common.base.Supplier<? extends T> supplier) {
+        if (supplier instanceof Source) return (Source<T>) supplier;
+        return supplier::get;
     }
 
     public static <T> Source<T> extendRunnable(final Runnable runnable, final T result) {
-        return new Source<T>() {
-            @Override
-            public T get() {
-                runnable.run();
-                return result;
-            }
+        return () -> {
+            runnable.run();
+            return result;
         };
     }
 
     public static <I, O> F<Supplier<? extends I>, Source<O>> mapper(Function<I, O> f) {
         final F<I, O> extended = F.extendF(f);
-        return new F<Supplier<? extends I>, Source<O>>() {
-            @Override
-            public Source<O> apply(Supplier<? extends I> input) {
-                return extended.bindFrom(input);
-            }
-        };
+        return extended::bindFrom;
     }
 
     public static <I, O> F<Supplier<? extends I>, Source<O>> flatMapper(final Function<I, ? extends Supplier<O>> f) {
-        return new F<Supplier<? extends I>, Source<O>>() {
-            @Override
-            public Source<O> apply(Supplier<? extends I> input) {
-                return extendSupplier(input).flatMap(f);
-            }
-        };
+        return input -> extendSupplier(input).flatMap(f);
     }
 
     @SuppressWarnings({"unchecked"})
     public static <T> F<Supplier<? extends T>, T> getter() {
-        return GETTER;
+        return s -> s.get();
     }
 
-    public <U> Source<U> andThen(final Function<? super T, U> transformer) {
+    @Override
+    default <U> Source<U> andThen(final Function<? super T, ? extends U> transformer) {
 //        return F.extendF(transformer).bindFrom(this);
-        return new Source<U>() { public U get() {
-            return transformer.apply(Source.this.get());
-        } };
+        return () -> transformer.apply(Source.this.get());
     }
 
-    public <U> Source<U> map(final Function<? super T, U> transformer) {
+    default <U> Source<U> map(final Function<? super T, U> transformer) {
         return andThen(transformer);
     }
 
-    public <U> Source<U> flatMap(final Function<? super T, ? extends Supplier<U>> transformer) {
-        return new Source<U>() {
-            @Override
-            public U get() {
-                return transformer.apply(Source.this.get()).get();
-            }
-        };
+    default <U> Source<U> flatMap(final Function<? super T, ? extends Supplier<U>> transformer) {
+        return () -> transformer.apply(Source.this.get()).get();
     }
 
-    public Source<T> memoize() {
-        return extendSupplier(Suppliers.memoize(this));
+    default Source<T> memoize() {
+        return extendGuava(Suppliers.memoize(this));
     }
 
-    public Source<T> memoizeWithExpiration(long duration, TimeUnit timeUnit) {
-        return extendSupplier(Suppliers.memoizeWithExpiration(this, duration, timeUnit));
+    default Source<T> memoizeWithExpiration(long duration, TimeUnit timeUnit) {
+        return extendGuava(Suppliers.memoizeWithExpiration(this, duration, timeUnit));
     }
 
-    public Runnable asRunnable() {
+    default Runnable asRunnable() {
         return new Runnable() {
             @Override
             public void run() {
@@ -120,7 +95,7 @@ public abstract class Source<T> extends F<Object, T> implements Callable<T>, Sup
         };
     }
 
-    public Supplier<T> asSupplier() {
+    default Supplier<T> asSupplier() {
         return this;
     }
 
@@ -131,7 +106,7 @@ public abstract class Source<T> extends F<Object, T> implements Callable<T>, Sup
      * <p>NOTE: any Throwable that is NOT handled by the ExceptionPolicy will still be thrown out
      * (wrapped in a RuntimeException if necessary by {@link Throwables#propagate}).
      */
-    public Source<Maybe<T>> handlingExceptions(final ExceptionPolicy exceptionPolicy) {
+    default Source<Maybe<T>> handlingExceptions(final ExceptionPolicy exceptionPolicy) {
         return new Source<Maybe<T>>() {
             @Override
             public Maybe<T> get() {
@@ -145,7 +120,7 @@ public abstract class Source<T> extends F<Object, T> implements Callable<T>, Sup
         };
     }
 
-    public Source<T> recover(final ThrowingFunction<? super Exception, ? extends T> recovery) {
+    default Source<T> recover(final ThrowingFunction<? super Exception, ? extends T> recovery) {
         return new Source<T>() {
             @Override public T get() {
                 try {
@@ -161,24 +136,19 @@ public abstract class Source<T> extends F<Object, T> implements Callable<T>, Sup
         };
     }
 
-    public Source<Either<Exception, T>> exceptionToLeft() {
-        return new Source<Either<Exception, T>>() {
-            @Override
-            public Either<Exception, T> get() {
-                return applyExceptionToLeft(null, Source.this);
-            }
-        };
+    default Source<Either<Exception, T>> exceptionToLeft() {
+        return () -> F.applyExceptionToLeft(null, Source.this);
     }
 
-    public T apply(Object input) {
+    default T apply(Object input) {
         return get();
     }
 
-    public T call() {
+    default T call() {
         return get();
     }
 
-    private static class SourceOfInstance<T> extends Source<T> {
+    static class SourceOfInstance<T> implements Source<T> {
         private final T value;
 
         public SourceOfInstance(T value) {
@@ -190,9 +160,10 @@ public abstract class Source<T> extends F<Object, T> implements Callable<T>, Sup
             return value;
         }
 
+        @SuppressWarnings("unchecked")
         @Override
-        public <U> Source<U> andThen(Function<? super T, U> transformer) {
-            return extendF(transformer).bind(value);
+        public <U> Source<U> andThen(Function<? super T, ? extends U> transformer) {
+            return (Source<U>) F.extendF(transformer).bind(value);
         }
 
         @Override

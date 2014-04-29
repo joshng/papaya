@@ -22,13 +22,13 @@ public class MutableTimePeriod {
 
     public static final Pred2<MutableTimePeriod, DateTime> CONTAINS = new Pred2<MutableTimePeriod, DateTime>() {
         @Override
-        public boolean apply(MutableTimePeriod key, DateTime value) {
+        public boolean test(MutableTimePeriod key, DateTime value) {
             return key.contains(value);
         }
     };
     public static final Pred2<MutableTimePeriod, MutableTimePeriod> INTERSECTS = new Pred2<MutableTimePeriod, MutableTimePeriod>() {
         @Override
-        public boolean apply(MutableTimePeriod key, MutableTimePeriod value) {
+        public boolean test(MutableTimePeriod key, MutableTimePeriod value) {
             return key.intersects(value);
         }
     };

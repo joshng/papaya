@@ -2,12 +2,12 @@ package joshng.util.exceptions;
 
 import com.google.common.base.Throwables;
 import joshng.util.LineNumbers;
-import joshng.util.blocks.Consumer;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * User: joey
@@ -54,7 +54,7 @@ public class Exceptions {
     public static <C extends Throwable> boolean handleCause(Throwable t, Class<C> causeClass, final Consumer<? super C> handler) {
         return handleCause(t, new ExceptionHandler<C>(causeClass) {
             public void handle(C error) {
-                handler.handle(error);
+                handler.accept(error);
             }
         });
     }

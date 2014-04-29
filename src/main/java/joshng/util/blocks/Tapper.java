@@ -11,15 +11,12 @@ package joshng.util.blocks;
  * returns the input itself.
  * This can be convenient when applying side-effects or validations to a value prior to returning it.
  */
-public abstract class Tapper<T> extends F<T, T> implements Tap<T> {
+public interface Tapper<T> extends F<T, T> {
+    void tap(T value);
     @Override
-    public final T apply(T input) {
+
+    default T apply(T input) {
         tap(input);
         return input;
     }
 }
-
-interface Tap<T> {
-    void tap(T value);
-}
-

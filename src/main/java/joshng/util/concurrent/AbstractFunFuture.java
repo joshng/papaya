@@ -1,7 +1,5 @@
 package joshng.util.concurrent;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -12,6 +10,8 @@ import joshng.util.collect.Pair;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * User: josh

@@ -82,35 +82,19 @@ public abstract class StackContext implements TransientContext {
     }
 
     public static <I,O> F<I,O> wrapInContext(final TransientContext context, final F<I, O> function) {
-        return new F<I, O>() {
-            public O apply(final I input) {
-                return getInContext(context, function.bind(input));
-            }
-        };
+        return input -> getInContext(context, function.bind(input));
     }
 
     public static <T> Sink<T> wrapInContext(final TransientContext context, final Sink<T> sink) {
-        return new Sink<T>() {
-            public void handle(T value) {
-                getInContext(context, sink.bind(value));
-            }
-        };
+        return value -> getInContext(context, sink.bind(value));
     }
 
     public static <I, O> AsyncF<I, O> wrapInContextAsync(final TransientContext context, final AsyncF<I, O> asyncFunction) {
-        return new AsyncF<I, O>() {
-            @Override protected FunFuture<O> applyAsync(I input) throws Throwable {
-                return callInContextAsync(context, asyncFunction.bind(input));
-            }
-        };
+        return input -> callInContextAsync(context, asyncFunction.bind(input));
     }
 
     public static <T> Source<FunFuture<T>> wrapAsyncCallable(final TransientContext context, final Callable<? extends FunFuture<T>> asyncCallable) {
-        return new Source<FunFuture<T>>() {
-            @Override public FunFuture<T> get() {
-                return callInContextAsync(context, asyncCallable);
-            }
-        };
+        return () -> callInContextAsync(context, asyncCallable);
     }
 
     public void runInContext(Runnable r) {
@@ -159,7 +143,7 @@ public abstract class StackContext implements TransientContext {
         }
     }
 
-    private static class RunnableInContext extends SideEffect {
+    private static class RunnableInContext implements SideEffect {
         private final TransientContext context;
         private final Runnable block;
 

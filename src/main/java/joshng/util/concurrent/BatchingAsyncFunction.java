@@ -5,7 +5,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Queues;
 import com.google.common.util.concurrent.ListenableFuture;
-import joshng.util.blocks.Consumer2;
+import joshng.util.blocks.Sink2;
 import joshng.util.blocks.Source;
 
 import java.util.List;
@@ -22,9 +22,9 @@ import static joshng.util.concurrent.Promise.newPromise;
  * Date: 9/21/13
  * Time: 6:02 PM
  */
-public class BatchingAsyncFunction<I, O> extends AsyncF<I, O> {
-    private static final Consumer2 COMPLETE_PROMISE = new Consumer2<BatchingAsyncFunction<Object,Object>.Job, ListenableFuture<Object>>() {
-        @Override public void handle(BatchingAsyncFunction<Object,Object>.Job job, ListenableFuture<Object> result) {
+public class BatchingAsyncFunction<I, O> implements AsyncF<I, O> {
+    private static final Sink2 COMPLETE_PROMISE = new Sink2<Job<Object,Object>, ListenableFuture<Object>>() {
+        @Override public void accept(Job<Object,Object> job, ListenableFuture<Object> result) {
             job.promise.completeWith(result);
         }
     };
@@ -34,7 +34,7 @@ public class BatchingAsyncFunction<I, O> extends AsyncF<I, O> {
     private final Executor executor;
     private final Function<? super ImmutableList<I>, ? extends Iterable<? extends ListenableFuture<O>>> batchConsumer;
     private final AtomicInteger pendingJobCount = new AtomicInteger();
-    private final BlockingQueue<Job> queue;
+    private final BlockingQueue<Job<I,O>> queue;
     private final SingleBatchWorker worker = new SingleBatchWorker();
 
     private BatchingAsyncFunction(int batchSize, long timeout, TimeUnit timeoutUnit, Executor executor, Function<? super ImmutableList<I>, ? extends Iterable<? extends ListenableFuture<O>>> batchConsumer) {
@@ -50,8 +50,8 @@ public class BatchingAsyncFunction<I, O> extends AsyncF<I, O> {
         return new BatchingAsyncFunction<I, O>(batchSize, timeout, timeoutUnit, executor, batchConsumer);
     }
 
-    protected FunFuture<O> applyAsync(I input) throws InterruptedException {
-        Job job = new Job(input);
+    public FunFuture<O> applyAsync(I input) throws InterruptedException {
+        Job<I,O> job = new Job<>(input);
         queue.put(job); // may throw InterruptedException
         if (pendingJobCount.incrementAndGet() % batchSize == 1) {
             try {
@@ -75,13 +75,13 @@ public class BatchingAsyncFunction<I, O> extends AsyncF<I, O> {
     }
 
     @SuppressWarnings("unchecked")
-    private Consumer2<Job, ListenableFuture<O>> completePromise() {
+    private Sink2<Job, ListenableFuture<O>> completePromise() {
         return COMPLETE_PROMISE;
     }
 
     private class SingleBatchWorker implements Runnable {
         @Override public void run() {
-            List<Job> jobs = getJobs();
+            List<Job<I, O>> jobs = getJobs();
             try {
                 Iterable<? extends ListenableFuture<O>> result = batchConsumer.apply(ImmutableList.copyOf(Lists.transform(jobs, Source.<I>getter())));
                 extend(jobs).zip(result).foreach2(completePromise());
@@ -92,8 +92,8 @@ public class BatchingAsyncFunction<I, O> extends AsyncF<I, O> {
             }
         }
 
-        private List<Job> getJobs() {
-            List<Job> jobs = Lists.newArrayListWithCapacity(batchSize);
+        private List<Job<I,O>> getJobs() {
+            List<Job<I,O>> jobs = Lists.newArrayListWithCapacity(batchSize);
             // synchronized to prevent batches from racing to consume jobs, which would make this MORE complicated
             synchronized (queue) {
                 int consumed = Queues.drainUninterruptibly(queue, jobs, batchSize, timeout, timeoutUnit);
@@ -114,7 +114,7 @@ public class BatchingAsyncFunction<I, O> extends AsyncF<I, O> {
         }
     }
 
-    private class Job extends Source<I> {
+    private static class Job<I, O> implements Source<I> {
         private final I input;
         private final Promise<O> promise = newPromise();
 

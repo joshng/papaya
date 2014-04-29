@@ -9,31 +9,23 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
-import joshng.util.blocks.Consumer;
-import joshng.util.blocks.Consumer2;
 import joshng.util.blocks.F;
 import joshng.util.blocks.Pred;
+import joshng.util.blocks.Sink2;
+import joshng.util.collect.AbstractFunIterable;
 import joshng.util.collect.FunIterable;
 import joshng.util.collect.FunPairs;
 import joshng.util.collect.Maybe;
-import joshng.util.collect.MutableFunList;
 
 import javax.annotation.Nullable;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedElement;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Queue;
+import java.util.function.Consumer;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static joshng.util.collect.Functional.extend;
 
 /**
  * User: josh
@@ -77,29 +69,23 @@ public class Reflect {
 
     public static <O, T> F<O, T> fieldReader(Class<? extends O> objectClass, final Class<T> fieldClass, final Field field) {
         checkFieldType(objectClass, fieldClass, field);
-        return new F<O, T>() {
-            @Override
-            public T apply(O input) {
-                try {
-                    return fieldClass.cast(field.get(input));
-                } catch (IllegalAccessException e) {
-                    throw Throwables.propagate(e);
-                }
+        return input -> {
+            try {
+                return fieldClass.cast(field.get(input));
+            } catch (IllegalAccessException e) {
+                throw Throwables.propagate(e);
             }
         };
     }
 
-    public static <O, T> Consumer2<O, T> fieldWriter(Class<? extends O> objectClass, final Class<T> fieldClass, final Field field) {
+    public static <O, T> Sink2<O, T> fieldWriter(Class<? extends O> objectClass, final Class<T> fieldClass, final Field field) {
         checkFieldType(objectClass, fieldClass, field);
         field.setAccessible(true);
-        return new Consumer2<O, T>() {
-            @Override
-            public void handle(O input1, T input2) {
-                try {
-                    field.set(input1, input2);
-                } catch (IllegalAccessException e) {
-                    throw Throwables.propagate(e);
-                }
+        return (obj, value) -> {
+            try {
+                field.set(obj, value);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
             }
         };
     }
@@ -192,7 +178,7 @@ public class Reflect {
         } };
     }
     public static <A extends Annotation> F<AnnotatedElement, Maybe<A>> maybeAnnotationGetter(final Class<A> annotationClass) {
-        return annotationGetter(annotationClass).andThen(Maybe.<A>of());
+        return annotationGetter(annotationClass).andThen(Maybe::of);
     }
 
     public static FunIterable<Field> getAllFields(Class<?> klass) {
@@ -261,39 +247,13 @@ public class Reflect {
         } };
     }
 
-    public static <S, T extends S> MutableFunList<Class<? super T>> getLineage(Class<T> klass, @Nullable Class<S> stopClass) {
-        MutableFunList<Class<? super T>> lineage = MutableFunList.newMutableFunList();
-        Class<? super T> superclass = klass;
-        while (superclass != stopClass) {
-            lineage.add(superclass);
-            //noinspection unchecked
-            superclass = superclass.getSuperclass();
-        }
-        return lineage;
+    public static <S, T extends S> AbstractFunIterable<Class<? super T>> getLineage(Class<T> klass, @Nullable Class<S> stopClass) {
+        return () -> new LineageIterator<>(klass, stopClass);
     }
 
 
     public static <A extends Annotation> Maybe<A> getAnnotationMaybe(AnnotatedElement element, Class<A> annotationClass) {
         return Maybe.of(element.getAnnotation(annotationClass));
-    }
-    
-    public static <S, T extends S> FunIterable<Class<? super T>> getLineageIterable(final Class<T> klass, final Class<S> stopClass) {
-        return extend(new Iterable<Class<? super T>>() {
-            public Iterator<Class<? super T>> iterator() {
-                return new AbstractIterator<Class<? super T>>() {
-                    private Class<? super T> currentClass = klass;
-
-                    @Override
-                    protected Class<? super T> computeNext() {
-                        if (currentClass == stopClass) return endOfData();
-                        Class<? super T> current = currentClass;
-                        //noinspection unchecked
-                        currentClass = current.getSuperclass();
-                        return current;
-                    }
-                };
-            }
-        });
     }
 
     @Nullable
@@ -356,7 +316,7 @@ public class Reflect {
     public static <T> boolean ifInstance(Object obj, Class<T> castClass, Consumer<? super T> handler) {
         T casted = castOrNull(obj, castClass);
         if (casted == null) return false;
-        handler.handle(casted);
+        handler.accept(casted);
         return true;
     }
 
@@ -373,5 +333,24 @@ public class Reflect {
     @SuppressWarnings({"unchecked"})
     public static <T> T blindCast(Object object) {
         return (T) object;
+    }
+
+    private static class LineageIterator<S, T extends S> extends AbstractIterator<Class<? super T>> {
+        private final Class<S> stopClass;
+        private Class<? super T> currentClass;
+
+        public LineageIterator(Class<T> klass, Class<S> stopClass) {
+            this.stopClass = stopClass;
+            currentClass = klass;
+        }
+
+        @Override
+        protected Class<? super T> computeNext() {
+            if (currentClass == stopClass) return endOfData();
+            Class<? super T> current = currentClass;
+            //noinspection unchecked
+            currentClass = current.getSuperclass();
+            return current;
+        }
     }
 }

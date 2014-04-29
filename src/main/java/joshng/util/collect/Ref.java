@@ -12,7 +12,7 @@ import joshng.util.context.StackContext;
 * Date: Feb 16, 2011
 * Time: 2:50:24 PM
 */
-public class Ref<T> extends Source<T> implements MutableReference<T> {
+public class Ref<T> implements Source<T>, MutableReference<T> {
     protected volatile T value;
 
 

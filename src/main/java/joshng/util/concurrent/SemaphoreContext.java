@@ -40,7 +40,7 @@ public class SemaphoreContext extends StackContext {
         }
     }
 
-    public class Releaser extends SideEffect implements State {
+    public class Releaser implements SideEffect, State {
         private final int permits;
 
         private Releaser(int permits) {

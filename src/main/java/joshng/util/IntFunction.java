@@ -10,7 +10,7 @@ import static com.google.common.base.Preconditions.checkArgument;
  * Date: 1/15/13
  * Time: 9:40 AM
  */
-public abstract class IntFunction extends F2<Integer, Integer, Integer> {
+public abstract class IntFunction implements F2<Integer, Integer, Integer> {
     public F<Integer, Integer> by(int rhs) {
         return bindSecond(rhs);
     }

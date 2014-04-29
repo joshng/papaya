@@ -1,8 +1,9 @@
 package joshng.util.collect;
 
-import com.google.common.base.Function;
 import joshng.util.Reflect;
 import joshng.util.blocks.F;
+
+import java.util.function.Function;
 
 import static joshng.util.collect.Maybe.definitely;
 
@@ -25,12 +26,6 @@ public abstract class Either<L,R> {
         return new Right<L, R>(definitely(value));
     }
 
-    @SuppressWarnings("unchecked")
-    public static <L> F<Either<? extends L, ?>, Maybe<L>> leftGetter() { return LEFT_GETTER; }
-
-    @SuppressWarnings("unchecked")
-    public static <R> F<Either<?, ? extends R>, Maybe<R>> rightGetter() { return RIGHT_GETTER; }
-
     public static <L, R, O> F<Either<L, R>, Either<O, R>> liftLeft(final Function<? super L, ? extends O> mapper) {
         return new F<Either<L, R>, Either<O, R>>() {
             @Override
@@ -48,8 +43,6 @@ public abstract class Either<L,R> {
 
     public abstract <O> Either<O, R> mapLeft(Function<? super L, ? extends O> transformer);
     public abstract <O> Either<L, O> mapRight(Function<? super R, ? extends O> transformer);
-
-    public abstract <O> O map(EitherFunction<? super L, ? super R, ? extends O> mapper);
 
     private static class Left<L, X> extends Either<L, X>  {
         private final Maybe<L> value;
@@ -82,11 +75,6 @@ public abstract class Either<L,R> {
         @Override
         public <O> Either<L, O> mapRight(Function<? super X, ? extends O> transformer) {
             return Reflect.blindCast(this);
-        }
-
-        @Override
-        public <O> O map(EitherFunction<? super L, ? super X, ? extends O> mapper) {
-            return mapper.applyLeft(value.getOrThrow());
         }
     }
 
@@ -121,11 +109,6 @@ public abstract class Either<L,R> {
         @Override
         public <O> Either<X, O> mapRight(Function<? super R, ? extends O> transformer) {
             return new Right<X, O>(value.map(transformer));
-        }
-
-        @Override
-        public <O> O map(EitherFunction<? super X, ? super R, ? extends O> f) {
-            return f.applyRight(value.getOrThrow());
         }
     }
 

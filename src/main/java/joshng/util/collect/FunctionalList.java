@@ -2,14 +2,10 @@ package joshng.util.collect;
 
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableList;
-import joshng.util.blocks.Consumer;
 
 import javax.annotation.Nullable;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
+import java.util.*;
+import java.util.function.Consumer;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static joshng.util.Reflect.blindCast;
@@ -19,31 +15,29 @@ import static joshng.util.Reflect.blindCast;
  * Date: Aug 27, 2011
  * Time: 4:26:26 PM
  */
-public class FunctionalList<E> extends FunctionalCollection<E> implements FunList<E> {
-    private final ImmutableList<E> delegate;
-
+public class FunctionalList<E> extends FunctionalIterable<E> implements FunList<E> {
     FunctionalList(ImmutableList<E> delegate) {
-        this.delegate = delegate;
+        super(delegate);
     }
 
     @Override
     public ImmutableList<E> delegate() {
-        return delegate;
+        return (ImmutableList<E>) super.delegate();
     }
 
     public static <T> FunList<T> extend(ImmutableList<T> list) {
-        if (list.isEmpty()) return emptyList();
+        if (list.isEmpty()) return Functional.emptyList();
         return new FunctionalList<T>(list);
     }
 
     public static <T> FunList<T> copyOf(T[] items) {
-        if (items.length == 0) return emptyList();
+        if (items.length == 0) return Functional.emptyList();
         return new FunctionalList<T>(ImmutableList.copyOf(items));
     }
 
     public static <T> FunList<T> copyOf(Iterator<? extends T> items) {
         checkNotNull(items);
-        if (!items.hasNext()) return emptyList();
+        if (!items.hasNext()) return Functional.emptyList();
         return new FunctionalList<T>(ImmutableList.copyOf(items));
     }
 
@@ -64,7 +58,7 @@ public class FunctionalList<E> extends FunctionalCollection<E> implements FunLis
                         if (idx == end) return endOfData();
                         int start = idx;
                         idx = Math.min(idx + size, end);
-                        return FunctionalList.extend(delegate.subList(start, idx));
+                        return FunctionalList.extend(delegate().subList(start, idx));
                     }
                 };
             }
@@ -87,15 +81,15 @@ public class FunctionalList<E> extends FunctionalCollection<E> implements FunLis
 
     @Override
     public Maybe<E> last() {
-        return isEmpty() ? Maybe.<E>not() : Maybe.definitely(delegate.get(delegate.size() - 1));
+        return isEmpty() ? Maybe.<E>not() : Maybe.definitely(delegate().get(size() - 1));
     }
 
     public FunList<E> limit(int maxElements) {
-        return subList(0, Math.min(maxElements, delegate.size()));
+        return subList(0, Math.min(maxElements, size()));
     }
 
     public FunList<E> skip(int skippedElements) {
-        int size = delegate.size();
+        int size = size();
         return subList(Math.min(skippedElements, size), size);
     }
 
@@ -109,15 +103,15 @@ public class FunctionalList<E> extends FunctionalCollection<E> implements FunLis
     }
 
     public FunList<E> reverse() {
-        return new FunctionalList<E>(delegate.reverse());
+        return new FunctionalList<E>(delegate().reverse());
     }
 
     public void add(int index, E element) {
-        throw rejectMutation();
+        throw FunCollection.rejectMutation();
     }
 
     public boolean addAll(int index, Collection<? extends E> elements) {
-        throw rejectMutation();
+        throw FunCollection.rejectMutation();
     }
 
     public E get(int index) {
@@ -141,11 +135,11 @@ public class FunctionalList<E> extends FunctionalCollection<E> implements FunLis
     }
 
     public E remove(int index) {
-        throw rejectMutation();
+        throw FunCollection.rejectMutation();
     }
 
     public E set(int index, E element) {
-        throw rejectMutation();
+        throw FunCollection.rejectMutation();
     }
 
     @SuppressWarnings({"unchecked"})
@@ -186,7 +180,7 @@ public class FunctionalList<E> extends FunctionalCollection<E> implements FunLis
     static final EmptyList EMPTY = new EmptyList();
 
     @SuppressWarnings({"unchecked"})
-    private static class EmptyList extends EmptyCollection implements FunList {
+    private static class EmptyList extends FunCollection.EmptyCollection implements FunList {
 
         public ImmutableList delegate() {
             return ImmutableList.of();
@@ -211,7 +205,7 @@ public class FunctionalList<E> extends FunctionalCollection<E> implements FunLis
         }
 
         public boolean addAll(int index, Collection c) {
-            throw rejectMutation();
+            throw FunCollection.rejectMutation();
         }
 
         public Object get(int index) {
@@ -219,11 +213,11 @@ public class FunctionalList<E> extends FunctionalCollection<E> implements FunLis
         }
 
         public Object set(int index, Object element) {
-            throw rejectMutation();
+            throw FunCollection.rejectMutation();
         }
 
         public void add(int index, Object element) {
-            throw rejectMutation();
+            throw FunCollection.rejectMutation();
         }
 
         public int indexOf(java.lang.Object o) {

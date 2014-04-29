@@ -1,7 +1,5 @@
 package joshng.util.blocks;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.Iterables;
@@ -15,29 +13,36 @@ import java.lang.reflect.AnnotatedElement;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * User: josh
  * Date: 10/2/11
  * Time: 1:16 PM
  */
-public abstract class Pred<T> implements Predicate<T> {
+@FunctionalInterface
+public interface Pred<T> extends Predicate<T>, com.google.common.base.Predicate<T> {
     public static final Pred<Boolean> IDENTITY = extendFunction(F.<Boolean>identity());
 
+    default boolean apply(T value) {
+        return test(value);
+    }
+    
     public static <T> Pred<T> extendFunction(final Function<T, Boolean> fn) {
-        return new Pred<T>() { public boolean apply(T input) {
+        return new Pred<T>() { public boolean test(T input) {
             return fn.apply(input);
         } };
     }
 
     public static <T> Pred<T> extendPredicate(final Predicate<T> fn) {
         if (fn instanceof Pred) return (Pred<T>) fn;
-        return new ExtendedPredicate<T>(fn);
+        return fn::test;
     }
 
     public static Pred<Object> equalTo(final Object value) {
         return value == null ? Pred.isNull() : new Pred<Object>() {
-            public boolean apply(Object input) {
+            public boolean test(Object input) {
                 return value.equals(input);
             }
         };
@@ -45,46 +50,30 @@ public abstract class Pred<T> implements Predicate<T> {
 
     public static <T> Pred<T> notEqualTo(final T value) {
         return value == null ? Pred.<T>notNull() : new Pred<T>() {
-            public boolean apply(T input) {
+            public boolean test(T input) {
                 return !value.equals(input);
             }
         };
     }
 
     public static <T> Pred<T> in(Collection<? extends T> collection) {
-        return new ExtendedPredicate<T>(Predicates.in(collection));
+        return Predicates.in(collection)::apply;
     }
 
     public static Pred<Object> instanceOf(final Class<?> instanceClass) {
-        return new Pred<Object>() {
-            public boolean apply(Object input) {
-                return instanceClass.isInstance(input);
-            }
-        };
+        return instanceClass::isInstance;
     }
 
     public static Pred<Class<?>> superclassOf(final Class<?> subclass) {
-        return new Pred<Class<?>>() {
-            public boolean apply(Class<?> input) {
-                return input.isAssignableFrom(subclass);
-            }
-        };
+        return input -> input.isAssignableFrom(subclass);
     }
 
     public static Pred<Class<?>> subclassOf(final Class<?> superclass) {
-        return new Pred<Class<?>>() {
-            public boolean apply(Class<?> input) {
-                return superclass.isAssignableFrom(input);
-            }
-        };
+        return superclass::isAssignableFrom;
     }
 
     public static Pred<AnnotatedElement> annotatedWith(final Class<? extends Annotation> anno) {
-        return new Pred<AnnotatedElement>() {
-            public boolean apply(AnnotatedElement input) {
-                return input.isAnnotationPresent(anno);
-            }
-        };
+        return input -> input.isAnnotationPresent(anno);
     }
 
     public static <C extends Comparable<? super C>> Pred<C> greaterThan(final C value) {
@@ -103,21 +92,21 @@ public abstract class Pred<T> implements Predicate<T> {
         return Comparison.LessOrEqual.to(value);
     }
 
-    public <U extends T> ImmutableListMultimap<Boolean, U> discriminate(Iterable<U> items) {
+    default <U extends T> ImmutableListMultimap<Boolean, U> discriminate(Iterable<U> items) {
         return Multimaps.index(items, asFunction());
     }
 
-    public Pred<Iterable<? extends T>> any() {
+    default Pred<Iterable<? extends T>> any() {
         return new Pred<Iterable<? extends T>>() {
-            public boolean apply(Iterable<? extends T> input) {
+            public boolean test(Iterable<? extends T> input) {
                 return Iterables.any(input, Pred.this);
             }
         };
     }
 
-    public Pred<Iterable<? extends T>> all() {
+    default Pred<Iterable<? extends T>> all() {
         return new Pred<Iterable<? extends T>>() {
-            public boolean apply(Iterable<? extends T> input) {
+            public boolean test(Iterable<? extends T> input) {
                 return Iterables.all(input, Pred.this);
             }
         };
@@ -147,65 +136,40 @@ public abstract class Pred<T> implements Predicate<T> {
         return new HashSetDeduplicatingPredicate();
     }
 
-    public <U extends T> FunIterable<U> filter(Iterable<U> items) {
-        return Functional.filter(items, this);
+    default <U extends T> FunIterable<U> filter(Iterable<U> items) {
+        return FunIterable.filter(items, this);
     }
 
-    @Override
-    public abstract boolean apply(T input);
-
-    public Pred<T> and(final Function<? super T, Boolean> pred2) {
-        return new Pred<T>() { public boolean apply(T input) {
-            return Pred.this.apply(input) && pred2.apply(input);
+    default Pred<T> and(final Predicate<? super T> pred2) {
+        return new Pred<T>() { public boolean test(T input) {
+            return Pred.this.test(input) && pred2.test(input);
         } };
     }
 
-    public Pred<T> and(final Predicate<? super T> pred2) {
-        return new Pred<T>() { public boolean apply(T input) {
-            return Pred.this.apply(input) && pred2.apply(input);
-        } };
+    default Pred<T> or(final Predicate<? super T> pred2) {
+        return input -> Pred.this.test(input) || pred2.test(input);
     }
 
-    public Pred<T> or(final Function<? super T, Boolean> pred2) {
-        return new Pred<T>() { public boolean apply(T input) {
-            return Pred.this.apply(input) || pred2.apply(input);
-        } };
+    default <I0> Pred<I0> compose(final Function<? super I0, ? extends T> first) {
+        return input -> test(first.apply(input));
     }
 
-    public Pred<T> or(final Predicate<? super T> pred2) {
-        return new Pred<T>() { public boolean apply(T input) {
-            return Pred.this.apply(input) || pred2.apply(input);
-        } };
-    }
-
-    public <I0> Pred<I0> compose(final Function<? super I0, ? extends T> first) {
-        return new Pred<I0>() {
-            public boolean apply(I0 input) {
-                return Pred.this.apply(first.apply(input));
-            }
-        };
-    }
-
-    public Pred<T> negated() {
+    default Pred<T> negated() {
         return not(this);
     }
 
     public static <T> Pred<T> not(final Pred<T> opposite) {
-        return new Pred<T>() { public boolean apply(T input) {
-            return !opposite.apply(input);
+        return new Pred<T>() { public boolean test(T input) {
+            return !opposite.test(input);
         } };
     }
 
-    public F<T, Boolean> asFunction() {
-        return new F<T, Boolean>() {
-            public Boolean apply(T from) {
-                return Pred.this.apply(from);
-            }
-        };
+    default F<T, Boolean> asFunction() {
+        return Pred.this::test;
     }
 
-    private static final Pred NOT_NULL = new Pred() {
-        public boolean apply(Object input) {
+    static final Pred NOT_NULL = new Pred() {
+        public boolean test(Object input) {
             return input != null;
         }
 
@@ -215,8 +179,8 @@ public abstract class Pred<T> implements Predicate<T> {
         }
     };
 
-    private static final Pred IS_NULL = new Pred() {
-        public boolean apply(Object input) {
+    static final Pred IS_NULL = new Pred() {
+        public boolean test(Object input) {
             return input == null;
         }
 
@@ -227,24 +191,14 @@ public abstract class Pred<T> implements Predicate<T> {
     };
 
     @SuppressWarnings({"unchecked"})
-    private static final Pred ALWAYS_TRUE = new Pred() {
-        public boolean apply(Object input) {
+    static final Pred ALWAYS_TRUE = new Pred() {
+        public boolean test(Object input) {
             return true;
-        }
-
-        @Override
-        public Pred and(Function pred2) {
-            return Pred.extendFunction(pred2);
         }
 
         @Override
         public Pred and(Predicate pred2) {
             return Pred.extendPredicate(pred2);
-        }
-
-        @Override
-        public Pred or(Function pred2) {
-            return this;
         }
 
         @Override
@@ -274,26 +228,15 @@ public abstract class Pred<T> implements Predicate<T> {
     };
 
     @SuppressWarnings({"unchecked"})
-    private static final Pred ALWAYS_FALSE = new Pred() {
-        public boolean apply(Object input) {
+    static final Pred ALWAYS_FALSE = new Pred() {
+        public boolean test(Object input) {
             return false;
-        }
-
-        @Override
-        public Pred and(Function pred2) {
-            return this;
         }
 
         @Override
         public Pred and(Predicate pred2) {
             return this;
         }
-
-        @Override
-        public Pred or(Function pred2) {
-            return Pred.extendFunction(pred2);
-        }
-
 
         @Override
         public Pred or(Predicate pred2) {
@@ -322,23 +265,11 @@ public abstract class Pred<T> implements Predicate<T> {
     };
 
 
-    public static class HashSetDeduplicatingPredicate extends Pred<Object> {
-        private final Set<Object> seenValues = new HashSet<Object>();
+    public static class HashSetDeduplicatingPredicate implements Pred<Object> {
+        private final Set<Object> seenValues = new HashSet<>();
 
-        public boolean apply(Object input) {
+        public boolean test(Object input) {
             return seenValues.add(input);
-        }
-    }
-
-    private static class ExtendedPredicate<T> extends Pred<T> {
-        private final Predicate<T> fn;
-
-        public ExtendedPredicate(Predicate<T> fn) {
-            this.fn = fn;
-        }
-
-        public boolean apply(T input) {
-            return fn.apply(input);
         }
     }
 }

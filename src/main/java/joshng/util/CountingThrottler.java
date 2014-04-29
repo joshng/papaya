@@ -1,11 +1,12 @@
 package joshng.util;
 
-import com.google.common.base.Function;
 import com.google.common.collect.ObjectArrays;
 import com.yammer.metrics.core.Meter;
 import joshng.util.blocks.Source;
 import joshng.util.collect.Maybe;
 import org.slf4j.Logger;
+
+import java.util.function.Function;
 
 import static joshng.util.collect.Maybe.definitely;
 
@@ -37,7 +38,7 @@ import static joshng.util.collect.Maybe.definitely;
  * }
  * }</pre>
  */
-public class CountingThrottler extends Source<Maybe<Long>> {
+public class CountingThrottler implements Source<Maybe<Long>> {
     private final Throttler throttler;
     private final Meter meter;
 

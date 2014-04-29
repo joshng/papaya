@@ -9,47 +9,47 @@ import java.util.Map.Entry;
  * Date: 3/16/12
  * Time: 9:04 AM
  */
-public abstract class Pred2<K,V> extends Pred<Entry<? extends K,? extends V>> {
+public interface Pred2<K,V> extends Pred<Entry<? extends K,? extends V>> {
     public static final Pred2<Object, Object> EQUAL_PARAMS = new Pred2<Object, Object>() {
-        public boolean apply(Object key, Object value) {
+        public boolean test(Object key, Object value) {
             return Objects.equal(key, value);
         }
     };
 
-    public boolean apply(Entry<? extends K, ? extends V> input) {
-        return apply(input.getKey(), input.getValue());
+    default boolean test(Entry<? extends K, ? extends V> input) {
+        return test(input.getKey(), input.getValue());
     }
 
-    public abstract boolean apply(K key, V value);
+    boolean test(K key, V value);
 
-    public Pred2<V,K> flip() {
+    default Pred2<V,K> flip() {
         return new Pred2<V, K>() {
-            public boolean apply(V key, K value) {
-                return Pred2.this.apply(value, key);
+            public boolean test(V key, K value) {
+                return Pred2.this.test(value, key);
             }
         };
     }
 
-    public Pred<V> bindFirst(final K key) {
+    default Pred<V> bindFirst(final K key) {
         return new Pred<V>() {
-            public boolean apply(V input) {
-                return Pred2.this.apply(key, input);
+            public boolean test(V input) {
+                return Pred2.this.test(key, input);
             }
         };
     }
 
-    public Pred<K> bindSecond(final V value) {
+    default Pred<K> bindSecond(final V value) {
         return new Pred<K>() {
-            public boolean apply(K input) {
-                return Pred2.this.apply(input, value);
+            public boolean test(K input) {
+                return Pred2.this.test(input, value);
             }
         };
     }
 
-    public Pred2<K,V> negated() {
+    default Pred2<K,V> negated() {
         return new Pred2<K, V>() {
-            public boolean apply(K key, V value) {
-                return !Pred2.this.apply(key, value);
+            public boolean test(K key, V value) {
+                return !Pred2.this.test(key, value);
             }
         };
     }

@@ -1,6 +1,5 @@
 package joshng.util;
 
-import joshng.util.blocks.F;
 import joshng.util.collect.ImmutableMaybeMap;
 
 import java.io.Serializable;
@@ -55,7 +54,7 @@ public class Identifier implements Serializable {
     public static class SealedRegistry<I extends Identifier> extends ImmutableMaybeMap<String, I> {
 
         public SealedRegistry(Iterable<I> entries) {
-            super(extend(entries).asValuesFrom(F.toStringer()));
+            super(extend(entries).asValuesFrom(Object::toString));
         }
 
         public boolean isValid(String key) {

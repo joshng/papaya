@@ -10,24 +10,24 @@ import static com.google.common.base.Preconditions.checkArgument;
  * Date: 1/15/13
  * Time: 9:40 AM
  */
-public abstract class LongFunction extends F2<Long, Long, Long> {
+public abstract class LongFunction implements F2<Long, Long, Long> {
     public F<Long, Long> by(long rhs) {
         return bindSecond(rhs);
     }
 
-    public static F<Long, Long> add(int addend) {
+    public static F<Long, Long> add(long addend) {
         return Add.by(addend);
     }
-    public static F<Long, Long> subtract(int addend) {
+    public static F<Long, Long> subtract(long addend) {
         return Subtract.by(addend);
     }
-    public static F<Long, Long> multiply(int factor) {
+    public static F<Long, Long> multiply(long factor) {
         return Multiply.by(factor);
     }
-    public static F<Long, Long> divide(int denom) {
+    public static F<Long, Long> divide(long denom) {
         return Divide.by(denom);
     }
-    public static F<Long, Long> modulo(int modulus) {
+    public static F<Long, Long> modulo(long modulus) {
         return Modulo.by(modulus);
     }
 

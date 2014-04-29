@@ -1,12 +1,12 @@
 package joshng.util.concurrent;
 
-import com.google.common.base.Function;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.ListenableFuture;
 import joshng.util.Reflect;
 import joshng.util.blocks.F;
 
 import javax.annotation.Nonnull;
+import java.util.function.Function;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static joshng.util.concurrent.FunFutures.extendFuture;
@@ -16,13 +16,8 @@ import static joshng.util.concurrent.FunFutures.extendFuture;
  * Date: 12/7/12
  * Time: 11:38 AM
  */
-public abstract class AsyncF<I, O> extends F<I, FunFuture<O>> implements IAsyncFunction<I,O> {
-    private static final AsyncF IDENTITY = new AsyncF<ListenableFuture<Object>, Object>() {
-        @Override
-        public FunFuture<Object> applyAsync(ListenableFuture<Object> input) {
-            return extendFuture(input);
-        }
-    };
+public interface AsyncF<I, O> extends F<I, FunFuture<O>>, IAsyncFunction<I,O> {
+    static final AsyncF IDENTITY = (AsyncF<ListenableFuture<Object>, Object>) FunFutures::extendFuture;
 
     @SuppressWarnings("unchecked")
     public static <T> AsyncF<ListenableFuture<? extends T>, T> asyncIdentity() {
@@ -47,15 +42,15 @@ public abstract class AsyncF<I, O> extends F<I, FunFuture<O>> implements IAsyncF
         };
     }
 
-    public AsyncF<Object, O> bindAsync(I input) {
-        return extendAsyncFunction(super.bind(input));
+    default AsyncF<Object, O> bindAsync(I input) {
+        return extendAsyncFunction(bind(input));
     }
 
     @Nonnull
-    protected abstract FunFuture<O> applyAsync(I input) throws Throwable;
+    FunFuture<O> applyAsync(I input) throws Throwable;
 
     @Override
-    public final FunFuture<O> apply(I input) {
+    default FunFuture<O> apply(I input) {
         try {
             return checkNotNull(applyAsync(input), "AsyncFunction must not return null!", this);
         } catch (Throwable e) {

@@ -85,7 +85,8 @@ public class Pair<T, U> extends PublicImmutableEntry<T, U> {
     }
     
     public static <T,U> Pair<FunIterable<T>, FunIterable<U>> unzip(Iterable<? extends Map.Entry<T, U>> pairs) {
-        return Pair.of(Functional.map(pairs, Pair.<T>getFirstFromPair()), Functional.map(pairs, Pair.<U>getSecondFromPair()));
+//        return Pair.of(FunIterable.map(pairs, Pair.<T>getFirstFromPair()), FunIterable.map(pairs, Pair.<U>getSecondFromPair()));
+        return Pair.of(FunIterable.map(pairs, Pair.<T>getFirstFromPair()), FunIterable.map(pairs, Pair.<U>getSecondFromPair()));
     }
 
     public static <T, U> Pair<U, U> map(Pair<? extends T, ? extends T> pair, Function<? super T, ? extends U> mapper) {

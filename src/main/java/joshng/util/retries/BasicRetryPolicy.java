@@ -1,9 +1,6 @@
 package joshng.util.retries;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.AsyncFunction;
-import joshng.util.blocks.Consumer;
 import joshng.util.blocks.F;
 import joshng.util.blocks.Pred;
 import joshng.util.blocks.Source;
@@ -15,8 +12,10 @@ import joshng.util.exceptions.IExceptionHandler;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
-import static joshng.util.blocks.F.extendF;
 import static joshng.util.concurrent.AsyncF.asyncF;
 
 /**
@@ -108,11 +107,7 @@ public class BasicRetryPolicy implements RetryPolicy {
 
     public <I, O> AsyncF<I, O> wrapAsync(final ScheduledExecutorService scheduler, final AsyncFunction<I, O> async) {
         final AsyncF<I, O> asyncF = asyncF(async);
-        return new AsyncF<I, O>() {
-            protected FunFuture<O> applyAsync(I input) throws Throwable {
-                return newSession().retryAsync(scheduler, asyncF.bind(input));
-            }
-        };
+        return input -> newSession().retryAsync(scheduler, asyncF.bind(input));
     }
 
     public <O> Source<FunFuture<O>> wrapAsyncCallable(final ScheduledExecutorService scheduler, final Callable<? extends FunFuture<O>> async) {
@@ -124,7 +119,7 @@ public class BasicRetryPolicy implements RetryPolicy {
     }
 
     public <I, O> F<I, O> wrapFunction(Function<I, O> function) {
-        return extendF(function).binder().andThen(this.<O>retry());
+        return F.<I,O>extendF(function).binder().andThen(this.<O>retry());
     }
 
     public <T> Source<T> wrapCallable(final Callable<T> callable) {

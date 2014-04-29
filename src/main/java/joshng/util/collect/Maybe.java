@@ -1,17 +1,14 @@
 package joshng.util.collect;
 
-import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
-import com.google.common.base.Supplier;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Ordering;
 import com.google.common.reflect.TypeToken;
+import joshng.util.Reflect;
 import joshng.util.StringUtils;
-import joshng.util.blocks.Consumer;
 import joshng.util.blocks.F;
 import joshng.util.blocks.F2;
-import joshng.util.blocks.Function2;
 import joshng.util.blocks.Pred;
 import joshng.util.blocks.Sink;
 
@@ -21,6 +18,9 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -32,9 +32,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public abstract class Maybe<T> implements Iterable<T> {
     private static final Pair NOT = new Not();
 
-    public static final Pred<Maybe<?>> IS_DEFINED = new Pred<Maybe<?>>() { public boolean apply(Maybe<?> input) {
-        return input.isDefined();
-    } };
+    public static final Pred<Maybe<?>> IS_DEFINED = input -> input.isDefined();
     private static final F GET_OR_THROW = new F<Maybe, Object>() { public Object apply(Maybe from) {
         return from.getOrThrow();
     } };
@@ -59,9 +57,9 @@ public abstract class Maybe<T> implements Iterable<T> {
         };
     }
 
-    public static <I, O> Maybe<O> apply(Maybe<? extends Function<? super I, ? extends O>> f, final I input) {
-        return apply(f, Maybe.definitely(input));
-    }
+//    public static <I, O> Maybe<O> apply(Maybe<? extends Function<? super I, ? extends O>> f, final I input) {
+//        return apply(f, Maybe.definitely(input));
+//    }
 
     public static <I, O> Maybe<O> apply(Maybe<? extends Function<? super I, ? extends O>> f, final Maybe<? extends I> input) {
         return f.flatMap(new Function<Function<? super I, ? extends O>, Maybe<O>>() {
@@ -161,7 +159,7 @@ public abstract class Maybe<T> implements Iterable<T> {
 
     public static <T> FunIterable<T> flatten(Iterable<Maybe<T>> maybes) {
         // this way is a bit more efficient than using concat:
-        return Functional.filter(maybes, IS_DEFINED).map(Maybe.<T>getter());
+        return FunIterable.filter(maybes, IS_DEFINED).map(Maybe.<T>getter());
     }
 
     @SuppressWarnings("unchecked")
@@ -206,7 +204,7 @@ public abstract class Maybe<T> implements Iterable<T> {
 
     @SuppressWarnings("unchecked")
     public static <T> Maybe<T> definitely(@Nonnull T value) {
-        return value instanceof Map.Entry ? definitely((Map.Entry) value) : new Definitely<T>(value);
+        return Reflect.blindCast(value instanceof Map.Entry ? definitely((Map.Entry) value) : new Definitely<>(value));
     }
 
     public static <K, V> Pair<K, V> definitely(@Nonnull Map.Entry<? extends K, ? extends V> entry) {
@@ -273,12 +271,7 @@ public abstract class Maybe<T> implements Iterable<T> {
     }
 
     public static <T> Sink<Maybe<? extends T>> foreacher(final Consumer<? super T> sink) {
-        return new Sink<Maybe<? extends T>>() {
-            @Override
-            public void handle(Maybe<? extends T> value) {
-                value.foreach(sink);
-            }
-        };
+        return value -> value.foreach(sink);
     }
 
 
@@ -299,11 +292,7 @@ public abstract class Maybe<T> implements Iterable<T> {
      * a value which matches the given {@valuePredicate}.
      */
     public static <T> Pred<Maybe<? extends T>> valueMatcher(final Predicate<? super T> valuePredicate) {
-        return new Pred<Maybe<? extends T>>() {
-            public boolean apply(Maybe<? extends T> input) {
-                return input.valueMatches(valuePredicate);
-            }
-        };
+        return input -> input.valueMatches(valuePredicate);
     }
 
     public static <T> Maybe<T> join(Maybe<Maybe<T>> nestedMaybe) {
@@ -399,7 +388,7 @@ public abstract class Maybe<T> implements Iterable<T> {
 
         @Override
         public Maybe<T> foreach(Consumer<? super T> handler) {
-            handler.handle(value);
+            handler.accept(value);
             return this;
         }
 
@@ -477,8 +466,8 @@ public abstract class Maybe<T> implements Iterable<T> {
 
         public abstract <K2> Pair<K2, V> mapKey(Function<? super K, ? extends K2> keyMapper);
         public abstract <V2> Pair<K, V2> mapValue(Function<? super V, ? extends V2> valueMapper);
-        public abstract <O> Maybe<O> map2(Function2<? super K, ? super V, ? extends O> mapper);
-        public abstract <K2, V2> Pair<K2, V2> map2Pair(Function2<? super K, ? super V, ? extends Map.Entry<? extends K2, ? extends V2>> mapper);
+        public abstract <O> Maybe<O> map2(F2<? super K, ? super V, ? extends O> mapper);
+        public abstract <K2, V2> Pair<K2, V2> map2Pair(F2<? super K, ? super V, ? extends Map.Entry<? extends K2, ? extends V2>> mapper);
         @Override
         public abstract Pair<K, V> foreach(Consumer<? super Map.Entry<K, V>> handler);
         @Override
@@ -532,12 +521,12 @@ public abstract class Maybe<T> implements Iterable<T> {
             }
 
             @Override
-            public <O> Maybe<O> map2(Function2<? super K, ? super V, ? extends O> mapper) {
+            public <O> Maybe<O> map2(F2<? super K, ? super V, ? extends O> mapper) {
                 return of(mapper.apply(entry.getKey(), entry.getValue()));
             }
 
             @Override
-            public <K2, V2> Pair<K2, V2> map2Pair(Function2<? super K, ? super V, ? extends Map.Entry<? extends K2, ? extends V2>> mapper) {
+            public <K2, V2> Pair<K2, V2> map2Pair(F2<? super K, ? super V, ? extends Map.Entry<? extends K2, ? extends V2>> mapper) {
                 return of(mapper.apply(entry.getKey(), entry.getValue()));
             }
 
@@ -613,7 +602,7 @@ public abstract class Maybe<T> implements Iterable<T> {
 
             @Override
             public Pair<K, V> foreach(Consumer<? super Map.Entry<K, V>> handler) {
-                handler.handle(entry);
+                handler.accept(entry);
                 return this;
             }
 
@@ -804,12 +793,12 @@ public abstract class Maybe<T> implements Iterable<T> {
         }
 
         @Override
-        public Maybe map2(Function2 mapper) {
+        public Maybe map2(F2 mapper) {
             return this;
         }
 
         @Override
-        public Pair map2Pair(Function2 mapper) {
+        public Pair map2Pair(F2 mapper) {
             return this;
         }
 

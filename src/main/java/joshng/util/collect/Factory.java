@@ -14,7 +14,7 @@ import joshng.util.blocks.Source;
  * Date: Sep 4, 2010
  * Time: 1:13:48 PM
  */
-public class Factory<T> extends Source<T> {
+public class Factory<T> implements Source<T> {
     private final Class<T> instanceClass;
 
     private static LoadingCache<Class, Factory> cache = CacheBuilder.newBuilder()

@@ -1,19 +1,19 @@
 package joshng.util.collect;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableBiMap;
-import com.google.common.collect.ImmutableListMultimap;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Ordering;
-import joshng.util.blocks.Consumer2;
+import com.google.common.base.Joiner;
+import com.google.common.collect.*;
 import joshng.util.blocks.F2;
-import joshng.util.blocks.Function2;
+import joshng.util.blocks.Pred;
 
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
+import static joshng.util.collect.MoreCollections.*;
 /**
  * User: josh
  * Date: 3/15/12
@@ -28,12 +28,24 @@ public interface FunPairs<K,V> extends FunIterable<Map.Entry<K,V>> {
     /**
      * @return a FunIterable which, when iterated, yields the {@link Map.Entry#getKey keys} from the entries in this sequence
      */
-    FunIterable<K> keys();
+    default FunIterable<K> keys() {
+        return Functional.extend(keysDelegate());
+    }
+
+    default Iterable<K> keysDelegate() {
+        return Iterables.transform(delegate(), Pair.<K>getFirstFromPair());
+    }
 
     /**
      * @return a FunIterable which, when iterated, yields the {@link Map.Entry#getValue values} from the entries in this sequence
      */
-    FunIterable<V> values();
+    default FunIterable<V> values() {
+        return Functional.extend(valuesDelegate());
+    }
+
+    default Iterable<V> valuesDelegate() {
+        return Iterables.transform(delegate(), Pair.<V>getSecondFromPair());
+    }
 
     /**
      * Produces a new FunPairs that transforms the keys of this sequence using the provided {@code keyTransformer}.<br/><br/>
@@ -46,7 +58,10 @@ public interface FunPairs<K,V> extends FunIterable<Map.Entry<K,V>> {
      * @param keyTransformer a {@link Function} to apply to the keys in this sequence
      * @param <K2> the key-type for the new FunPairs sequence
      */
-    <K2> FunPairs<K2, V> mapKeys(Function<? super K, ? extends K2> keyTransformer);
+    default <K2> FunPairs<K2, V> mapKeys(Function<? super K, ? extends K2> keyTransformer) {
+        return new FunctionalPairs<>(Iterables.transform(delegate(), FunctionalPairs.<K, V, K2>keyMapper(keyTransformer)));
+    }
+
 
     /**
      * Produces a new FunPairs that transforms the keys of this sequence using the provided {@code keyTransformer}.<br/><br/>
@@ -59,7 +74,10 @@ public interface FunPairs<K,V> extends FunIterable<Map.Entry<K,V>> {
      * @param valueTransformer a {@link Function} to apply to the values in this sequence
      * @param <V2> the value-type for the new FunPairs sequence
      */
-    <V2> FunPairs<K, V2> mapValues(Function<? super V, ? extends V2> valueTransformer);
+    default <V2> FunPairs<K, V2> mapValues(Function<? super V, ? extends V2> valueTransformer) {
+        return new FunctionalPairs<>(Iterables.transform(delegate(), FunctionalPairs.<K, V, V2>valueMapper(valueTransformer)));
+    }
+
 
     /**
      * Produces a new FunPairs that applies the given {@code keyTransformer} to each key in this sequence, and
@@ -87,7 +105,10 @@ public interface FunPairs<K,V> extends FunIterable<Map.Entry<K,V>> {
      * @param keyTransformer a function to produce an Iterable of new keys from each input-key
      * @param <K2> the key-type of the resulting pairs
      */
-    <K2> FunPairs<K2, V> flatMapKeys(Function<? super K, ? extends Iterable<? extends K2>> keyTransformer);
+    default <K2> FunPairs<K2, V> flatMapKeys(Function<? super K, ? extends Iterable<? extends K2>> keyTransformer) {
+        return new FunctionalPairs<>(Iterables.concat(Iterables.transform(delegate(), FunctionalPairs.<K, V, K2>keyFlatMapper(keyTransformer))));
+    }
+
 
     /**
      * Produces a new FunPairs that applies the given {@code valueTransformer} to each value in this sequence, and
@@ -115,85 +136,161 @@ public interface FunPairs<K,V> extends FunIterable<Map.Entry<K,V>> {
      * @param valueTransformer a function to produce an Iterable of new values from each input-value
      * @param <V2> the value-type of the resulting pairs
      */
-    <V2> FunPairs<K, V2> flatMapValues(Function<? super V, ? extends Iterable<? extends V2>> valueTransformer);
+    default <V2> FunPairs<K, V2> flatMapValues(Function<? super V, ? extends Iterable<? extends V2>> valueTransformer) {
+        return new FunctionalPairs<>(Iterables.concat(Iterables.transform(delegate(), FunctionalPairs.<K, V, V2>valueFlatMapper(valueTransformer))));
+    }
+
 
     /**
      * Produces as new FunIterable that, when iterated, yields the results of applying the given
      * {@link F2} {@code transformer} to each {@link Map.Entry Entry} in this sequence.
      */
-    <O> FunIterable<O> map2(F2<? super K, ? super V, ? extends O> transformer);
+    default <O> FunIterable<O> map2(F2<? super K, ? super V, ? extends O> transformer) {
+        return map(transformer.tupled());
+    }
 
-    void foreach2(Consumer2<? super K, ? super V> visitor);
+    default void foreach2(BiConsumer<? super K, ? super V> visitor) {
+        foreach(e -> visitor.accept(e.getKey(), e.getValue()));
+    }
+
+    default <A> A accumulate2(Accumulator.BiAccumulator<? super K, ? super V, ? extends A> accumulator) {
+        foreach2(accumulator);
+        return accumulator.get();
+    }
 
     /**
      * {@inheritDoc}
      * @return a new FunPairs that, when iterated, applies the {@code predicate} to each element in this
      * sequence and yields only those entries for which the result is {@code true}.
      * */
-    FunPairs<K, V> filter(Predicate<? super Map.Entry<K, V>> predicate);
+    default FunPairs<K, V> filter(Predicate<? super Entry<K, V>> predicate) {
+        return new FunctionalPairs<>(Iterables.filter(delegate(), (com.google.common.base.Predicate<? super Entry<K,V>>)predicate::test));
+    }
+
 
     /**
      * Eliminates entries whose {@link Map.Entry#getKey keys} do not match the given {@link Predicate}.
      */
-    FunPairs<K, V> filterKeys(Predicate<? super K> predicate);
+    default FunPairs<K, V> filterKeys(Predicate<? super K> predicate) {
+        return new FunctionalPairs<>(Iterables.filter(delegate(), Pair.<K>getFirstFromPair().resultMatches(predicate)));
+    }
+
+    /**
+     * Eliminates entries whose {@link Map.Entry#getValue values} do not match the given {@link Predicate}.
+     */
+    default FunPairs<K, V> filterValues(Predicate<? super V> predicate) {
+        return new FunctionalPairs<>(Iterables.filter(delegate(), Pair.<V>getSecondFromPair().resultMatches(predicate)));
+    }
 
     /**
      * @return a new FunPairs which omits all but the <em>first</em> occurrence of each unique
      * {@link Map.Entry#getKey key} in this sequence
      */
-    FunPairs<K, V> uniqueKeys();
-
-    /**
-     * Eliminates entries whose {@link Map.Entry#getValue values} do not match the given {@link Predicate}.
-     */
-    FunPairs<K, V> filterValues(Predicate<? super V> predicate);
+    default FunPairs<K, V> uniqueKeys() {
+        return filterKeys(Pred.newDeduplicator());
+    }
 
     /**
      * @return a new FunPairs which omits all but the <em>first</em> occurrence of each unique
      * {@link java.util.Map.Entry#getValue value} in this sequence
      */
-    FunPairs<K, V> uniqueValues();
+    default FunPairs<K, V> uniqueValues() {
+        return filterValues(Pred.newDeduplicator());
+    }
 
-    FunPairs<K, V> toSortedCopy(Ordering<? super Map.Entry<K, V>> ordering);
+    default FunPairs<K, V> toSortedCopy(Ordering<? super Entry<K, V>> ordering) {
+        return new FunctionalPairs<>(ordering.<Entry<K,V>>sortedCopy(delegate()));
+    }
 
-    FunPairs<K, V> sortByKeys(Ordering<? super K> keyOrdering);
-    FunPairs<K, V> sortByValues(Ordering<? super V> valueOrdering);
 
-    Maybe.Pair<K, V> minByKeys(Ordering<? super K> keyOrdering);
-    Maybe.Pair<K, V> maxByKeys(Ordering<? super K> keyOrdering);
-    Maybe.Pair<K, V> minByValues(Ordering<? super V> valueOrdering);
-    Maybe.Pair<K, V> maxByValues(Ordering<? super V> valueOrdering);
+    default FunPairs<K, V> sortByKeys(Ordering<? super K> keyOrdering) {
+        return toSortedCopy(orderingByKey(keyOrdering));
+    }
 
-    <O> Maybe.Pair<K, V> minByKeys(Ordering<? super O> ordering, Function<? super K, O> keyValueComputer);
-    <O> Maybe.Pair<K, V> maxByKeys(Ordering<? super O> ordering, Function<? super K, O> keyValueComputer);
-    <O> Maybe.Pair<K, V> minByValues(Ordering<? super O> ordering, Function<? super V, O> valueComputer);
-    <O> Maybe.Pair<K, V> maxByValues(Ordering<? super O> ordering, Function<? super V, O> valueComputer);
+    static <K,V> Ordering<Entry<K, V>> orderingByKey(Ordering<? super K> keyOrdering) {
+        return keyOrdering.onResultOf(Entry::getKey);
+    }
 
-    FunPairs<K, V> cons(Map.Entry<K, V> firstElement);
-    FunPairs<K, V> append(Map.Entry<K, V> lastElement);
-    FunPairs<K, V> plus(Iterable<? extends Map.Entry<K, V>> moreElements);
-    FunIterable<FunPairs<K,V>> partition(int size);
-    @Override
-    Maybe.Pair<K, V> head();
-    @Override
-    Maybe.Pair<K, V> last();
+    default FunPairs<K,V> sortByValues(Ordering<? super V> valueOrdering) {
+        return toSortedCopy(valueOrdering.onResultOf(Entry::getValue));
+    }
 
-    Maybe.Pair<K, V> find(Predicate<? super Map.Entry<K, V>> predicate);
+
+
+    default Maybe.Pair<K, V> minByKeys(Ordering<? super K> keyOrdering) {
+        return minBy(keyOrdering, Entry::getKey);
+    }
+
+    default Maybe.Pair<K, V> maxByKeys(Ordering<? super K> keyOrdering) {
+        return maxBy(keyOrdering, Entry::getKey);
+    }
+
+    default Maybe.Pair<K, V> minByValues(Ordering<? super V> valueOrdering) {
+        return minBy(valueOrdering, Entry::getValue);
+    }
+
+    default Maybe.Pair<K, V> maxByValues(Ordering<? super V> valueOrdering) {
+        return maxBy(valueOrdering, Entry::getValue);
+    }
+
+    default <O> Maybe.Pair<K, V> minByKeys(Ordering<? super O> ordering, Function<? super K, O> keyValueComputer) {
+        return minBy(ordering, Pair.<K>getFirstFromPair().andThen(keyValueComputer));
+    }
+
+    default <O> Maybe.Pair<K, V> maxByKeys(Ordering<? super O> ordering, Function<? super K, O> keyValueComputer) {
+        return maxBy(ordering, Pair.<K>getFirstFromPair().andThen(keyValueComputer));
+    }
+
+    default <O> Maybe.Pair<K, V> minByValues(Ordering<? super O> ordering, Function<? super V, O> valueComputer) {
+        return minBy(ordering, Pair.<V>getSecondFromPair().andThen(valueComputer));
+    }
+
+    default <O> Maybe.Pair<K, V> maxByValues(Ordering<? super O> ordering, Function<? super V, O> valueComputer) {
+        return maxBy(ordering, Pair.<V>getSecondFromPair().andThen(valueComputer));
+    }
+
 
     @Override
-    Maybe.Pair<K, V> reduce(Function2<? super Map.Entry<K, V>, ? super Map.Entry<K, V>, ? extends Map.Entry<K, V>> reducer);
+    default FunPairs<K, V> prepend(Entry<K, V> firstElement) {
+        return new FunctionalPairs<>(PrependedIterable.of(firstElement, delegate()));
+    }
+
     @Override
-    Maybe.Pair<K, V> min(Ordering<? super Map.Entry<K, V>> ordering);
+    default FunPairs<K, V> append(Entry<K, V> lastElement) {
+        return new FunctionalPairs<>(AppendedIterable.of(delegate(), lastElement));
+    }
+
+    default FunPairs<K, V> plus(Iterable<? extends Entry<K, V>> more) {
+        return new FunctionalPairs<>(Iterables.concat(delegate(), more));
+    }
+
     @Override
-    Maybe.Pair<K, V> max(Ordering<? super Map.Entry<K, V>> ordering);
-    @Override
-    Maybe.Pair<K, V> minBy(Function<? super Map.Entry<K, V>, ? extends Comparable> valueComputer);
-    @Override
-    <N> Maybe.Pair<K, V> minBy(Ordering<? super N> ordering, Function<? super Map.Entry<K, V>, ? extends N> valueComputer);
-    @Override
-    Maybe.Pair<K, V> maxBy(Function<? super Map.Entry<K, V>, ? extends Comparable> valueComputer);
-    @Override
-    <N> Maybe.Pair<K, V> maxBy(Ordering<? super N> ordering, Function<? super Map.Entry<K, V>, ? extends N> valueComputer);
+    default FunIterable<FunPairs<K, V>> partition(int size) {
+        return FunIterable.map(Iterables.partition(delegate(), size), FunctionalPairs::extendPairs);
+    }
+
+
+    @Override default Maybe.Pair<K, V> head() { return (Maybe.Pair<K, V>) FunIterable.super.head(); }
+    @Override default Maybe.Pair<K, V> last() { return (Maybe.Pair<K, V>) FunIterable.super.last(); }
+
+
+    @Override default Maybe.Pair<K, V> find(Predicate<? super Map.Entry<K, V>> predicate) { return (Maybe.Pair<K, V>) FunIterable.super.find(predicate); }
+
+
+    @Override default Maybe.Pair<K, V> reduce(F2<? super Entry<K, V>, ? super Entry<K, V>, ? extends Entry<K, V>> reducer) { return (Maybe.Pair<K, V>) FunIterable.super.reduce(reducer); }
+
+    @Override default Maybe.Pair<K, V> min(Ordering<? super Entry<K, V>> ordering) { return (Maybe.Pair<K, V>) FunIterable.super.min(ordering); }
+
+    @Override default Maybe.Pair<K, V> max(Ordering<? super Entry<K, V>> ordering) { return (Maybe.Pair<K, V>) FunIterable.super.max(ordering); }
+
+    @Override default Maybe.Pair<K, V> minBy(Function<? super Entry<K, V>, ? extends Comparable<?>> valueComputer) { return (Maybe.Pair<K, V>) FunIterable.super.minBy(valueComputer); }
+
+    @Override default <N> Maybe.Pair<K, V> minBy(Ordering<? super N> ordering, Function<? super Entry<K, V>, ? extends N> valueComputer) { return (Maybe.Pair<K, V>) FunIterable.super.minBy(ordering, valueComputer); }
+
+    @Override default Maybe.Pair<K, V> maxBy(Function<? super Entry<K, V>, ? extends Comparable<?>> valueComputer) { return (Maybe.Pair<K, V>) FunIterable.super.maxBy(valueComputer); }
+
+    @Override default <N> Maybe.Pair<K, V> maxBy(Ordering<? super N> ordering, Function<? super Entry<K, V>, ? extends N> valueComputer) { return (Maybe.Pair<K, V>) FunIterable.super.maxBy(ordering, valueComputer); }
+
     /**
      * Builds an {@link ImmutableMap} from the entries in this sequence.<br/><br/>
      *
@@ -205,18 +302,56 @@ public interface FunPairs<K,V> extends FunIterable<Map.Entry<K,V>> {
      * @see #uniqueKeys
      * @see #toMultimap
      */
-    ImmutableMap<K,V> toMap();
-    ImmutableListMultimap<K, V> toMultimap();
-    ImmutableBiMap<K, V> toBimap();
-    ComparingMap<K, V> toComparingMap(Comparator<? super V> ordering);
-    HashMap<K,V> toMutableMap();
-    FunPairs<K, V> limit(int maxElements);
-    FunPairs<K, V> skip(int skippedElements);
-    <K2, V2> FunPairs<K2, V2> mapPairs2(F2<? super K, ? super V, ? extends Map.Entry<K2, V2>> transformer);
-    <K2, V2> FunPairs<K2, V2> flatMapPairs2(F2<? super K, ? super V, ? extends Iterable<? extends Map.Entry<K2, V2>>> transformer);
+    default ImmutableMap<K,V> toMap() {
+        return immutableMapWithEntries(delegate());
+    }
 
-    FunPairs<V,K> swap();
-    Maybe<V> findValueForKey(K key);
+    default ImmutableListMultimap<K, V> toMultimap() {
+        return multimapWithEntries(delegate());
+    }
 
-    String joinPairs(String pairSeparator, String keyValueSeparator);
+    default ImmutableBiMap<K, V> toBimap() {
+        return bimapWithEntries(delegate());
+    }
+
+    default ComparingMap<K, V> toComparingMap(Comparator<? super V> ordering) {
+        return ComparingMap.build(ordering, delegate());
+    }
+
+    default HashMap<K, V> toMutableMap() {
+        HashMap<K,V> map = Maps.newHashMap();
+        for (Entry<K, V> entry : delegate()) {
+            map.put(entry.getKey(), entry.getValue());
+        }
+        return map;
+    }
+
+    default FunPairs<K, V> limit(int maxElements) {
+        return new FunctionalPairs<>(Iterables.limit(delegate(), maxElements));
+    }
+
+    default FunPairs<K, V> skip(int skippedElements) {
+        return new FunctionalPairs<>(Iterables.skip(delegate(), skippedElements));
+    }
+
+
+    default <K2, V2> FunPairs<K2, V2> mapPairs2(F2<? super K, ? super V, ? extends Entry<K2, V2>> transformer) {
+        return mapPairs(transformer.tupled());
+    }
+
+    default <K2, V2> FunPairs<K2, V2> flatMapPairs2(F2<? super K, ? super V, ? extends Iterable<? extends Entry<K2, V2>>> transformer) {
+        return flatMapPairs(transformer.tupled());
+    }
+
+    default FunPairs<V, K> swap() {
+        return mapPairs(Pair.<K,V>swapper());
+    }
+
+    default Maybe<V> findValueForKey(K key) {
+        return find(Pair.<K>getFirstFromPair().resultEqualTo(key)).getValue();
+    }
+
+    default String joinPairs(String pairSeparator, String keyValueSeparator) {
+        return Joiner.on(pairSeparator).withKeyValueSeparator(keyValueSeparator).join(this);
+    }
 }

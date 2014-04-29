@@ -1,17 +1,17 @@
 package joshng.util.concurrent;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
-import joshng.util.blocks.Consumer;
 import joshng.util.blocks.ThrowingFunction;
 import joshng.util.collect.Maybe;
 import joshng.util.collect.Pair;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * User: josh

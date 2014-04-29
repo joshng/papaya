@@ -29,15 +29,9 @@ public enum Modifiers {
 
     private final int flag;
 
-    public final Pred<Class<?>> CLASS_PREDICATE = new Pred<Class<?>>() { public boolean apply(Class<?> input) {
-        return matches(input);
-    } };
-    public final Pred<Method> METHOD_PREDICATE = new Pred<Method>() { public boolean apply(Method input) {
-        return matches(input);
-    } };
-    public final Pred<Field> FIELD_PREDICATE = new Pred<Field>() { public boolean apply(Field input) {
-        return matches(input);
-    } };
+    public final Pred<Class<?>> CLASS_PREDICATE = this::matches;
+    public final Pred<Method> METHOD_PREDICATE = this::matches;
+    public final Pred<Field> FIELD_PREDICATE = this::matches;
     
     Modifiers(int flag) {
         this.flag = flag;

@@ -57,7 +57,7 @@ public enum Comparison {
 
     private final String preposition;
 
-    public class ComparingPredicate<T> extends Pred<T> {
+    public class ComparingPredicate<T> implements Pred<T> {
         private final Comparator<? super T> comparator;
         private final T value;
 
@@ -66,7 +66,7 @@ public enum Comparison {
             this.value = value;
         }
 
-        public boolean apply(T input) {
+        public boolean test(T input) {
             return compare(input, value, comparator);
         }
 

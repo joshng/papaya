@@ -20,7 +20,7 @@ public class IncrementalFutureList<T> extends AbstractCompletionTracker<T, FunLi
     public IncrementalFutureList() {
         super(MoreExecutors.sameThreadExecutor());
         getCompletionFuture().uponFailure(new Sink<Throwable>() {
-            @Override public void handle(Throwable value) {
+            @Override public void accept(Throwable value) {
                 for (ListenableFuture<? extends T> future : futures) {
                     future.cancel(false);
                 }

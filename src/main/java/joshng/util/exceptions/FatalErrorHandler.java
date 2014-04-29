@@ -15,7 +15,7 @@ public class FatalErrorHandler {
     private static final Logger LOG = LoggerFactory.getLogger(FatalErrorHandler.class);
     public static final Sink<Throwable> FATAL_ERROR_SINK = new Sink<Throwable>() {
         @Override
-        public void handle(Throwable value) {
+        public void accept(Throwable value) {
             terminateProcess(value);
         }
     };

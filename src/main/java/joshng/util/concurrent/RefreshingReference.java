@@ -16,7 +16,7 @@ import static com.google.common.base.Preconditions.checkState;
 * Date: 11/14/12
 * Time: 12:57 PM
 */
-public abstract class RefreshingReference<T> extends Source<T> {
+public abstract class RefreshingReference<T> implements Source<T> {
 
     private final WallClock clock;
     private final Object lock = new Object();
