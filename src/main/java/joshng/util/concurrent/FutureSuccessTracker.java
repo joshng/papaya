@@ -15,7 +15,7 @@ public class FutureSuccessTracker extends FutureCompletionTracker {
     @Override
     protected void handleCompletedJob(ListenableFuture<?> job) {
         try {
-            FunFutures.getUnchecked(job);
+            FunFuture.getUnchecked(job);
         } catch (Throwable e) {
             abort(e);
         }

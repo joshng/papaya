@@ -9,7 +9,7 @@ import javax.annotation.Nonnull;
 import java.util.function.Function;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static joshng.util.concurrent.FunFutures.extendFuture;
+import static joshng.util.concurrent.FunFuture.extendFuture;
 
 /**
  * User: josh
@@ -17,7 +17,7 @@ import static joshng.util.concurrent.FunFutures.extendFuture;
  * Time: 11:38 AM
  */
 public interface AsyncF<I, O> extends F<I, FunFuture<O>>, IAsyncFunction<I,O> {
-    static final AsyncF IDENTITY = (AsyncF<ListenableFuture<Object>, Object>) FunFutures::extendFuture;
+    static final AsyncF IDENTITY = (AsyncF<ListenableFuture<Object>, Object>) FunFuture::extendFuture;
 
     @SuppressWarnings("unchecked")
     public static <T> AsyncF<ListenableFuture<? extends T>, T> asyncIdentity() {
@@ -54,7 +54,7 @@ public interface AsyncF<I, O> extends F<I, FunFuture<O>>, IAsyncFunction<I,O> {
         try {
             return checkNotNull(applyAsync(input), "AsyncFunction must not return null!", this);
         } catch (Throwable e) {
-            return FunFutures.immediateFailedFuture(e);
+            return FunFuture.immediateFailedFuture(e);
         }
     }
 }

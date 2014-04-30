@@ -1,14 +1,12 @@
 package joshng.util.blocks;
 
 import com.google.common.base.Functions;
-import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.util.concurrent.ListenableFuture;
 import joshng.util.Modifiers;
 import joshng.util.collect.*;
 import joshng.util.concurrent.AsyncF;
-import joshng.util.concurrent.FunFuture;
 import joshng.util.exceptions.ExceptionPolicy;
 
 import javax.annotation.Nullable;
@@ -23,7 +21,7 @@ import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static joshng.util.collect.Maybe.definitely;
-import static joshng.util.concurrent.FunFutures.extendFuture;
+import static joshng.util.concurrent.FunFuture.extendFuture;
 
 /**
  * User: josh
@@ -35,6 +33,9 @@ public interface F<I,O> extends Function<I,O>, com.google.common.base.Function<I
     @SuppressWarnings({"unchecked"})
     F IDENTITY = new IdentityF();
 
+    public static <I,O> F<I,O> method(F<I, O> f) {
+        return f;
+    }
 
     public static <I,O> F<I,O> extendF(final Function<I, O> f) {
         if (f instanceof F) return (F<I,O>) f;

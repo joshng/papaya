@@ -2,7 +2,6 @@ package joshng.util.collect;
 
 import joshng.util.blocks.Source;
 import joshng.util.concurrent.FunFuture;
-import joshng.util.concurrent.FunFutures;
 
 /**
  * User: josh
@@ -13,7 +12,7 @@ import joshng.util.concurrent.FunFutures;
  */
 public final class Nothing {
     public static final Nothing NOTHING = new Nothing();
-    public static final FunFuture<Nothing> FUTURE = FunFutures.immediateFuture(NOTHING);
+    public static final FunFuture<Nothing> FUTURE = FunFuture.immediateFuture(NOTHING);
     public static final Source<Nothing> SOURCE = Source.ofInstance(NOTHING);
 
     private Nothing() {}

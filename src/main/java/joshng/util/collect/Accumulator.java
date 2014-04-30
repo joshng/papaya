@@ -3,7 +3,7 @@ package joshng.util.collect;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import joshng.util.blocks.Source;
+import joshng.util.blocks.Sink;
 
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -16,7 +16,7 @@ import java.util.stream.Collector;
  * Date: 4/26/14
  * Time: 11:57 AM
  */
-public interface Accumulator<I, O> extends Consumer<I>, Source<O> {
+public interface Accumulator<I, O> extends Sink<I>, Supplier<O> {
     static <I, A, O> Accumulator<I, O> from(Collector<I, A, O> collector) {
         A instance = collector.supplier().get();
         BiConsumer<A,I> accumulator = collector.accumulator();
@@ -61,13 +61,7 @@ public interface Accumulator<I, O> extends Consumer<I>, Source<O> {
         return new ImmutableMapAccumulator<>();
     }
 
-    interface BiAccumulator<T, U, V> extends Accumulator<Map.Entry<? extends T, ? extends U>, V>, BiConsumer<T, U> {
-        @Override default void accept(Map.Entry<? extends T, ? extends U> entry) {
-            accept(entry.getKey(), entry.getValue());
-        }
-    }
-
-    class ImmutableMapAccumulator<K, V> implements BiAccumulator<K, V, ImmutableMap<K, V>> {
+  class ImmutableMapAccumulator<K, V> implements BiAccumulator<K, V, ImmutableMap<K, V>> {
         private final ImmutableMap.Builder<K, V> builder = ImmutableMap.builder();
 
         @Override

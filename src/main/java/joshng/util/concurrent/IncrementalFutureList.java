@@ -49,7 +49,7 @@ public class IncrementalFutureList<T> extends AbstractCompletionTracker<T, FunLi
     protected void completePromise(Promise<FunList<T>> completionPromise) {
         completionPromise.complete(new Source<FunList<T>>() {
             @Override public FunList<T> get() {
-                return FunFutures.<T>getFromFuture().transform(futures).toList();
+                return FunFuture.<T>getFromFuture().transform(futures).toList();
             }
         });
     }

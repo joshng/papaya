@@ -11,7 +11,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static joshng.util.concurrent.FunFutures.extendFuture;
+import static joshng.util.concurrent.FunFuture.extendFuture;
 
 /**
  * User: josh

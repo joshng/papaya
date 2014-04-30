@@ -9,7 +9,6 @@ import joshng.util.blocks.Sink;
 import joshng.util.blocks.Source;
 import joshng.util.concurrent.AsyncF;
 import joshng.util.concurrent.FunFuture;
-import joshng.util.concurrent.FunFutures;
 
 import java.util.concurrent.Callable;
 
@@ -58,14 +57,14 @@ public abstract class StackContext implements TransientContext {
     public static <T> FunFuture<T> callInContextAsync(TransientContext context, Callable<? extends ListenableFuture<T>> futureBlock) {
         final State state = context.enter();
         try {
-            return FunFutures.callSafely(futureBlock)
+            return FunFuture.callSafely(futureBlock)
                     .uponCompletion(new SideEffect() {
                         public void run() {
                             state.exit();
                         }
                     });
         } catch (Exception e) {
-            return FunFutures.immediateFailedFuture(e);
+            return FunFuture.immediateFailedFuture(e);
         }
     }
 

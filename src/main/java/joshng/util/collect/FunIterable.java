@@ -6,6 +6,7 @@ import joshng.util.Reflect;
 import joshng.util.blocks.F;
 import joshng.util.blocks.F2;
 import joshng.util.blocks.Pred;
+import joshng.util.blocks.Unzipper;
 import joshng.util.concurrent.LazyReference;
 
 import java.util.*;
@@ -123,6 +124,24 @@ public interface FunIterable<T> extends Iterable<T>, Runnable {
 
     default <K, V> FunPairs<K, V> mapPairs(Function<? super T, ? extends Map.Entry<? extends K, ? extends V>> transformer) {
         return new FunctionalPairs<>(Iterables.transform(delegate(), F.<T,Map.Entry<? extends K,? extends V>>extendF(transformer::apply)));
+    }
+
+    default <K, V> FunPairs<K, V> unzip(Unzipper<? super T, K, V> unzipper) {
+      return new FunPairs<K, V>() {
+        @Override public Iterable<Map.Entry<K, V>> delegate() {
+          return Iterables.transform(FunIterable.this.delegate(), unzipper);
+        }
+
+        @Override
+        public Iterable<K> keysDelegate() {
+          return Iterables.transform(FunIterable.this.delegate(), unzipper.keyTransformer());
+        }
+
+        @Override
+        public Iterable<V> valuesDelegate() {
+          return Iterables.transform(FunIterable.this.delegate(), unzipper.valueTransformer());
+        }
+      };
     }
 
     /**

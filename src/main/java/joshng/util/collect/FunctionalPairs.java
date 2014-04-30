@@ -3,7 +3,6 @@ package joshng.util.collect;
 import com.google.common.collect.*;
 import joshng.util.blocks.F;
 import joshng.util.blocks.F2;
-import joshng.util.blocks.Sink2;
 
 import java.util.Comparator;
 import java.util.HashMap;
@@ -337,12 +336,12 @@ public class FunctionalPairs<K,V> extends FunctionalIterable<Entry<K,V>> impleme
 
         @Override
         public <K2> FunPairs<K2, V> mapKeys(Function<? super K, ? extends K2> keyTransformer) {
-            return new TransformedMap<K, V, K2, V>(map, F.extendF(keyTransformer), F.<V>identity());
+            return new TransformedFunPairs<K, V, K2, V>(this, F.extendF(keyTransformer), F.<V>identity());
         }
 
         @Override
         public <V2> FunPairs<K, V2> mapValues(Function<? super V, ? extends V2> valueTransformer) {
-            return new TransformedMap<K, V, K, V2>(map, F.<K>identity(), F.extendF(valueTransformer));
+            return new TransformedFunPairs<K, V, K, V2>(this, F.<K>identity(), F.extendF(valueTransformer));
         }
 
         @Override
@@ -355,67 +354,6 @@ public class FunctionalPairs<K,V> extends FunctionalIterable<Entry<K,V>> impleme
             return ImmutableMap.copyOf(map);
         }
 
-        private static class TransformedMap<K, V, K1, V1> implements FunPairs<K1,V1> {
-            private Map<K, V> map;
-            private final F<? super K, ? extends K1> keyTransformer;
-            private final F<? super V, ? extends V1> valueTransformer;
-
-            private TransformedMap(Map<K, V> map, F<? super K, ? extends K1> keyTransformer, F<? super V, ? extends V1> valueTransformer) {
-                this.map = map;
-                this.keyTransformer = keyTransformer;
-                this.valueTransformer = valueTransformer;
-            }
-
-            @Override
-            public Iterable<Entry<K1, V1>> delegate() {
-                return Iterables.transform(map.entrySet(), p -> Pair.of(keyTransformer.apply(p.getKey()), valueTransformer.apply(p.getValue())));
-            }
-
-            @Override
-            public Iterable<K1> keysDelegate() {
-                return Iterables.transform(map.keySet(), keyTransformer);
-            }
-
-            @Override
-            public Iterable<V1> valuesDelegate() {
-                return Iterables.transform(map.values(), valueTransformer);
-            }
-
-            @Override
-            public <K2> FunPairs<K2, V1> mapKeys(Function<? super K1, ? extends K2> keyTransformer) {
-                return new TransformedMap<>(map, this.keyTransformer.andThen(keyTransformer), valueTransformer);
-            }
-
-            @Override
-            public <V2> FunPairs<K1, V2> mapValues(Function<? super V1, ? extends V2> valueTransformer) {
-                return new TransformedMap<>(map, this.keyTransformer, this.valueTransformer.andThen(valueTransformer));
-            }
-
-            @Override
-            public void foreach2(BiConsumer<? super K1, ? super V1> visitor) {
-                for (Entry<K, V> entry : map.entrySet()) {
-                    visitor.accept(keyTransformer.apply(entry.getKey()), valueTransformer.apply(entry.getValue()));
-                }
-            }
-
-            @Override
-            public <O> FunIterable<O> map2(F2<? super K1, ? super V1, ? extends O> transformer) {
-                return new FunctionalIterable<>(() -> new AbstractIterator<O>() {
-                    Iterator<Entry<K,V>> iterator = map.entrySet().iterator();
-                    @Override
-                    protected O computeNext() {
-                        if (!iterator.hasNext()) return endOfData();
-                        Entry<K, V> nextRaw = iterator.next();
-                        return transformer.apply(keyTransformer.apply(nextRaw.getKey()), valueTransformer.apply(nextRaw.getValue()));
-                    }
-                });
-            }
-
-            @Override
-            public ImmutableMap<K1, V1> toMap() {
-                return accumulate2(Accumulator.immutableMap());
-            }
-        }
     }
 
     static class ZippedPairs<T, U> extends FunctionalPairs<T, U> {
@@ -453,4 +391,5 @@ public class FunctionalPairs<K,V> extends FunctionalIterable<Entry<K,V>> impleme
             }
         }
     }
+
 }

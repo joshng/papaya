@@ -1,24 +1,21 @@
 package joshng.util.concurrent;
 
-import com.google.common.util.concurrent.*;
-import joshng.util.blocks.Source;
-import joshng.util.blocks.ThrowingFunction;
-import joshng.util.collect.Maybe;
-import joshng.util.collect.Pair;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import joshng.util.exceptions.MultiException;
 
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
 
 /**
  * User: josh
  * Date: 12/20/12
  * Time: 8:30 AM
  */
-public class Promise<T> extends AbstractFuture<T> implements FunFuture<T> {
+public class Promise<T> extends AbstractFunFuture<T> {
     private static final AtomicReferenceFieldUpdater<Promise, Cancellable> CANCELLABLE_COMPLETION_UPDATER = AtomicReferenceFieldUpdater.newUpdater(Promise.class, Cancellable.class, "_cancellableCompletion");
     @SuppressWarnings("UnusedDeclaration") private volatile Cancellable _cancellableCompletion = null;
 
@@ -160,7 +157,7 @@ public class Promise<T> extends AbstractFuture<T> implements FunFuture<T> {
      *         or {@link #cancel}
      */
     protected final boolean fail(Throwable failure) {
-        Throwable cause = FunFutures.unwrapExecutionException(failure);
+        Throwable cause = FunFuture.unwrapExecutionException(failure);
         if (cause instanceof CancellationException) {
             return onCompleteInternal(super.cancel(false));
         } else {
@@ -175,7 +172,7 @@ public class Promise<T> extends AbstractFuture<T> implements FunFuture<T> {
      *         Promise was <em>already</em> cancelled.
      */
     protected boolean attachFutureCompletion(Future<?> other) {
-        return attachCancellableCompletion(FunFutures.extendCancellable(other));
+        return attachCancellableCompletion(FunFuture.extendCancellable(other));
     }
 
     /**
@@ -211,125 +208,7 @@ public class Promise<T> extends AbstractFuture<T> implements FunFuture<T> {
     }
 
     @Override
-    public <O> FunFuture<O> map(Executor executor, Function<? super T, ? extends O> f) {
-        return FunFutures.map(this, executor, f);
-    }
-
-    @Override
-    public <O> FunFuture<O> flatMap(Executor executor, AsyncFunction<? super T, ? extends O> f) {
-        return FunFutures.flatMap(this, executor, f);
-    }
-
-    @Override
-    public T getUnchecked() {
-        return FunFutures.getUnchecked(this);
-    }
-
-    @Override
-    public Maybe<T> getWithin(long timeout, TimeUnit timeUnit) {
-        return FunFutures.getUnchecked(this, timeout, timeUnit);
-    }
-
-    @Override
-    public <E extends Throwable> T getChecked(Class<E> exceptionClass) throws E {
-        return FunFutures.getChecked(this, exceptionClass);
-    }
-
-    @Override
-    public <E extends Throwable> Maybe<T> getCheckedWithin(long timeout, TimeUnit timeUnit, Class<E> exceptionClass) throws E {
-        return FunFutures.getChecked(this, timeout, timeUnit, exceptionClass);
-    }
-
-    public Maybe<T> toMaybe() {
-        return Maybe.from(asSource());
-    }
-
-    public Source<T> asSource() {
-        return FunFutures.asSource(this);
-    }
-
-    @Override
-    public <O> FunFuture<O> map(Function<? super T, ? extends O> f) {
-        return FunFutures.map(this, f);
-    }
-
-    @Override
-    public <O> FunFuture<O> flatMap(AsyncFunction<? super T, ? extends O> f) {
-        return FunFutures.flatMap(this, f);
-    }
-
-    @Override
-    public FunFuture<T> filter(Predicate<? super T> filter) {
-        return FunFutures.filter(this, filter);
-    }
-
-    @Override
-    public FunFuture<T> filter(AsyncFunction<? super T, Boolean> filter) {
-        return FunFutures.filter(this, filter);
-    }
-
-    @Override
-    public FunFuture<T> recover(ThrowingFunction<? super Throwable, ? extends T> exceptionHandler) {
-        return FunFutures.recover(this, exceptionHandler);
-    }
-
-    @Override
-    public FunFuture<T> recover(Executor executor, ThrowingFunction<? super Throwable, ? extends T> exceptionHandler) {
-        return FunFutures.recover(this, executor, exceptionHandler);
-    }
-
-    @Override
-    public FunFuture<T> recoverWith(AsyncFunction<? super Throwable, ? extends T> exceptionHandler) {
-        return FunFutures.recoverWith(this, exceptionHandler);
-    }
-
-    @Override
-    public <C> FunFuture<C> filter(Class<C> castClass) {
-        return FunFutures.filter(this, castClass);
-    }
-
-    @Override
-    public FunFuture<T> uponCompletion(Runnable runnable) {
-        return uponCompletion(MoreExecutors.sameThreadExecutor(), runnable);
-    }
-
-    @Override
-    public FunFuture<T> uponCompletion(Executor executor, Runnable runnable) {
-        return FunFutures.uponCompletion(this, executor, runnable);
-    }
-
-    @Override
-    public FunFuture<T> uponCompletion(FutureCallback<? super T> callback) {
-        return uponCompletion(MoreExecutors.sameThreadExecutor(), callback);
-    }
-
-    @Override
-    public FunFuture<T> uponCompletion(Executor executor, FutureCallback<? super T> callback) {
-        return FunFutures.uponCompletion(this, executor, callback);
-    }
-
-    @Override
-    public FunFuture<T> uponSuccess(Consumer<? super T> successObserver) {
-        return uponSuccess(MoreExecutors.sameThreadExecutor(), successObserver);
-    }
-
-    @Override
-    public FunFuture<T> uponSuccess(Executor executor, Consumer<? super T> successObserver) {
-        return FunFutures.uponSuccess(this, executor, successObserver);
-    }
-
-    @Override
-    public FunFuture<T> uponFailure(Consumer<? super Throwable> errorObserver) {
-        return uponFailure(MoreExecutors.sameThreadExecutor(), errorObserver);
-    }
-
-    @Override
-    public FunFuture<T> uponFailure(Executor executor, Consumer<? super Throwable> errorObserver) {
-        return FunFutures.uponFailure(this, executor, errorObserver);
-    }
-
-    @Override
-    public <U> FunFuture<Pair<T, U>> zip(ListenableFuture<U> that) {
-        return FunFutures.zip(this, that);
+    public ListenableFuture<T> delegate() {
+        return this;
     }
 }

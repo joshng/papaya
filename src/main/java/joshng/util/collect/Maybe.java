@@ -121,6 +121,7 @@ public abstract class Maybe<T> implements Iterable<T> {
     public abstract Maybe<T> foreach(Consumer<? super T> handler);
     public abstract Maybe<T> orElseRun(Runnable runnable);
     public abstract Maybe<T> filter(Predicate<? super T> filter);
+    public abstract Maybe<T> filterNot(Predicate<? super T> filter);
     public abstract <V> Pair<T, V> asKeyTo(Function<? super T, ? extends V> valueComputer);
     public abstract <K> Pair<K, T> asValueFrom(Function<? super T, ? extends K> keyComputer);
 
@@ -403,6 +404,11 @@ public abstract class Maybe<T> implements Iterable<T> {
         }
 
         @Override
+        public Maybe<T> filterNot(Predicate<? super T> filter) {
+          return !filter.apply(value) ? this : Maybe.<T>not();
+        }
+
+        @Override
         public <V> Pair<T, V> asKeyTo(Function<? super T, ? extends V> valueComputer) {
             return definitePair(value, valueComputer.apply(value));
         }
@@ -617,6 +623,11 @@ public abstract class Maybe<T> implements Iterable<T> {
             }
 
             @Override
+            public Maybe<Map.Entry<K, V>> filterNot(Predicate<? super Map.Entry<K, V>> filter) {
+              return !filter.apply(entry) ? this : Maybe.<K,V>noPair();
+            }
+
+          @Override
             public Pair<K, V> filterKey(Predicate<? super K> filter) {
                 return filter.apply(entry.getKey()) ? this : Maybe.<K,V>noPair();
             }
@@ -735,6 +746,11 @@ public abstract class Maybe<T> implements Iterable<T> {
         @Override
         public Pair filter(Predicate filter) {
             return this;
+        }
+
+        @Override
+        public Maybe filterNot(Predicate filter) {
+          return this;
         }
 
         @Override

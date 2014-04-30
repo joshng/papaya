@@ -42,7 +42,7 @@ public class ParallelFold<I, O> extends AbstractCompletionTracker<I,O> {
         try {
             resultFolder.apply(job.get());
         } catch (final Throwable e) {
-            final Throwable cause = FunFutures.unwrapExecutionException(e);
+            final Throwable cause = FunFuture.unwrapExecutionException(e);
             if (abortOnFailure) abort(cause);
             try {
                 errorAccumulators.get(cause.getClass(), new Callable<ErrorAccumulator>() {

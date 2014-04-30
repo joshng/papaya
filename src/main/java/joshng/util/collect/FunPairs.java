@@ -153,7 +153,7 @@ public interface FunPairs<K,V> extends FunIterable<Map.Entry<K,V>> {
         foreach(e -> visitor.accept(e.getKey(), e.getValue()));
     }
 
-    default <A> A accumulate2(Accumulator.BiAccumulator<? super K, ? super V, ? extends A> accumulator) {
+    default <A> A accumulate2(BiAccumulator<? super K, ? super V, ? extends A> accumulator) {
         foreach2(accumulator);
         return accumulator.get();
     }
@@ -214,8 +214,6 @@ public interface FunPairs<K,V> extends FunIterable<Map.Entry<K,V>> {
     default FunPairs<K,V> sortByValues(Ordering<? super V> valueOrdering) {
         return toSortedCopy(valueOrdering.onResultOf(Entry::getValue));
     }
-
-
 
     default Maybe.Pair<K, V> minByKeys(Ordering<? super K> keyOrdering) {
         return minBy(keyOrdering, Entry::getKey);
