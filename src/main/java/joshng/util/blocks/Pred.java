@@ -28,7 +28,11 @@ public interface Pred<T> extends Predicate<T>, com.google.common.base.Predicate<
     default boolean apply(T value) {
         return test(value);
     }
-    
+
+  public static <T> Pred<T> method(final Pred<T> fn) {
+    return fn;
+  }
+
     public static <T> Pred<T> extendFunction(final Function<T, Boolean> fn) {
         return new Pred<T>() { public boolean test(T input) {
             return fn.apply(input);

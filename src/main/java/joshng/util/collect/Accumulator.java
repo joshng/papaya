@@ -1,11 +1,11 @@
 package joshng.util.collect;
 
+import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import joshng.util.blocks.Sink;
 
-import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -61,13 +61,24 @@ public interface Accumulator<I, O> extends Sink<I>, Supplier<O> {
         return new ImmutableMapAccumulator<>();
     }
 
+    static <K,V> BiAccumulator<K, V, ImmutableBiMap<K,V>> biMap() {
+        return new BiAccumulator<K, V, ImmutableBiMap<K, V>>() {
+          private final ImmutableBiMap.Builder<K, V> builder = ImmutableBiMap.builder();
+
+          @Override
+          public void accept(K k, V v) {
+              builder.put(k, v);
+          }
+
+          @Override
+          public ImmutableBiMap<K, V> get() {
+              return builder.build();
+          }
+        };
+    }
+
   class ImmutableMapAccumulator<K, V> implements BiAccumulator<K, V, ImmutableMap<K, V>> {
         private final ImmutableMap.Builder<K, V> builder = ImmutableMap.builder();
-
-        @Override
-        public void accept(Map.Entry<? extends K, ? extends V> i) {
-            builder.put(i);
-        }
 
         @Override
         public void accept(K k, V v) {

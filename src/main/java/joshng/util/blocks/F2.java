@@ -16,6 +16,9 @@ public interface F2<I1, I2, O> extends BiFunction<I1, I2, O> {
     public static <T> F2<Object, Object, T> constant(final T result) {
         return (input1, input2) -> result;
     }
+    public static <I1, I2, O> F2<I1, I2, O> method(final F2<I1, I2, O> fn) {
+      return fn;
+    }
     public static <I1, I2, O> F2<I1, I2, O> of(final BiFunction<I1, I2, O> fn) {
         if (fn instanceof F2) return (F2<I1, I2, O>) fn;
         return fn::apply;

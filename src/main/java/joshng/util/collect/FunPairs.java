@@ -309,7 +309,7 @@ public interface FunPairs<K,V> extends FunIterable<Map.Entry<K,V>> {
     }
 
     default ImmutableBiMap<K, V> toBimap() {
-        return bimapWithEntries(delegate());
+        return accumulate2(Accumulator.biMap());
     }
 
     default ComparingMap<K, V> toComparingMap(Comparator<? super V> ordering) {
