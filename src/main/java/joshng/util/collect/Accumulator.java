@@ -6,6 +6,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import joshng.util.blocks.Sink;
 
+import java.util.HashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -76,6 +77,21 @@ public interface Accumulator<I, O> extends Sink<I>, Supplier<O> {
           }
         };
     }
+
+  static <K,V> BiAccumulator<K, V, HashMap<K, V>> mutableMap() {
+    return new BiAccumulator<K, V, HashMap<K, V>>() {
+      HashMap<K, V> map = new HashMap<>();
+      @Override
+      public void accept(K k, V v) {
+        map.put(k, v);
+      }
+
+      @Override
+      public HashMap<K, V> get() {
+        return map;
+      }
+    };
+  }
 
   class ImmutableMapAccumulator<K, V> implements BiAccumulator<K, V, ImmutableMap<K, V>> {
         private final ImmutableMap.Builder<K, V> builder = ImmutableMap.builder();

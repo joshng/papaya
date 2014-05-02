@@ -213,7 +213,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
 
     public static <T> FunFuture<T> extendFuture(ListenableFuture<T> future) {
         if (future instanceof FunFuture) return (FunFuture<T>) future;
-        return new ForwardingFunFuture<T>(future);
+        return new ForwardingFunFuture<>(future);
     }
 
     public static <T> FunRunnableFuture<T> funFutureTask(Callable<T> callable) {

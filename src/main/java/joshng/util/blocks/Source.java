@@ -22,6 +22,10 @@ import static joshng.util.collect.Maybe.definitely;
 public interface Source<T> extends F<Object, T>, Callable<T>, Supplier<T>, com.google.common.base.Supplier<T> {
     static final Source NULL_SOURCE = Source.ofInstance(null);
 
+    static <T> Source<T> method(Source<T> method) {
+      return method;
+    }
+
     @SuppressWarnings("unchecked")
     public static <T> Source<T> nullSource() {
         return NULL_SOURCE;
