@@ -5,12 +5,18 @@ import joshng.util.blocks.Unzipper;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
+import static joshng.util.collect.Functional.funPairs;
+
 /**
 * User: josh
 * Date: 4/30/14
 * Time: 10:47 AM
 */
 public interface BiAccumulator<K, V, O> extends Accumulator<Map.Entry<? extends K, ? extends V>, O>, BiConsumer<K, V> {
+    default O accumulate2(Iterable<? extends Map.Entry<K, V>> pairs) {
+      return funPairs(pairs).accumulate2(this);
+    }
+
     @Override default void accept(Map.Entry<? extends K, ? extends V> entry) {
         accept(entry.getKey(), entry.getValue());
     }

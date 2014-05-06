@@ -173,6 +173,10 @@ public abstract class Maybe<T> implements Iterable<T> {
         return GET_OR_THROW;
     }
 
+    public static <T> F<Maybe<T>, T> getter(String format, Object... args) {
+      return m -> m.getOrThrow(format, args);
+    }
+
     public static <T> F<Maybe<T>, T> getterWithDefault(final T alternateValue) {
         return new F<Maybe<T>, T>() {
             @Override public T apply(Maybe<T> input) {

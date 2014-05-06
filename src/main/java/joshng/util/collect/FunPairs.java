@@ -263,7 +263,7 @@ public interface FunPairs<K,V> extends FunIterable<Map.Entry<K,V>> {
     }
 
     @Override
-    default FunIterable<FunPairs<K, V>> partition(int size) {
+    default FunIterable<? extends FunPairs<K, V>> partition(int size) {
         return FunIterable.map(Iterables.partition(delegate(), size), FunctionalPairs::extendPairs);
     }
 

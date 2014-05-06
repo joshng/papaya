@@ -257,7 +257,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
         return new ForwardingFunFuture<>(Futures.transform(delegate(), f, executor));
     }
 
-    default FunFuture<Nothing> forEach(Sink<? super T> sideEffect) {
+    default FunFuture<Nothing> foreach(Sink<? super T> sideEffect) {
       return map(sideEffect);
     }
 

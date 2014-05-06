@@ -33,6 +33,9 @@ public interface F<I,O> extends Function<I,O>, com.google.common.base.Function<I
     @SuppressWarnings({"unchecked"})
     F IDENTITY = new IdentityF();
 
+    @Override
+    O apply(I input);
+
     public static <I,O> F<I,O> method(F<I, O> f) {
         return f;
     }

@@ -9,6 +9,7 @@ import joshng.util.blocks.F;
 import joshng.util.collect.Pair;
 
 import javax.annotation.Nullable;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
@@ -56,14 +57,36 @@ public class StringUtils {
 	}
 
     public static String toHexString(byte[] bytes, int offset, int len) {
-        StringBuilder hex = new StringBuilder(len * 2);
-        for (int i = offset; i < len; i++) {
-            hex.append(Character.forDigit((bytes[i] & 0XF0) >> 4, 16));
-            hex.append(Character.forDigit((bytes[i] & 0X0F), 16));
-        }
-        return hex.toString();
+      StringBuilder hex = new StringBuilder(len * 2);
+      try {
+        appendHexString(bytes, offset, len, hex);
+      } catch (IOException e) {
+        throw new AssertionError("StringBuilder.append throw IOException (shouldn't happen!)..?");
+      }
+      return hex.toString();
     }
 
+  public static <A extends Appendable> A appendHexString(byte[] bytes, int offset, int len, A builder) throws IOException {
+    for (int i = offset; i < len; i++) {
+        builder.append(Character.forDigit((bytes[i] & 0XF0) >> 4, 16));
+        builder.append(Character.forDigit((bytes[i] & 0X0F), 16));
+    }
+    return builder;
+  }
+
+  public static String toHexStringTruncatedWithEllipsis(byte[] bytes, int offset, int maxBytes) {
+    boolean truncated = bytes.length > offset + maxBytes;
+    int len = maxBytes * 2;
+    if (truncated) len += 3;
+    StringBuilder hex = new StringBuilder(len);
+    try {
+      appendHexString(bytes, offset, Math.min(bytes.length - offset, maxBytes), hex);
+    } catch (IOException e) {
+      throw new AssertionError("StringBuilder.append throw IOException (shouldn't happen!)..?");
+    }
+    if (truncated) hex.append("...");
+    return hex.toString();
+  }
 
     public static F<String, String> trailingSubstringer(final int startOffset) {
         return new F<String, String>() {

@@ -7,6 +7,8 @@ import com.google.common.collect.ImmutableSet;
 import joshng.util.blocks.Sink;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -58,6 +60,14 @@ public interface Accumulator<I, O> extends Sink<I>, Supplier<O> {
         return of(builder::add, builder::build);
     }
 
+    static <K,V> BiAccumulator<K, V, HashMap<K, V>> hashMap() {
+      return new MutableMapAccumulator<>(new HashMap<>());
+    }
+
+    static <K,V> BiAccumulator<K, V, LinkedHashMap<K, V>> linkedHashMap() {
+      return new MutableMapAccumulator<>(new LinkedHashMap<>());
+    }
+
     static <K,V> BiAccumulator<K, V, ImmutableMap<K,V>> immutableMap() {
         return new ImmutableMapAccumulator<>();
     }
@@ -78,19 +88,12 @@ public interface Accumulator<I, O> extends Sink<I>, Supplier<O> {
         };
     }
 
-  static <K,V> BiAccumulator<K, V, HashMap<K, V>> mutableMap() {
-    return new BiAccumulator<K, V, HashMap<K, V>>() {
-      HashMap<K, V> map = new HashMap<>();
-      @Override
-      public void accept(K k, V v) {
-        map.put(k, v);
-      }
 
-      @Override
-      public HashMap<K, V> get() {
-        return map;
-      }
-    };
+  default O accumulate(Iterable<? extends I> items) {
+    for (I item : items) {
+      accept(item);
+    }
+    return get();
   }
 
   class ImmutableMapAccumulator<K, V> implements BiAccumulator<K, V, ImmutableMap<K, V>> {
@@ -106,4 +109,22 @@ public interface Accumulator<I, O> extends Sink<I>, Supplier<O> {
             return builder.build();
         }
     }
+
+  class MutableMapAccumulator<K, V, M extends Map<K, V>> implements BiAccumulator<K, V, M> {
+    private final M map;
+
+    public MutableMapAccumulator(M map) {
+      this.map = map;
+    }
+
+    @Override
+    public void accept(K k, V v) {
+      map.put(k, v);
+    }
+
+    @Override
+    public M get() {
+      return map;
+    }
+  }
 }

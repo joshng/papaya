@@ -18,7 +18,7 @@ public interface FunList<T> extends List<T>, FunCollection<T> {
     ImmutableList<T> delegate();
     FunList<T> reverse();
     <S> FunList<S> cast();
-    FunIterable<FunList<T>> partition(int size);
+    FunIterable<? extends FunList<T>> partition(int size);
 
     @Override default Object[] toArray() { return FunCollection.super.toArray(); }
     @Override default <T1> T1[] toArray(T1[] a) { return FunCollection.super.toArray(a); }
