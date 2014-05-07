@@ -41,7 +41,7 @@ public class MultiMethodInvoker<T> {
             }
         }
         ImmutableList<Method> methods = selectedMethods.build();
-        @SuppressWarnings("unchecked") MultiMethodInvoker<T> result = methods.isEmpty() ? NULL_INVOKER : new MultiMethodInvoker<T>(methods);
+        @SuppressWarnings("unchecked") MultiMethodInvoker<T> result = methods.isEmpty() ? NULL_INVOKER : new MultiMethodInvoker<>(methods);
         return result;
     }
 
