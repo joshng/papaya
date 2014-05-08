@@ -5,10 +5,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.*;
 import joshng.util.blocks.*;
-import joshng.util.collect.FunIterable;
-import joshng.util.collect.Maybe;
-import joshng.util.collect.Nothing;
-import joshng.util.collect.Pair;
+import joshng.util.collect.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -237,12 +234,14 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
         return EXTENDER;
     }
 
-    default <O> FunFuture<O> map(Function<? super T, ? extends O> f) {
-        return new ForwardingFunFuture<>(Futures.transform(delegate(), (com.google.common.base.Function<? super T, ? extends O>)f::apply));
+    default <O> FunFuture<O> map(Function<? super T, ? extends O> function) {
+      F<? super T, ? extends O> f = F.extendF(function);
+      return new ForwardingFunFuture<>(Futures.transform(delegate(), f));
     }
 
-    default <O> FunFuture<O> map(Executor executor, Function<? super T, ? extends O> f) {
-        return new ForwardingFunFuture<O>(Futures.transform(delegate(), (com.google.common.base.Function<? super T, ? extends O>)f::apply, executor));
+    default <O> FunFuture<O> map(Executor executor, Function<? super T, ? extends O> function) {
+      F<? super T, ? extends O> f = F.extendF(function);
+      return new ForwardingFunFuture<>(Futures.transform(delegate(), f, executor));
     }
 
     public static <I, O> AsyncF<ListenableFuture<? extends I>, O> mapper(final Function<? super I, ? extends O> mapper) {
@@ -257,28 +256,31 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
         return new ForwardingFunFuture<>(Futures.transform(delegate(), f, executor));
     }
 
+    default <O> FutureMaybe<O> mapMaybe(Function<? super T, Maybe<O>> f) {
+      return new ForwardingFutureMaybe<>(Futures.transform(delegate(), F.extendF(f)));
+    }
+
+    default <O> FutureMaybe<O> flatMapMaybe(AsyncFunction<? super T, Maybe<O>> f) {
+      return new ForwardingFutureMaybe<>(Futures.transform(delegate(), f));
+    }
+
+    default <O> FutureMaybe<O> mapMaybe(Executor executor, Function<? super T, Maybe<O>> f) {
+      return new ForwardingFutureMaybe<>(Futures.transform(delegate(), F.extendF(f), executor));
+    }
+
+    static <I, O> AsyncF<ListenableFuture<? extends I>, Maybe<O>> maybeMapper(Function<? super I, Maybe<O>> maybeFunction) {
+      return future -> extendFuture(future).mapMaybe(maybeFunction);
+    }
+
+    default <O> FutureMaybe<O> flatMapMaybe(Executor executor, AsyncFunction<? super T, Maybe<O>> f) {
+      return new ForwardingFutureMaybe<>(Futures.transform(delegate(), f, executor));
+    }
+
     default FunFuture<Nothing> foreach(Sink<? super T> sideEffect) {
       return map(sideEffect);
     }
 
-    static final F MAYBE_WRAPPER = mapper(Maybe.of());
-    static final FunFuture EMPTY_FUTURE = immediateFuture(Maybe.not());
-
-    @SuppressWarnings("unchecked")
-    public static <T> F<ListenableFuture<? extends T>, FunFuture<Maybe<T>>> maybeWrapper() {
-        return MAYBE_WRAPPER;
-    }
-
-    @SuppressWarnings("unchecked")
-    public static <T> FunFuture<Maybe<T>> futureMaybeNot() {
-        return EMPTY_FUTURE;
-    }
-
-    public static <T> FunFuture<Maybe<T>> asFutureOfMaybe(Maybe<? extends ListenableFuture<? extends T>> maybeOfFuture) {
-        return maybeOfFuture.map(FunFuture.<T>maybeWrapper()).getOrElse(FunFuture.<T>futureMaybeNot());
-    }
-
-    default FunFuture<T> filter(final Predicate<? super T> filter) {
+  default FunFuture<T> filter(final Predicate<? super T> filter) {
         return map(new Tapper<T>() {
             public void tap(T value) {
                 if (!filter.test(value)) throw new FilteredFutureException();

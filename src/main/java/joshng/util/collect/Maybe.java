@@ -32,7 +32,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public abstract class Maybe<T> implements Iterable<T> {
     private static final Pair NOT = new Not();
 
-    public static final Pred<Maybe<?>> IS_DEFINED = input -> input.isDefined();
+    public static final Pred<Maybe<?>> IS_DEFINED = Maybe::isDefined;
     private static final F GET_OR_THROW = new F<Maybe, Object>() { public Object apply(Maybe from) {
         return from.getOrThrow();
     } };
@@ -178,11 +178,11 @@ public abstract class Maybe<T> implements Iterable<T> {
     }
 
     public static <T> F<Maybe<T>, T> getterWithDefault(final T alternateValue) {
-        return new F<Maybe<T>, T>() {
-            @Override public T apply(Maybe<T> input) {
-                return input.getOrElse(alternateValue);
-            }
-        };
+        return input -> input.getOrElse(alternateValue);
+    }
+
+    public static <T> F<Maybe<T>, T> getterWithDefaultFrom(Supplier<? extends T> alternateValueSupplier) {
+        return input -> input.getOrElseFrom(alternateValueSupplier);
     }
 
     public static <T> Maybe<T> from(Supplier<T> supplier) {
