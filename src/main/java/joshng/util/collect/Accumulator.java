@@ -6,6 +6,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import joshng.util.blocks.Sink;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -53,6 +54,11 @@ public interface Accumulator<I, O> extends Sink<I>, Supplier<O> {
     static <T> Accumulator<T, ImmutableList<T>> immutableList() {
         ImmutableList.Builder<T> builder = ImmutableList.builder();
         return of(builder::add, builder::build);
+    }
+
+    static <T> Accumulator<T, ArrayList<T>> arrayList() {
+      ArrayList<T> list = new ArrayList<>();
+      return of(list::add, () -> list);
     }
 
     static <T> Accumulator<T, ImmutableSet<T>> immutableSet() {
