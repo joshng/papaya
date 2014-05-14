@@ -37,6 +37,13 @@ public interface Sink<T> extends F<T, Nothing>, Consumer<T>,ThrowingConsumer<T> 
         return value -> logger.info(format, value);
     }
 
+    void accept(T value);
+
+    default <U extends T> U acceptAndReturn(U value) {
+        accept(value);
+        return value;
+    }
+
     @Override
     default <I0> Sink<I0> compose(Function<? super I0, ? extends T> first) {
         return value -> accept(first.apply(value));
@@ -57,4 +64,5 @@ public interface Sink<T> extends F<T, Nothing>, Consumer<T>,ThrowingConsumer<T> 
             if (inputFilter.test(value)) Sink.this.accept(value);
         };
     }
+
 }

@@ -256,24 +256,24 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
         return new ForwardingFunFuture<>(Futures.transform(delegate(), f, executor));
     }
 
-    default <O> FutureMaybe<O> mapMaybe(Function<? super T, Maybe<O>> f) {
-      return new ForwardingFutureMaybe<>(Futures.transform(delegate(), F.extendF(f)));
+    default <O> FunFutureMaybe<O> mapMaybe(Function<? super T, Maybe<O>> f) {
+      return new ForwardingFunFutureMaybe<>(Futures.transform(delegate(), F.extendF(f)));
     }
 
-    default <O> FutureMaybe<O> flatMapMaybe(AsyncFunction<? super T, Maybe<O>> f) {
-      return new ForwardingFutureMaybe<>(Futures.transform(delegate(), f));
+    default <O> FunFutureMaybe<O> flatMapMaybe(AsyncFunction<? super T, Maybe<O>> f) {
+      return new ForwardingFunFutureMaybe<>(Futures.transform(delegate(), f));
     }
 
-    default <O> FutureMaybe<O> mapMaybe(Executor executor, Function<? super T, Maybe<O>> f) {
-      return new ForwardingFutureMaybe<>(Futures.transform(delegate(), F.extendF(f), executor));
+    default <O> FunFutureMaybe<O> mapMaybe(Executor executor, Function<? super T, Maybe<O>> f) {
+      return new ForwardingFunFutureMaybe<>(Futures.transform(delegate(), F.extendF(f), executor));
     }
 
     static <I, O> AsyncF<ListenableFuture<? extends I>, Maybe<O>> maybeMapper(Function<? super I, Maybe<O>> maybeFunction) {
       return future -> extendFuture(future).mapMaybe(maybeFunction);
     }
 
-    default <O> FutureMaybe<O> flatMapMaybe(Executor executor, AsyncFunction<? super T, Maybe<O>> f) {
-      return new ForwardingFutureMaybe<>(Futures.transform(delegate(), f, executor));
+    default <O> FunFutureMaybe<O> flatMapMaybe(Executor executor, AsyncFunction<? super T, Maybe<O>> f) {
+      return new ForwardingFunFutureMaybe<>(Futures.transform(delegate(), f, executor));
     }
 
     default FunFuture<Nothing> foreach(Sink<? super T> sideEffect) {

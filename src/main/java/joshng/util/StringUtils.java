@@ -1,9 +1,6 @@
 package joshng.util;
 
-import com.google.common.base.Charsets;
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.base.Strings;
+import com.google.common.base.*;
 import com.google.common.collect.Ordering;
 import joshng.util.blocks.F;
 import joshng.util.collect.Pair;
@@ -39,12 +36,9 @@ public class StringUtils {
     //private static final Pattern WORD_SEPARATOR = Pattern.compile("\\W+");
 	private static final Pattern LAST_NONWORD_PATTERN = Pattern.compile("\\W\\w*$");
 	public static final Charset UTF8_CHARSET = Charsets.UTF_8;
-    public static final Ordering<String> CASE_INSENSITIVE_ORDERING = Ordering.from(String.CASE_INSENSITIVE_ORDER);
-    public static final Function<byte[],String> UTF8_BYTES_TO_STRING = new Function<byte[], String>() { public String apply(byte[] bytes) {
-        return StringUtils.fromUTF8Bytes(bytes);
-    } };
+  public static final Ordering<String> CASE_INSENSITIVE_ORDERING = Ordering.from(String.CASE_INSENSITIVE_ORDER);
 
-    public static byte[] toUTF8Bytes(String str) {
+  public static byte[] toUTF8Bytes(String str) {
 		return str.getBytes(UTF8_CHARSET);
 	}
 

@@ -14,11 +14,7 @@ public interface SideEffect extends Source<Nothing>, Runnable {
     }
 
     default <T> Tapper<T> asTapper() {
-        return new Tapper<T>() {
-            @Override public void tap(T value) {
-                run();
-            }
-        };
+        return value -> run();
     }
 
     @Override
