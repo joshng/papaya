@@ -12,18 +12,18 @@ import static joshng.util.collect.Functional.extend;
  * Time: 9:12 PM
  */
 public abstract class FunForwardingMap<K, V> extends ForwardingMap<K, V> {
-    @Override
-    protected abstract Map<K, V> delegate();
+  @Override
+  protected abstract Map<K, V> delegate();
 
-    public FunIterable<K> funKeys() {
-        return extend(keySet());
-    }
+  public FunIterable<K> funKeys() {
+    return extend(keySet());
+  }
 
-    public FunIterable<V> funValues() {
-        return extend(values());
-    }
+  public FunIterable<V> funValues() {
+    return extend(values());
+  }
 
-    public FunPairs<K, V> funPairs() {
-        return Functional.funPairs(delegate());
-    }
+  public FunPairs<K, V> funPairs() {
+    return Functional.funPairs(delegate());
+  }
 }

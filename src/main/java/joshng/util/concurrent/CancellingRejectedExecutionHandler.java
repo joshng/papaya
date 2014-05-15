@@ -10,17 +10,17 @@ import java.util.concurrent.ThreadPoolExecutor;
  * Time: 11:51 AM
  */
 public abstract class CancellingRejectedExecutionHandler implements RejectedExecutionHandler {
-    @Override
-    public final void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-        cancelFuture(r);
-        handleRejectedTask(r);
-    }
+  @Override
+  public final void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+    cancelFuture(r);
+    handleRejectedTask(r);
+  }
 
-    public static boolean cancelFuture(Object r) {
-        boolean isFuture = r instanceof Future;
-        if (isFuture) ((Future<?>)r).cancel(false);
-        return isFuture;
-    }
+  public static boolean cancelFuture(Object r) {
+    boolean isFuture = r instanceof Future;
+    if (isFuture) ((Future<?>) r).cancel(false);
+    return isFuture;
+  }
 
-    protected abstract void handleRejectedTask(Runnable r);
+  protected abstract void handleRejectedTask(Runnable r);
 }

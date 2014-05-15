@@ -19,84 +19,84 @@ import static joshng.util.concurrent.FunFuture.extendFuture;
  * Time: 10:51 AM
  */
 public class FunctionalExecutorService extends ForwardingListeningExecutorService {
-    private final ListeningExecutorService delegate;
-    private final AsyncF submitter = new AsyncF<Callable<Object>, Object>() {
-        @Override
-        public FunFuture<Object> applyAsync(Callable<Object> input) {
-            return extendFuture(getDelegate().submit(input));
-        }
+  private final ListeningExecutorService delegate;
+  private final AsyncF submitter = new AsyncF<Callable<Object>, Object>() {
+    @Override
+    public FunFuture<Object> applyAsync(Callable<Object> input) {
+      return extendFuture(getDelegate().submit(input));
+    }
+  };
+
+  FunctionalExecutorService(ListeningExecutorService delegate) {
+    this.delegate = delegate;
+  }
+
+  @SuppressWarnings("unchecked")
+  public <T> AsyncF<Callable<T>, T> submitter() {
+    return submitter;
+  }
+
+  public <T> Source<FunFuture<T>> wrapSource(Supplier<T> supplier) {
+    return this.<T>submitter().bind(supplier::get);
+  }
+
+  public <I, O> AsyncF<I, O> wrapFunction(Function<I, O> function) {
+    return AsyncF.extendAsyncFunction(F.extendF(function).binder().andThen(this.<O>submitter()));
+  }
+
+  public <I, O> AsyncF<I, O> wrapAsync(final AsyncF<? super I, ? extends O> function) {
+    return new AsyncF<I, O>() {
+      @Override
+      public FunFuture<O> applyAsync(I input) {
+        return submit(function.bind(input)).flatMap(AsyncF.<O>asyncIdentity());
+      }
     };
+  }
 
-    FunctionalExecutorService(ListeningExecutorService delegate) {
-        this.delegate = delegate;
-    }
+  public <T> AsyncF<T, Nothing> wrapSink(Consumer<T> sink) {
+    return wrapFunction(Sink.extendConsumer(sink));
+  }
 
-    @SuppressWarnings("unchecked")
-    public <T> AsyncF<Callable<T>, T> submitter() {
-        return submitter;
-    }
+  public <I, O> AsyncF<ListenableFuture<? extends I>, O> mapper(final Function<? super I, ? extends O> mapper) {
+    com.google.common.base.Function<I, O> f = mapper::apply;
+    return new AsyncF<ListenableFuture<? extends I>, O>() {
+      @Override
+      public FunFuture<O> applyAsync(ListenableFuture<? extends I> input) {
+        return extendFuture(Futures.transform(input, f, getDelegate()));
+      }
+    };
+  }
 
-    public <T> Source<FunFuture<T>> wrapSource(Supplier<T> supplier) {
-        return this.<T>submitter().bind(supplier::get);
-    }
+  public <I, O> AsyncF<ListenableFuture<? extends I>, O> flatMapper(final AsyncFunction<? super I, ? extends O> mapper) {
+    return new AsyncF<ListenableFuture<? extends I>, O>() {
+      @Override
+      public FunFuture<O> applyAsync(ListenableFuture<? extends I> input) {
+        return extendFuture(Futures.transform(input, mapper, getDelegate()));
+      }
+    };
+  }
 
-    public <I, O> AsyncF<I, O> wrapFunction(Function<I, O> function) {
-        return AsyncF.extendAsyncFunction(F.extendF(function).binder().andThen(this.<O>submitter()));
-    }
+  @Override
+  public <T> FunFuture<T> submit(Callable<T> task) {
+    return extendFuture(super.submit(task));
+  }
 
-    public <I, O> AsyncF<I, O> wrapAsync(final AsyncF<? super I, ? extends O> function) {
-        return new AsyncF<I, O>() {
-            @Override
-            public FunFuture<O> applyAsync(I input) {
-                return submit(function.bind(input)).flatMap(AsyncF.<O>asyncIdentity());
-            }
-        };
-    }
+  @Override
+  public FunFuture<?> submit(Runnable task) {
+    return extendFuture(super.submit(task));
+  }
 
-    public <T> AsyncF<T, Nothing> wrapSink(Consumer<T> sink) {
-        return wrapFunction(Sink.extendConsumer(sink));
-    }
+  @Override
+  public <T> FunFuture<T> submit(Runnable task, T result) {
+    return extendFuture(super.submit(task, result));
+  }
 
-    public <I, O> AsyncF<ListenableFuture<? extends I>, O> mapper(final Function<? super I, ? extends O> mapper) {
-        com.google.common.base.Function<I, O> f = mapper::apply;
-        return new AsyncF<ListenableFuture<? extends I>, O>() {
-            @Override
-            public FunFuture<O> applyAsync(ListenableFuture<? extends I> input) {
-                return extendFuture(Futures.transform(input, f, getDelegate()));
-            }
-        };
-    }
+  @Override
+  protected ListeningExecutorService delegate() {
+    return getDelegate();
+  }
 
-    public <I, O> AsyncF<ListenableFuture<? extends I>, O> flatMapper(final AsyncFunction<? super I, ? extends O> mapper) {
-        return new AsyncF<ListenableFuture<? extends I>, O>() {
-            @Override
-            public FunFuture<O> applyAsync(ListenableFuture<? extends I> input) {
-                return extendFuture(Futures.transform(input, mapper, getDelegate()));
-            }
-        };
-    }
-
-    @Override
-    public <T> FunFuture<T> submit(Callable<T> task) {
-        return extendFuture(super.submit(task));
-    }
-
-    @Override
-    public FunFuture<?> submit(Runnable task) {
-        return extendFuture(super.submit(task));
-    }
-
-    @Override
-    public <T> FunFuture<T> submit(Runnable task, T result) {
-        return extendFuture(super.submit(task, result));
-    }
-
-    @Override
-    protected ListeningExecutorService delegate() {
-        return getDelegate();
-    }
-
-    protected ListeningExecutorService getDelegate() {
-        return delegate;
-    }
+  protected ListeningExecutorService getDelegate() {
+    return delegate;
+  }
 }

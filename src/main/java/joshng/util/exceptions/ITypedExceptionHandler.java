@@ -6,5 +6,5 @@ package joshng.util.exceptions;
  * Time: 11:34:24 AM
  */
 interface ITypedExceptionHandler<E extends Throwable> {
-    public void handle(E e);
+  public void handle(E e);
 }

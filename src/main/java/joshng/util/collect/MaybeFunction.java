@@ -6,6 +6,7 @@ package joshng.util.collect;
  * Time: 2:48 PM
  */
 public interface MaybeFunction<I, O> {
-    O whenDefined(I input);
-    O whenEmpty();
+  O whenDefined(I input);
+
+  O whenEmpty();
 }

@@ -16,115 +16,120 @@ import java.util.Collections;
 import java.util.List;
 
 public interface MultiException {
-    public static final F2<Throwable, MultiException, MultiException> COMBINER = new F2<Throwable, MultiException, MultiException>() {
-        @Override
-        public MultiException apply(Throwable input1, MultiException input2) {
-            return input2.with(input1);
-        }
-    };
+  public static final F2<Throwable, MultiException, MultiException> COMBINER = new F2<Throwable, MultiException, MultiException>() {
+    @Override
+    public MultiException apply(Throwable input1, MultiException input2) {
+      return input2.with(input1);
+    }
+  };
 
-    MultiException with(Throwable toAdd);
-    List<Throwable> getThrowables();
-    Maybe<Throwable> getCombinedThrowable();
-    <E extends Throwable> void throwIfException(Class<E> exceptionClass) throws E;
+  MultiException with(Throwable toAdd);
 
-    void throwRuntimeIfAny();
+  List<Throwable> getThrowables();
 
-    public static final MultiException Empty = new EmptyImpl();
+  Maybe<Throwable> getCombinedThrowable();
 
-    class EmptyImpl implements MultiException {
-        private EmptyImpl() {}
+  <E extends Throwable> void throwIfException(Class<E> exceptionClass) throws E;
 
-        public MultiException with(Throwable toAdd) {
-            if (toAdd instanceof MultiException) return (MultiException) toAdd;
-            return new Single(toAdd);
-        }
+  void throwRuntimeIfAny();
 
-        public List<Throwable> getThrowables() {
-            return ImmutableList.of();
-        }
+  public static final MultiException Empty = new EmptyImpl();
 
-        @Override
-        public Maybe<Throwable> getCombinedThrowable() {
-            return Maybe.not();
-        }
-
-        public <E extends Throwable> void throwIfException(Class<E> exceptionClass) throws E {
-        }
-
-        public void throwRuntimeIfAny() {
-        }
+  class EmptyImpl implements MultiException {
+    private EmptyImpl() {
     }
 
-    class Single implements MultiException {
-        private final Throwable throwable;
-
-        private Single(Throwable throwable) {
-            this.throwable = throwable;
-        }
-
-        public MultiException with(Throwable toAdd) {
-            return new Multiple().with(throwable).with(toAdd);
-        }
-
-        public List<Throwable> getThrowables() {
-            return ImmutableList.of(throwable);
-        }
-
-        @Override
-        public Maybe<Throwable> getCombinedThrowable() {
-            return Maybe.definitely(throwable);
-        }
-
-        public <E extends Throwable> void throwIfException(Class<E> exceptionClass) throws E {
-            Throwables.propagateIfPossible(throwable, exceptionClass);
-            throw Throwables.propagate(throwable);
-        }
-
-        public void throwRuntimeIfAny() {
-            throw Throwables.propagate(throwable);
-        }
+    public MultiException with(Throwable toAdd) {
+      if (toAdd instanceof MultiException) return (MultiException) toAdd;
+      return new Single(toAdd);
     }
 
-    class Multiple extends RuntimeException implements MultiException {
-        private List<Throwable> nested = Lists.newArrayList();
-
-        private Multiple() {}
-
-        public MultiException with(Throwable toAdd) {
-            if (toAdd instanceof Multiple) {
-                nested.addAll(((Multiple)toAdd).nested);
-            } else {
-                nested.add(toAdd);
-            }
-            return this;
-        }
-
-        public List<Throwable> getThrowables() {
-            return Collections.unmodifiableList(nested);
-        }
-
-        @Override
-        public Maybe<Throwable> getCombinedThrowable() {
-            return Maybe.<Throwable>definitely(this);
-        }
-
-        public <E extends Throwable> void throwIfException(Class<E> exceptionClass) throws E {
-            throw this;
-        }
-
-        public void throwRuntimeIfAny() {
-            throw this;
-        }
-
-        @Override
-        public String getMessage() {
-            final StringBuilder builder = new StringBuilder("Multiple exceptions thrown (").append(nested.size()).append(" total):");
-            for (int i = 0; i < nested.size(); i++) {
-                Throwable throwable = nested.get(i);
-                builder.append("\n\n ----> ").append(i+1).append(") ").append(Throwables.getStackTraceAsString(throwable));
-            }
-            return builder.toString();
-        }
+    public List<Throwable> getThrowables() {
+      return ImmutableList.of();
     }
+
+    @Override
+    public Maybe<Throwable> getCombinedThrowable() {
+      return Maybe.not();
+    }
+
+    public <E extends Throwable> void throwIfException(Class<E> exceptionClass) throws E {
+    }
+
+    public void throwRuntimeIfAny() {
+    }
+  }
+
+  class Single implements MultiException {
+    private final Throwable throwable;
+
+    private Single(Throwable throwable) {
+      this.throwable = throwable;
+    }
+
+    public MultiException with(Throwable toAdd) {
+      return new Multiple().with(throwable).with(toAdd);
+    }
+
+    public List<Throwable> getThrowables() {
+      return ImmutableList.of(throwable);
+    }
+
+    @Override
+    public Maybe<Throwable> getCombinedThrowable() {
+      return Maybe.definitely(throwable);
+    }
+
+    public <E extends Throwable> void throwIfException(Class<E> exceptionClass) throws E {
+      Throwables.propagateIfPossible(throwable, exceptionClass);
+      throw Throwables.propagate(throwable);
+    }
+
+    public void throwRuntimeIfAny() {
+      throw Throwables.propagate(throwable);
+    }
+  }
+
+  class Multiple extends RuntimeException implements MultiException {
+    private List<Throwable> nested = Lists.newArrayList();
+
+    private Multiple() {
+    }
+
+    public MultiException with(Throwable toAdd) {
+      if (toAdd instanceof Multiple) {
+        nested.addAll(((Multiple) toAdd).nested);
+      } else {
+        nested.add(toAdd);
+      }
+      return this;
+    }
+
+    public List<Throwable> getThrowables() {
+      return Collections.unmodifiableList(nested);
+    }
+
+    @Override
+    public Maybe<Throwable> getCombinedThrowable() {
+      return Maybe.<Throwable>definitely(this);
+    }
+
+    public <E extends Throwable> void throwIfException(Class<E> exceptionClass) throws E {
+      throw this;
+    }
+
+    public void throwRuntimeIfAny() {
+      throw this;
+    }
+
+    @Override
+    public String getMessage() {
+      final StringBuilder builder = new StringBuilder("Multiple exceptions thrown (").append(nested.size()).append(" total):");
+      for (int i = 0; i < nested.size(); i++) {
+        Throwable throwable = nested.get(i);
+        builder.append("\n\n ----> ").append(i + 1).append(") ").append(Throwables.getStackTraceAsString(throwable));
+      }
+      return builder.toString();
+    }
+  }
 }

@@ -9,13 +9,13 @@ import org.slf4j.Logger;
  * Time: 5:09:51 PM
  */
 public final class StackTraceLogger extends RuntimeException {
-    public static void log(Logger logger, String format, Object... formatArgs) {
-        String message = StringUtils.format(format, formatArgs);
-        logger.warn(message, new StackTraceLogger(message));
-    }
+  public static void log(Logger logger, String format, Object... formatArgs) {
+    String message = StringUtils.format(format, formatArgs);
+    logger.warn(message, new StackTraceLogger(message));
+  }
 
-    private StackTraceLogger(String message) {
-        super(message);
-        fillInStackTrace();
-    }
+  private StackTraceLogger(String message) {
+    super(message);
+    fillInStackTrace();
+  }
 }

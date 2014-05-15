@@ -16,32 +16,32 @@ import java.util.stream.Collector;
  * Time: 10:53 AM
  */
 public class GuavaCollectors {
-    public static <K,V> Collector<Map.Entry<K,V>, ImmutableMap.Builder<K,V>, ImmutableMap<K,V>> immutableMapCollector() {
-        return new Collector<Map.Entry<K, V>, ImmutableMap.Builder<K, V>, ImmutableMap<K, V>>() {
-            @Override
-            public Supplier<ImmutableMap.Builder<K, V>> supplier() {
-                return ImmutableMap::<K, V>builder;
-            }
+  public static <K, V> Collector<Map.Entry<K, V>, ImmutableMap.Builder<K, V>, ImmutableMap<K, V>> immutableMapCollector() {
+    return new Collector<Map.Entry<K, V>, ImmutableMap.Builder<K, V>, ImmutableMap<K, V>>() {
+      @Override
+      public Supplier<ImmutableMap.Builder<K, V>> supplier() {
+        return ImmutableMap::<K, V>builder;
+      }
 
-            @Override
-            public BiConsumer<ImmutableMap.Builder<K, V>, Map.Entry<K, V>> accumulator() {
-                return (kvBuilder, kvEntry) -> kvBuilder.put(kvEntry);
-            }
+      @Override
+      public BiConsumer<ImmutableMap.Builder<K, V>, Map.Entry<K, V>> accumulator() {
+        return (kvBuilder, kvEntry) -> kvBuilder.put(kvEntry);
+      }
 
-            @Override
-            public BinaryOperator<ImmutableMap.Builder<K, V>> combiner() {
-                return (kvBuilder, kvBuilder2) -> kvBuilder.putAll(kvBuilder2.build());
-            }
+      @Override
+      public BinaryOperator<ImmutableMap.Builder<K, V>> combiner() {
+        return (kvBuilder, kvBuilder2) -> kvBuilder.putAll(kvBuilder2.build());
+      }
 
-            @Override
-            public Function<ImmutableMap.Builder<K, V>, ImmutableMap<K, V>> finisher() {
-                return ImmutableMap.Builder::build;
-            }
+      @Override
+      public Function<ImmutableMap.Builder<K, V>, ImmutableMap<K, V>> finisher() {
+        return ImmutableMap.Builder::build;
+      }
 
-            @Override
-            public Set<Characteristics> characteristics() {
-                throw new UnsupportedOperationException(".characteristics has not been implemented");
-            }
-        };
-    }
+      @Override
+      public Set<Characteristics> characteristics() {
+        throw new UnsupportedOperationException(".characteristics has not been implemented");
+      }
+    };
+  }
 }

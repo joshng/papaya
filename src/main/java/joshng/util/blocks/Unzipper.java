@@ -14,9 +14,10 @@ import java.util.function.Function;
  */
 public interface Unzipper<I, K, V> extends F<I, Pair<K, V>> {
   K getKey(I input);
+
   V getValue(I input);
 
-  static <I, K, V> Unzipper<I,K,V> of(F<? super I, ? extends K> keyMapper, F<? super I, ? extends V> valueMapper) {
+  static <I, K, V> Unzipper<I, K, V> of(F<? super I, ? extends K> keyMapper, F<? super I, ? extends V> valueMapper) {
     return new Unzipper<I, K, V>() {
       @Override
       public K getKey(I input) {

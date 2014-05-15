@@ -4,10 +4,10 @@ import com.google.common.base.Converter;
 import com.google.common.primitives.Ints;
 
 /**
-* User: josh
-* Date: 5/14/14
-* Time: 11:50 AM
-*/
+ * User: josh
+ * Date: 5/14/14
+ * Time: 11:50 AM
+ */
 public class IntByteConverter extends Converter<Integer, byte[]> {
   public static final IntByteConverter INSTANCE = new IntByteConverter();
 

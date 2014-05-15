@@ -12,38 +12,39 @@ import java.util.concurrent.locks.ReentrantLock;
  * Time: 4:27 PM
  */
 public class GlobalExclusiveRetryPolicy extends BasicRetryPolicy {
-    private final ReentrantLock sessionLock = new ReentrantLock();
+  private final ReentrantLock sessionLock = new ReentrantLock();
 
-    private static final Logger LOG = LoggerFactory.getLogger(GlobalExclusiveRetryPolicy.class);
-    
-    @Override
-    public RetrySession newSession() {
-        
-        return new BasicRetrySession(this) {
+  private static final Logger LOG = LoggerFactory.getLogger(GlobalExclusiveRetryPolicy.class);
 
-            boolean hasPermission = false;
-            @Override
-            public boolean canRetry(Exception e) {
-                return super.canRetry(e) && obtainPermission();
-            }
+  @Override
+  public RetrySession newSession() {
 
-            public <T> T retry(Callable<T> closure) throws RetryAbortedException {
-                try {
-                    return super.retry(closure);
-                } finally {
-                    if (hasPermission) {
-                        sessionLock.unlock();
-                    }
-                }
-            }
+    return new BasicRetrySession(this) {
 
-            private boolean obtainPermission() {
-                if(!hasPermission) {
-                    sessionLock.lock();
-                    hasPermission = true;
-                }
-                return true;
-            }
-        };
-    }
+      boolean hasPermission = false;
+
+      @Override
+      public boolean canRetry(Exception e) {
+        return super.canRetry(e) && obtainPermission();
+      }
+
+      public <T> T retry(Callable<T> closure) throws RetryAbortedException {
+        try {
+          return super.retry(closure);
+        } finally {
+          if (hasPermission) {
+            sessionLock.unlock();
+          }
+        }
+      }
+
+      private boolean obtainPermission() {
+        if (!hasPermission) {
+          sessionLock.lock();
+          hasPermission = true;
+        }
+        return true;
+      }
+    };
+  }
 }

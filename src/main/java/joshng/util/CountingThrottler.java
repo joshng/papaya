@@ -15,19 +15,20 @@ import static joshng.util.collect.Maybe.definitely;
  * Date: 12/28/12
  * Time: 4:21 PM
  */
+
 /**
  * Utility class to encapsulate a common pattern that involves counting occurrences of an event,
  * with throttled logging to occasionally expose how many times the event has happened.
- *
+ * <p>
  * Usage:
- *
+ * <p>
  * <pre>{@code
  * // register a Meter to count all occurrences
  * Meter meter = Metrics.newMeter(MyClass.class, "someEvent", "whatever", TimeUnit.MINUTES);
- *
+ * <p>
  * // configure a throttler to control our logging-spam: this will permit logging at most once every 5 seconds
  * CountingThrottler errorLogThrottler = new CountingThrottler(meter, new Throttler(5, TimeUnit.SECONDS);
- *
+ * <p>
  * try {
  *     // ... do work ...
  * } catch (Exception e) {
@@ -39,72 +40,74 @@ import static joshng.util.collect.Maybe.definitely;
  * }</pre>
  */
 public class CountingThrottler implements Source<Maybe<Long>> {
-    private final Throttler throttler;
-    private final Meter meter;
+  private final Throttler throttler;
+  private final Meter meter;
 
-    public CountingThrottler(Meter meter, Throttler throttler) {
-        this.meter = meter;
-        this.throttler = throttler;
-    }
+  public CountingThrottler(Meter meter, Throttler throttler) {
+    this.meter = meter;
+    this.throttler = throttler;
+  }
 
-    /**
-     * @return If the underlying {@link Throttler} permits, returns the total count of calls
-     * to tryAcquire() since startup. Otherwise, Maybe.not().
-     */
-    public Maybe<Long> tryAcquire() {
-        meter.mark();
-        if (throttler.tryAcquire()) {
-            return definitely(getCount());
-        } else {
-            return Maybe.not();
-        }
+  /**
+   * @return If the underlying {@link Throttler} permits, returns the total count of calls
+   * to tryAcquire() since startup. Otherwise, Maybe.not().
+   */
+  public Maybe<Long> tryAcquire() {
+    meter.mark();
+    if (throttler.tryAcquire()) {
+      return definitely(getCount());
+    } else {
+      return Maybe.not();
     }
+  }
 
-    /**
-     * If {@link #tryAcquire} permits (ie, if the underlying {@link Throttler} permits), invokes the provided
-     * function with the result from {@link #tryAcquire} (ie, total count of all calls since startup).
-     * Otherwise, does NOT invoke the function, and returns Maybe.not().
-     */
-    public <T> Maybe<T> invokeThrottled(Function<? super Long, T> periodicBlock) {
-        return tryAcquire().map(periodicBlock);
-    }
+  /**
+   * If {@link #tryAcquire} permits (ie, if the underlying {@link Throttler} permits), invokes the provided
+   * function with the result from {@link #tryAcquire} (ie, total count of all calls since startup).
+   * Otherwise, does NOT invoke the function, and returns Maybe.not().
+   */
+  public <T> Maybe<T> invokeThrottled(Function<? super Long, T> periodicBlock) {
+    return tryAcquire().map(periodicBlock);
+  }
 
-    public long getCount() {
-        return meter.count();
-    }
+  public long getCount() {
+    return meter.count();
+  }
 
-    public void logCountWithThrottling(Logger logger, LogLevel level, String format) {
-        meter.mark();
-        if (throttler.tryAcquire()) level.log(logger, format, getCount());
-    }
+  public void logCountWithThrottling(Logger logger, LogLevel level, String format) {
+    meter.mark();
+    if (throttler.tryAcquire()) level.log(logger, format, getCount());
+  }
 
-    public void countAndLogWithThrottle(Logger logger, LogLevel level, String format, Object arg) {
-        meter.mark();
-        if (throttler.tryAcquire()) level.log(logger, format, arg, getCount());
-    }
+  public void countAndLogWithThrottle(Logger logger, LogLevel level, String format, Object arg) {
+    meter.mark();
+    if (throttler.tryAcquire()) level.log(logger, format, arg, getCount());
+  }
 
-    public void countAndLogWithThrottle(Logger logger, LogLevel level, String format, Object... args) {
-        meter.mark();
-        if (throttler.tryAcquire() && level.isEnabled(logger)) level.log(logger, format, ObjectArrays.concat(args, getCount()));
-    }
+  public void countAndLogWithThrottle(Logger logger, LogLevel level, String format, Object... args) {
+    meter.mark();
+    if (throttler.tryAcquire() && level.isEnabled(logger))
+      level.log(logger, format, ObjectArrays.concat(args, getCount()));
+  }
 
-    public void countAndStacktraceWithThrottle(Logger logger, LogLevel level, Throwable t, String format) {
-        meter.mark();
-        if (throttler.tryAcquire()) level.stacktrace(logger, t, format, getCount());
-    }
+  public void countAndStacktraceWithThrottle(Logger logger, LogLevel level, Throwable t, String format) {
+    meter.mark();
+    if (throttler.tryAcquire()) level.stacktrace(logger, t, format, getCount());
+  }
 
-    public void countAndStacktraceWithThrottle(Logger logger, LogLevel level, Throwable t, String format, Object arg) {
-        meter.mark();
-        if (throttler.tryAcquire()) level.stacktrace(logger, t, format, arg, getCount());
-    }
+  public void countAndStacktraceWithThrottle(Logger logger, LogLevel level, Throwable t, String format, Object arg) {
+    meter.mark();
+    if (throttler.tryAcquire()) level.stacktrace(logger, t, format, arg, getCount());
+  }
 
-    public void countAndStacktraceWithThrottle(Logger logger, LogLevel level, Throwable t, String format, Object... args) {
-        meter.mark();
-        if (throttler.tryAcquire() && level.isEnabled(logger)) level.stacktrace(logger, t, format, ObjectArrays.concat(args, getCount()));
-    }
+  public void countAndStacktraceWithThrottle(Logger logger, LogLevel level, Throwable t, String format, Object... args) {
+    meter.mark();
+    if (throttler.tryAcquire() && level.isEnabled(logger))
+      level.stacktrace(logger, t, format, ObjectArrays.concat(args, getCount()));
+  }
 
-    @Override
-    public Maybe<Long> get() {
-        return tryAcquire();
-    }
+  @Override
+  public Maybe<Long> get() {
+    return tryAcquire();
+  }
 }

@@ -10,6 +10,7 @@ import java.util.Collection;
  * Time: 11:19 AM
  */
 public interface IntegratedService extends Service {
-    Collection<? extends Service> getRequiredServices();
-    Collection<? extends Service> getExcludedServiceDependencies();
+  Collection<? extends Service> getRequiredServices();
+
+  Collection<? extends Service> getExcludedServiceDependencies();
 }

@@ -6,5 +6,5 @@ package joshng.util.blocks;
  * Time: 2:32 PM
  */
 public interface ThrowingFunction<I, O> {
-    public O apply(I input) throws Exception;
+  public O apply(I input) throws Exception;
 }

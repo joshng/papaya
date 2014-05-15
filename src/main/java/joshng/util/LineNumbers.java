@@ -4,15 +4,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Maps;
-import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.Attribute;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.FieldVisitor;
-import org.objectweb.asm.Label;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
+import org.objectweb.asm.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,10 +18,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
-* Looks up line numbers for classes and their members.
-*
-* @author Chris Nokleberg
-*/
+ * Looks up line numbers for classes and their members.
+ *
+ * @author Chris Nokleberg
+ */
 
 public class LineNumbers {
 
@@ -39,44 +31,44 @@ public class LineNumbers {
   private int firstLine = Integer.MAX_VALUE;
   /*if[AOP]*/
   static final LoadingCache<Class<?>, LineNumbers> lineNumbersCache = CacheBuilder.newBuilder().weakKeys().softValues()
-      .build(new CacheLoader<Class<?>, LineNumbers>() {
-          public LineNumbers load(Class<?> key) {
+          .build(new CacheLoader<Class<?>, LineNumbers>() {
+            public LineNumbers load(Class<?> key) {
               try {
-                  return new LineNumbers(key);
+                return new LineNumbers(key);
               } catch (IOException e) {
-                  throw new RuntimeException(e);
+                throw new RuntimeException(e);
               }
-          }
-      });
+            }
+          });
   /*end[AOP]*/
 
-    static final LoadingCache<Member, StackTraceElement> stackTraceCache = CacheBuilder.newBuilder().weakKeys().softValues().build(new CacheLoader<Member, StackTraceElement>() {
-        public StackTraceElement load(Member member) {
-            Class<?> declaringClass = member.getDeclaringClass();
-            LineNumbers lineNumbers = lineNumbersCache.getUnchecked(declaringClass);
-            String fileName = lineNumbers.getSource();
-            Integer lineNumberOrNull = lineNumbers.getLineNumber(member);
-            int lineNumber = lineNumberOrNull == null ? lineNumbers.getFirstLine() : lineNumberOrNull - 1;
+  static final LoadingCache<Member, StackTraceElement> stackTraceCache = CacheBuilder.newBuilder().weakKeys().softValues().build(new CacheLoader<Member, StackTraceElement>() {
+    public StackTraceElement load(Member member) {
+      Class<?> declaringClass = member.getDeclaringClass();
+      LineNumbers lineNumbers = lineNumbersCache.getUnchecked(declaringClass);
+      String fileName = lineNumbers.getSource();
+      Integer lineNumberOrNull = lineNumbers.getLineNumber(member);
+      int lineNumber = lineNumberOrNull == null ? lineNumbers.getFirstLine() : lineNumberOrNull - 1;
 
-            String memberName = member instanceof Constructor ? "<init>" : member.getName();
-            return new StackTraceElement(declaringClass.getName(), memberName, fileName, lineNumber);
-        }
-    });
-
-    public static LineNumbers get(Member member) {
-        return lineNumbersCache.getUnchecked(member.getDeclaringClass());
+      String memberName = member instanceof Constructor ? "<init>" : member.getName();
+      return new StackTraceElement(declaringClass.getName(), memberName, fileName, lineNumber);
     }
+  });
 
-    public static StackTraceElement getStackTraceElement(Member member) {
-        return stackTraceCache.getUnchecked(member);
-    }
+  public static LineNumbers get(Member member) {
+    return lineNumbersCache.getUnchecked(member.getDeclaringClass());
+  }
+
+  public static StackTraceElement getStackTraceElement(Member member) {
+    return stackTraceCache.getUnchecked(member);
+  }
 
   /**
    * Reads line number information from the given class, if available.
    *
    * @param type the class to read line number information from
    * @throws IllegalArgumentException if the bytecode for the class cannot be found
-   * @throws java.io.IOException if an error occurs while reading bytecode
+   * @throws java.io.IOException      if an error occurs while reading bytecode
    */
 
   private LineNumbers(Class type) throws IOException {
@@ -105,16 +97,18 @@ public class LineNumbers {
    * @param member a field, constructor, or method belonging to the class used during construction
    * @return the wrapped line number, or null if not available
    * @throws IllegalArgumentException if the member does not belong to the class used during
-   * construction
+   *                                  construction
    */
 
   public Integer getLineNumber(Member member) {
     checkArgument(type == member.getDeclaringClass(),
-        "Member %s belongs to %s, not %s", member, member.getDeclaringClass(), type);
+            "Member %s belongs to %s, not %s", member, member.getDeclaringClass(), type);
     return lines.get(memberKey(member));
   }
 
-  /** Gets the first line number. */
+  /**
+   * Gets the first line number.
+   */
 
   public int getFirstLine() {
     return firstLine == Integer.MAX_VALUE ? 1 : firstLine;
@@ -129,13 +123,13 @@ public class LineNumbers {
 
 
     public void visit(int version, int access, String name, String signature,
-        String superName, String[] interfaces) {
+                      String superName, String[] interfaces) {
       this.name = name;
     }
 
 
     public MethodVisitor visitMethod(int access, String name, String desc,
-        String signature, String[] exceptions) {
+                                     String signature, String[] exceptions) {
       if ((access & Opcodes.ACC_PRIVATE) != 0) {
         return null;
       }
@@ -164,9 +158,9 @@ public class LineNumbers {
 
 
     public void visitFieldInsn(int opcode, String owner, String name,
-        String desc) {
+                               String desc) {
       if (opcode == Opcodes.PUTFIELD && this.name.equals(owner)
-          && !lines.containsKey(name) && line != -1) {
+              && !lines.containsKey(name) && line != -1) {
         lines.put(name, line);
       }
     }
@@ -177,7 +171,7 @@ public class LineNumbers {
 
 
     public void visitInnerClass(String name, String outerName, String innerName,
-        int access) {
+                                int access) {
     }
 
 
@@ -190,7 +184,7 @@ public class LineNumbers {
 
 
     public FieldVisitor visitField(int access, String name, String desc,
-        String signature, Object value) {
+                                   String signature, Object value) {
       return null;
     }
 
@@ -211,7 +205,7 @@ public class LineNumbers {
 
 
     public AnnotationVisitor visitParameterAnnotation(int parameter,
-        String desc, boolean visible) {
+                                                      String desc, boolean visible) {
       return this;
     }
 
@@ -234,7 +228,7 @@ public class LineNumbers {
 
 
     public void visitFrame(int type, int nLocal, Object[] local, int nStack,
-        Object[] stack) {
+                           Object[] stack) {
     }
 
 
@@ -263,7 +257,7 @@ public class LineNumbers {
 
 
     public void visitLocalVariable(String name, String desc, String signature,
-        Label start, Label end, int index) {
+                                   Label start, Label end, int index) {
     }
 
 
@@ -276,7 +270,7 @@ public class LineNumbers {
 
 
     public void visitMethodInsn(int opcode, String owner, String name,
-        String desc) {
+                                String desc) {
     }
 
 
@@ -285,12 +279,12 @@ public class LineNumbers {
 
 
     public void visitTableSwitchInsn(int min, int max, Label dflt,
-        Label[] labels) {
+                                     Label[] labels) {
     }
 
 
     public void visitTryCatchBlock(Label start, Label end, Label handler,
-        String type) {
+                                   String type) {
     }
 
 
@@ -302,30 +296,30 @@ public class LineNumbers {
     }
   }
 
-    public static String memberKey(Member member) {
-      checkNotNull(member, "member");
+  public static String memberKey(Member member) {
+    checkNotNull(member, "member");
 
       /*if[AOP]*/
-      if (member instanceof Field) {
-        return member.getName();
+    if (member instanceof Field) {
+      return member.getName();
 
-      } else if (member instanceof Method) {
-        return member.getName() +  Type.getMethodDescriptor((Method) member);
+    } else if (member instanceof Method) {
+      return member.getName() + Type.getMethodDescriptor((Method) member);
 
-      } else if (member instanceof Constructor) {
-        StringBuilder sb = new StringBuilder().append("<init>(");
-        for (Class param : ((Constructor) member).getParameterTypes()) {
-            sb.append(Type.getDescriptor(param));
-        }
-        return sb.append(")V").toString();
-
-      } else {
-        throw new IllegalArgumentException(
-            "Unsupported implementation class for Member, " +  member.getClass());
+    } else if (member instanceof Constructor) {
+      StringBuilder sb = new StringBuilder().append("<init>(");
+      for (Class param : ((Constructor) member).getParameterTypes()) {
+        sb.append(Type.getDescriptor(param));
       }
+      return sb.append(")V").toString();
+
+    } else {
+      throw new IllegalArgumentException(
+              "Unsupported implementation class for Member, " + member.getClass());
+    }
       /*end[AOP]*/
       /*if[NO_AOP]
       return "<NO_MEMBER_KEY>";
       end[NO_AOP]*/
-    }
+  }
 }

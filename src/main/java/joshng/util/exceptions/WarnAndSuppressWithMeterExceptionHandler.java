@@ -9,16 +9,16 @@ import org.slf4j.Logger;
  * Time: 10:12 AM
  */
 public class WarnAndSuppressWithMeterExceptionHandler<E extends Throwable> extends WarnAndSuppressExceptionHandler<E> {
-    final Meter meter;
+  final Meter meter;
 
-    public WarnAndSuppressWithMeterExceptionHandler(Class<E> throwableClass, String message, Logger logger, Meter meter) {
-        
-        super(throwableClass, message, logger);
-        this.meter = meter;
-    }
+  public WarnAndSuppressWithMeterExceptionHandler(Class<E> throwableClass, String message, Logger logger, Meter meter) {
 
-    public void handle(E e) {
-        meter.mark();
-        super.handle(e);
-    }
+    super(throwableClass, message, logger);
+    this.meter = meter;
+  }
+
+  public void handle(E e) {
+    meter.mark();
+    super.handle(e);
+  }
 }

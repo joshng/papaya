@@ -6,9 +6,9 @@ package joshng.util.context;
  * Time: 12:14 AM
  */
 public interface TransientContext {
-    public interface State {
-        void exit();
-    }
+  public interface State {
+    void exit();
+  }
 
-    State enter();
+  State enter();
 }

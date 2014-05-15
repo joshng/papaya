@@ -8,14 +8,16 @@ import java.util.UUID;
 import static com.google.common.base.Preconditions.checkArgument;
 
 /**
-* User: josh
-* Date: 5/14/14
-* Time: 12:37 PM
-*/
+ * User: josh
+ * Date: 5/14/14
+ * Time: 12:37 PM
+ */
 public class UuidByteConverter extends Converter<UUID, byte[]> {
   public static final UuidByteConverter INSTANCE = new UuidByteConverter();
   private static final int BYTE_LENGTH = 2 * Long.BYTES;
-  public UuidByteConverter() {}
+
+  public UuidByteConverter() {
+  }
 
 
   @Override

@@ -11,21 +11,23 @@ import java.util.function.Consumer;
  * Date: 10/2/12
  * Time: 1:57 AM
  */
-public interface Sink2<T, U> extends BiConsumer<T, U>, F2<T, U, Nothing>, Consumer<Map.Entry<? extends T, ? extends U>>,ThrowingConsumer<Map.Entry<? extends T,? extends U>> {
-  static <T, U> Sink2<T, U> method(Sink2<T, U> method) { return method; }
+public interface Sink2<T, U> extends BiConsumer<T, U>, F2<T, U, Nothing>, Consumer<Map.Entry<? extends T, ? extends U>>, ThrowingConsumer<Map.Entry<? extends T, ? extends U>> {
+  static <T, U> Sink2<T, U> method(Sink2<T, U> method) {
+    return method;
+  }
 
-    default public Nothing apply(T input1, U input2) {
-        accept(input1, input2);
-        return Nothing.NOTHING;
-    }
+  default public Nothing apply(T input1, U input2) {
+    accept(input1, input2);
+    return Nothing.NOTHING;
+  }
 
-    default public void accept(Map.Entry<? extends T, ? extends U> value) {
-        accept(value.getKey(), value.getValue());
-    }
+  default public void accept(Map.Entry<? extends T, ? extends U> value) {
+    accept(value.getKey(), value.getValue());
+  }
 
-    default <I> Sink<I> compose(Unzipper<? super I, ? extends T, ? extends U> unzipper) {
-        return input -> accept(unzipper.getKey(input), unzipper.getValue(input));
-    }
+  default <I> Sink<I> compose(Unzipper<? super I, ? extends T, ? extends U> unzipper) {
+    return input -> accept(unzipper.getKey(input), unzipper.getValue(input));
+  }
 
   @Override
   default Sink<U> bindFirst(final T input1) {
@@ -39,10 +41,10 @@ public interface Sink2<T, U> extends BiConsumer<T, U>, F2<T, U, Nothing>, Consum
 
   abstract void accept(T input1, U input2);
 
-    @SuppressWarnings("unchecked")
-    @Override
-    default Sink<Map.Entry<? extends T, ? extends U>> tupled() {
-        F<Map.Entry<? extends T, ? extends U>, Nothing> tupled = F2.super.tupled();
-        return Sink.extendFunction(tupled);
-    }
+  @SuppressWarnings("unchecked")
+  @Override
+  default Sink<Map.Entry<? extends T, ? extends U>> tupled() {
+    F<Map.Entry<? extends T, ? extends U>, Nothing> tupled = F2.super.tupled();
+    return Sink.extendFunction(tupled);
+  }
 }

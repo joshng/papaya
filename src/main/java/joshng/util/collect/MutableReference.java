@@ -8,7 +8,9 @@ import java.util.function.Supplier;
  * Time: 1:53 PM
  */
 public interface MutableReference<T> extends Supplier<T> {
-    void set(T value);
-    boolean compareAndSet(T expect, T update);
-    T getAndSet(T value);
+  void set(T value);
+
+  boolean compareAndSet(T expect, T update);
+
+  T getAndSet(T value);
 }

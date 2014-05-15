@@ -25,16 +25,16 @@ public interface FunFutureMaybe<T> extends FunFuture<Maybe<T>> {
 
   @SuppressWarnings("unchecked")
   static <T> FunFutureMaybe<T> futureMaybeNot() {
-      return EMPTY_FUTURE;
+    return EMPTY_FUTURE;
   }
 
   @SuppressWarnings("unchecked")
   static <T> F<ListenableFuture<? extends T>, FunFuture<Maybe<T>>> maybeWrapper() {
-      return MAYBE_WRAPPER;
+    return MAYBE_WRAPPER;
   }
 
   static <T> FunFuture<Maybe<T>> asFutureMaybe(Maybe<? extends ListenableFuture<? extends T>> maybeOfFuture) {
-      return maybeOfFuture.map(FunFutureMaybe.<T>maybeWrapper()).getOrElse(FunFutureMaybe.<T>futureMaybeNot());
+    return maybeOfFuture.map(FunFutureMaybe.<T>maybeWrapper()).getOrElse(FunFutureMaybe.<T>futureMaybeNot());
   }
 
   default <O> FunFutureMaybe<O> mapIfDefined(Function<? super T, ? extends O> f) {
@@ -76,6 +76,7 @@ public interface FunFutureMaybe<T> extends FunFuture<Maybe<T>> {
   static <I, O> AsyncF<Maybe<I>, Maybe<O>> flatMapper(AsyncFunction<? super I, O> f) {
     return maybe -> asFutureMaybe(maybe.map(AsyncF.asyncF(f)));
   }
+
   static <I, O> AsyncF<Maybe<I>, Maybe<O>> maybeFlatMapper(AsyncFunction<? super I, Maybe<O>> f) {
     return maybe -> maybe.map(AsyncF.asyncF(f)).getOrElse(FunFutureMaybe.futureMaybeNot());
   }

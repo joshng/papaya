@@ -12,30 +12,31 @@ import javax.annotation.Nullable;
  * Time: 9:36 AM
  */
 public class ThreadLocalRef<T> extends ThreadLocal<T> implements MutableReference<T> {
-    private final T initialValue;
+  private final T initialValue;
 
-    public ThreadLocalRef(T initialValue) {
-        this.initialValue = initialValue;
-    }
+  public ThreadLocalRef(T initialValue) {
+    this.initialValue = initialValue;
+  }
 
-    public ThreadLocalRef() {
-        this(null);
-    }
+  public ThreadLocalRef() {
+    this(null);
+  }
 
-    public StackContext contextWithValue(final T value) {
-        return Ref.contextWithValue(value, this);
-    }
+  public StackContext contextWithValue(final T value) {
+    return Ref.contextWithValue(value, this);
+  }
 
-    public boolean compareAndSet(@Nullable T expect, @Nullable T update) {
-        return Ref.nonAtomicCompareAndSet(this, expect, update);
-    }
+  public boolean compareAndSet(@Nullable T expect, @Nullable T update) {
+    return Ref.nonAtomicCompareAndSet(this, expect, update);
+  }
 
-    @Override public T getAndSet(T value) {
-        return Ref.nonAtomicGetAndSet(this, value);
-    }
+  @Override
+  public T getAndSet(T value) {
+    return Ref.nonAtomicGetAndSet(this, value);
+  }
 
-    @Override
-    protected T initialValue() {
-        return initialValue;
-    }
+  @Override
+  protected T initialValue() {
+    return initialValue;
+  }
 }

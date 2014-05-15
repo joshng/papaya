@@ -13,19 +13,21 @@ import java.util.regex.Pattern;
  * Time: 2:30 PM
  */
 public class SqlStrings {
-    private static final Pattern UNESCAPED_WILDCARD_PATTERN = Pattern.compile("(^|[^\\\\])[%_]");
-    public static boolean containsWildcards(String sql) {
-        return UNESCAPED_WILDCARD_PATTERN.matcher(sql).find();
-    }
+  private static final Pattern UNESCAPED_WILDCARD_PATTERN = Pattern.compile("(^|[^\\\\])[%_]");
 
-    private static final Pattern WILDCARD_PATTERN = Pattern.compile("[%_]");
-    public static String escapeWildcards(String sql) {
-        return WILDCARD_PATTERN.matcher(sql).replaceAll("\\\\$0");
-    }
+  public static boolean containsWildcards(String sql) {
+    return UNESCAPED_WILDCARD_PATTERN.matcher(sql).find();
+  }
 
-    @Nullable
-    public static byte[] getBlobBytes(String columnName, ResultSet rs) throws SQLException {
-        Blob blob = rs.getBlob(columnName);
-        return blob == null ? null : blob.getBytes(1, (int) blob.length());
-    }
+  private static final Pattern WILDCARD_PATTERN = Pattern.compile("[%_]");
+
+  public static String escapeWildcards(String sql) {
+    return WILDCARD_PATTERN.matcher(sql).replaceAll("\\\\$0");
+  }
+
+  @Nullable
+  public static byte[] getBlobBytes(String columnName, ResultSet rs) throws SQLException {
+    Blob blob = rs.getBlob(columnName);
+    return blob == null ? null : blob.getBytes(1, (int) blob.length());
+  }
 }

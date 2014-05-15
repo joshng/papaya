@@ -11,29 +11,31 @@ import java.util.concurrent.ScheduledExecutorService;
  * Time: 6:11:01 PM
  */
 public interface RetrySession {
-    <T> T retry(Callable<T> closure) throws RetryAbortedException;
-    void retry(Runnable runnable) throws RetryAbortedException;
-    <T> FunFuture<T> retryAsync(ScheduledExecutorService scheduler, Callable<? extends FunFuture<T>> jobStarter);
+  <T> T retry(Callable<T> closure) throws RetryAbortedException;
 
-    RetrySession NO_RETRY = new AbstractRetrySession() {
-        protected boolean sleepBeforeRetry(Exception e) {
-            return false;
-        }
+  void retry(Runnable runnable) throws RetryAbortedException;
 
-        public boolean canRetry(Exception e) {
-            return false;
-        }
+  <T> FunFuture<T> retryAsync(ScheduledExecutorService scheduler, Callable<? extends FunFuture<T>> jobStarter);
 
-        public boolean canRetryAfterDelay(long currentDelay) {
-            return false;
-        }
+  RetrySession NO_RETRY = new AbstractRetrySession() {
+    protected boolean sleepBeforeRetry(Exception e) {
+      return false;
+    }
 
-        public void willRetry() {
-            throw new UnsupportedOperationException("No retries permitted");
-        }
+    public boolean canRetry(Exception e) {
+      return false;
+    }
 
-        public long computeCurrentDelay() {
-            return 0;
-        }
-    };
+    public boolean canRetryAfterDelay(long currentDelay) {
+      return false;
+    }
+
+    public void willRetry() {
+      throw new UnsupportedOperationException("No retries permitted");
+    }
+
+    public long computeCurrentDelay() {
+      return 0;
+    }
+  };
 }

@@ -6,5 +6,5 @@ package joshng.util.blocks;
  * Time: 11:33:40 AM
  */
 public interface ThrowingConsumer<T> {
-    void accept(T value) throws Exception;
+  void accept(T value) throws Exception;
 }

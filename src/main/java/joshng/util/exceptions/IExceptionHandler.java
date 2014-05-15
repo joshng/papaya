@@ -6,5 +6,5 @@ package joshng.util.exceptions;
  * Time: 11:23:02 AM
  */
 public interface IExceptionHandler {
-    boolean didHandle(Throwable throwable);
+  boolean didHandle(Throwable throwable);
 }

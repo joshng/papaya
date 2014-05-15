@@ -6,17 +6,18 @@ package joshng.util.retries;
  * Time: 12:30:55 PM
  */
 public class TryAgain extends RuntimeException {
-    public TryAgain(String message) {
-        super(message);
-    }
+  public TryAgain(String message) {
+    super(message);
+  }
 
-    public TryAgain() {
-    }
+  public TryAgain() {
+  }
 
-    public static TryAgain please() {
-        throw new TryAgain();
-    }
-    public static TryAgain please(String message) {
-        throw new TryAgain(message);
-    }
+  public static TryAgain please() {
+    throw new TryAgain();
+  }
+
+  public static TryAgain please(String message) {
+    throw new TryAgain(message);
+  }
 }

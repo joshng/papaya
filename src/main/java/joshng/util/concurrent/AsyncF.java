@@ -16,45 +16,45 @@ import static joshng.util.concurrent.FunFuture.extendFuture;
  * Date: 12/7/12
  * Time: 11:38 AM
  */
-public interface AsyncF<I, O> extends F<I, FunFuture<O>>, IAsyncFunction<I,O> {
-    static final AsyncF IDENTITY = (AsyncF<ListenableFuture<Object>, Object>) FunFuture::extendFuture;
+public interface AsyncF<I, O> extends F<I, FunFuture<O>>, IAsyncFunction<I, O> {
+  static final AsyncF IDENTITY = (AsyncF<ListenableFuture<Object>, Object>) FunFuture::extendFuture;
 
-    @SuppressWarnings("unchecked")
-    public static <T> AsyncF<ListenableFuture<? extends T>, T> asyncIdentity() {
-        return IDENTITY;
+  @SuppressWarnings("unchecked")
+  public static <T> AsyncF<ListenableFuture<? extends T>, T> asyncIdentity() {
+    return IDENTITY;
+  }
+
+  public static <I, O> AsyncF<I, O> extendAsyncFunction(final Function<? super I, ? extends ListenableFuture<O>> asyncFunction) {
+    if (asyncFunction instanceof AsyncF) return Reflect.blindCast(asyncFunction);
+    return new AsyncF<I, O>() {
+      public FunFuture<O> applyAsync(I input) {
+        return extendFuture(asyncFunction.apply(input));
+      }
+    };
+  }
+
+  public static <I, O> AsyncF<I, O> asyncF(final AsyncFunction<? super I, O> function) {
+    if (function instanceof AsyncF) return Reflect.blindCast(function);
+    return new AsyncF<I, O>() {
+      public FunFuture<O> applyAsync(I input) throws Exception {
+        return extendFuture(function.apply(input));
+      }
+    };
+  }
+
+  default AsyncF<Object, O> bindAsync(I input) {
+    return extendAsyncFunction(bind(input));
+  }
+
+  @Nonnull
+  FunFuture<O> applyAsync(I input) throws Throwable;
+
+  @Override
+  default FunFuture<O> apply(I input) {
+    try {
+      return checkNotNull(applyAsync(input), "AsyncFunction must not return null!", this);
+    } catch (Throwable e) {
+      return FunFuture.immediateFailedFuture(e);
     }
-
-    public static <I, O> AsyncF<I, O> extendAsyncFunction(final Function<? super I, ? extends ListenableFuture<O>> asyncFunction) {
-        if (asyncFunction instanceof AsyncF) return Reflect.blindCast(asyncFunction);
-        return new AsyncF<I, O>() {
-            public FunFuture<O> applyAsync(I input) {
-                return extendFuture(asyncFunction.apply(input));
-            }
-        };
-    }
-
-    public static <I, O> AsyncF<I, O> asyncF(final AsyncFunction<? super I, O> function) {
-        if (function instanceof AsyncF) return Reflect.blindCast(function);
-        return new AsyncF<I, O>() {
-            public FunFuture<O> applyAsync(I input) throws Exception {
-                return extendFuture(function.apply(input));
-            }
-        };
-    }
-
-    default AsyncF<Object, O> bindAsync(I input) {
-        return extendAsyncFunction(bind(input));
-    }
-
-    @Nonnull
-    FunFuture<O> applyAsync(I input) throws Throwable;
-
-    @Override
-    default FunFuture<O> apply(I input) {
-        try {
-            return checkNotNull(applyAsync(input), "AsyncFunction must not return null!", this);
-        } catch (Throwable e) {
-            return FunFuture.immediateFailedFuture(e);
-        }
-    }
+  }
 }

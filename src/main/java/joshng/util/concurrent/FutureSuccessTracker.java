@@ -12,12 +12,12 @@ import com.google.common.util.concurrent.ListenableFuture;
  * reflect the exception thrown by the first failed job, if any.
  */
 public class FutureSuccessTracker extends FutureCompletionTracker {
-    @Override
-    protected void handleCompletedJob(ListenableFuture<?> job) {
-        try {
-            FunFuture.getUnchecked(job);
-        } catch (Throwable e) {
-            abort(e);
-        }
+  @Override
+  protected void handleCompletedJob(ListenableFuture<?> job) {
+    try {
+      FunFuture.getUnchecked(job);
+    } catch (Throwable e) {
+      abort(e);
     }
+  }
 }

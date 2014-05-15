@@ -24,146 +24,162 @@ import static joshng.util.concurrent.AsyncF.asyncF;
  * Time: 4:53:16 PM
  */
 public class BasicRetryPolicy implements RetryPolicy {
-    private long firstDelay = 2;
-    private long minDelay = 0;
-    private long maxDelay = 1000;
-    private long maxTryCount = Integer.MAX_VALUE;
-    private long duration = Long.MAX_VALUE;
-    private ExceptionPolicy exceptionPolicy = new ExceptionPolicy();
-    private double backoffFactor = 2.0;
-    private Predicate<? super Long> additionalAbortPolicy = Pred.alwaysTrue();
-    private Consumer<Exception> abortHandler;
-    private final F retryFunction = new F<Callable<?>, Object>() {
-        @Override
-        public Object apply(Callable<?> input) {
-            return newSession().retry(input);
-        }
+  private long firstDelay = 2;
+  private long minDelay = 0;
+  private long maxDelay = 1000;
+  private long maxTryCount = Integer.MAX_VALUE;
+  private long duration = Long.MAX_VALUE;
+  private ExceptionPolicy exceptionPolicy = new ExceptionPolicy();
+  private double backoffFactor = 2.0;
+  private Predicate<? super Long> additionalAbortPolicy = Pred.alwaysTrue();
+  private Consumer<Exception> abortHandler;
+  private final F retryFunction = new F<Callable<?>, Object>() {
+    @Override
+    public Object apply(Callable<?> input) {
+      return newSession().retry(input);
+    }
+  };
+
+  public BasicRetryPolicy firstDelayMillis(long delayMillis) {
+    firstDelay = delayMillis;
+    return this;
+  }
+
+  public BasicRetryPolicy firstDelay(int delay, TimeUnit timeUnit) {
+    return firstDelayMillis(timeUnit.toMillis(delay));
+  }
+
+  public BasicRetryPolicy minDelayMillis(long delayMillis) {
+    minDelay = delayMillis;
+    return this;
+  }
+
+  public BasicRetryPolicy minDelay(int delay, TimeUnit timeUnit) {
+    return minDelayMillis(timeUnit.toMillis(delay));
+  }
+
+  public BasicRetryPolicy maxDelayMillis(long delayMillis) {
+    maxDelay = delayMillis;
+    return this;
+  }
+
+  public BasicRetryPolicy maxDelay(int delay, TimeUnit timeUnit) {
+    return maxDelayMillis(timeUnit.toMillis(delay));
+  }
+
+  public BasicRetryPolicy failAfterTryCount(int count) {
+    maxTryCount = count;
+    return this;
+  }
+
+  public BasicRetryPolicy failAfterMillis(long delayMillis) {
+    duration = delayMillis;
+    return this;
+  }
+
+  public BasicRetryPolicy failAfter(int delay, TimeUnit timeUnit) {
+    return failAfterMillis(timeUnit.toMillis(delay));
+  }
+
+  public BasicRetryPolicy backoff(double factor) {
+    backoffFactor = factor;
+    return this;
+  }
+
+  public BasicRetryPolicy handling(IExceptionHandler exceptionHandler) {
+    exceptionPolicy.add(exceptionHandler);
+    return this;
+  }
+
+  public BasicRetryPolicy handling(ExceptionPolicy exceptionPolicy) {
+    this.exceptionPolicy = exceptionPolicy;
+    return this;
+  }
+
+  public BasicRetryPolicy withAdditionalAbortPolicy(Predicate<? super Long> additionalAbortPolicy) {
+    this.additionalAbortPolicy = additionalAbortPolicy;
+    return this;
+  }
+
+  public BasicRetryPolicy withAbortHandler(Consumer<Exception> abortHandler) {
+    this.abortHandler = abortHandler;
+    return this;
+  }
+
+
+  @SuppressWarnings("unchecked")
+  public <T> F<Callable<? extends T>, T> retry() {
+    return retryFunction;
+  }
+
+  public Runnable wrapRunnable(final Runnable runnable) {
+    return new Runnable() {
+      public void run() {
+        newSession().retry(runnable);
+      }
     };
+  }
 
-    public BasicRetryPolicy firstDelayMillis(long delayMillis) {
-        firstDelay = delayMillis; return this;
-    }
-    public BasicRetryPolicy firstDelay(int delay, TimeUnit timeUnit) {
-        return firstDelayMillis(timeUnit.toMillis(delay));
-    }
-    public BasicRetryPolicy minDelayMillis(long delayMillis) {
-        minDelay = delayMillis; return this;
-    }
-    public BasicRetryPolicy minDelay(int delay, TimeUnit timeUnit) {
-        return minDelayMillis(timeUnit.toMillis(delay));
-    }
-    
-    public BasicRetryPolicy maxDelayMillis(long delayMillis) {
-        maxDelay = delayMillis; return this;
-    }
-    public BasicRetryPolicy maxDelay(int delay, TimeUnit timeUnit) {
-        return maxDelayMillis(timeUnit.toMillis(delay));
-    }
-    public BasicRetryPolicy failAfterTryCount(int count) {
-        maxTryCount = count; return this;
-    }
-    public BasicRetryPolicy failAfterMillis(long delayMillis) {
-        duration = delayMillis; return this;
-    }
-    public BasicRetryPolicy failAfter(int delay, TimeUnit timeUnit) {
-        return failAfterMillis(timeUnit.toMillis(delay));
-    }
-    public BasicRetryPolicy backoff(double factor) {
-        backoffFactor = factor; return this;
-    }
+  public <I, O> AsyncF<I, O> wrapAsync(final ScheduledExecutorService scheduler, final AsyncFunction<I, O> async) {
+    final AsyncF<I, O> asyncF = asyncF(async);
+    return input -> newSession().retryAsync(scheduler, asyncF.bind(input));
+  }
 
-    public BasicRetryPolicy handling(IExceptionHandler exceptionHandler) {
-        exceptionPolicy.add(exceptionHandler);
-        return this;
-    }
-    public BasicRetryPolicy handling(ExceptionPolicy exceptionPolicy) {
-        this.exceptionPolicy = exceptionPolicy;
-        return this;
-    }
+  public <O> Source<FunFuture<O>> wrapAsyncCallable(final ScheduledExecutorService scheduler, final Callable<? extends FunFuture<O>> async) {
+    return new Source<FunFuture<O>>() {
+      @Override
+      public FunFuture<O> get() {
+        return newSession().retryAsync(scheduler, async);
+      }
+    };
+  }
 
-    public BasicRetryPolicy withAdditionalAbortPolicy(Predicate<? super Long> additionalAbortPolicy) {
-        this.additionalAbortPolicy = additionalAbortPolicy;
-        return this;
-    }
+  public <I, O> F<I, O> wrapFunction(Function<I, O> function) {
+    return F.<I, O>extendF(function).binder().andThen(this.<O>retry());
+  }
 
-    public BasicRetryPolicy withAbortHandler(Consumer<Exception> abortHandler) {
-        this.abortHandler = abortHandler;
-        return this;
-    }
+  public <T> Source<T> wrapCallable(final Callable<T> callable) {
+    return this.<T>retry().bind(callable);
+  }
 
+  public RetrySession newSession() {
+    return new BasicRetrySession(this);
+  }
 
-    @SuppressWarnings("unchecked")
-    public <T> F<Callable<? extends T>, T> retry() {
-        return retryFunction;
-    }
+  public ExceptionPolicy getExceptionPolicy() {
+    return exceptionPolicy;
+  }
 
-    public Runnable wrapRunnable(final Runnable runnable) {
-        return new Runnable() {
-            public void run() {
-                newSession().retry(runnable);
-            }
-        };
-    }
+  public long getFirstDelay() {
+    return firstDelay;
+  }
 
-    public <I, O> AsyncF<I, O> wrapAsync(final ScheduledExecutorService scheduler, final AsyncFunction<I, O> async) {
-        final AsyncF<I, O> asyncF = asyncF(async);
-        return input -> newSession().retryAsync(scheduler, asyncF.bind(input));
-    }
+  public long getMinDelay() {
+    return minDelay;
+  }
 
-    public <O> Source<FunFuture<O>> wrapAsyncCallable(final ScheduledExecutorService scheduler, final Callable<? extends FunFuture<O>> async) {
-        return new Source<FunFuture<O>>() {
-            @Override public FunFuture<O> get() {
-                return newSession().retryAsync(scheduler, async);
-            }
-        };
-    }
+  public long getMaxDelay() {
+    return maxDelay;
+  }
 
-    public <I, O> F<I, O> wrapFunction(Function<I, O> function) {
-        return F.<I,O>extendF(function).binder().andThen(this.<O>retry());
-    }
+  public long getMaxTryCount() {
+    return maxTryCount;
+  }
 
-    public <T> Source<T> wrapCallable(final Callable<T> callable) {
-        return this.<T>retry().bind(callable);
-    }
+  public long getDuration() {
+    return duration;
+  }
 
-    public RetrySession newSession() {
-        return new BasicRetrySession(this);
-    }
+  public double getBackoffFactor() {
+    return backoffFactor;
+  }
 
-    public ExceptionPolicy getExceptionPolicy() {
-        return exceptionPolicy;
-    }
+  public Consumer<Exception> getAbortHandler() {
+    return abortHandler;
+  }
 
-    public long getFirstDelay() {
-        return firstDelay;
-    }
-
-    public long getMinDelay() {
-        return minDelay;
-    }
-
-    public long getMaxDelay() {
-        return maxDelay;
-    }
-
-    public long getMaxTryCount() {
-        return maxTryCount;
-    }
-
-    public long getDuration() {
-        return duration;
-    }
-
-    public double getBackoffFactor() {
-        return backoffFactor;
-    }
-
-    public Consumer<Exception> getAbortHandler() {
-        return abortHandler;
-    }
-
-    public Predicate<? super Long> getAdditionalAbortPolicy() {
-        return additionalAbortPolicy;
-    }
+  public Predicate<? super Long> getAdditionalAbortPolicy() {
+    return additionalAbortPolicy;
+  }
 }
 

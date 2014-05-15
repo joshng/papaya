@@ -6,18 +6,18 @@ package joshng.util.concurrent;
  * Time: 11:49:53 PM
  */
 public class ShutdownException extends RuntimeException {
-    public ShutdownException() {
-    }
+  public ShutdownException() {
+  }
 
-    public ShutdownException(String message) {
-        super(message);
-    }
+  public ShutdownException(String message) {
+    super(message);
+  }
 
-    public static void throwIf(boolean isShutdown) {
-        throwIf(isShutdown, "Was shut down");
-    }
+  public static void throwIf(boolean isShutdown) {
+    throwIf(isShutdown, "Was shut down");
+  }
 
-    public static void throwIf(boolean isShutdown, String message) {
-        if (isShutdown) throw new ShutdownException(message);
-    }
+  public static void throwIf(boolean isShutdown, String message) {
+    if (isShutdown) throw new ShutdownException(message);
+  }
 }

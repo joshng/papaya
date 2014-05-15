@@ -15,32 +15,32 @@ import java.nio.charset.Charset;
  * Time: 11:33 PM
  */
 public class ByteArrayWriter extends OutputStreamWriter {
-    private final ByteArrayOutputStream output;
+  private final ByteArrayOutputStream output;
 
-    public ByteArrayWriter() {
-        this(new ByteArrayOutputStream(), Charsets.UTF_8);
-    }
+  public ByteArrayWriter() {
+    this(new ByteArrayOutputStream(), Charsets.UTF_8);
+  }
 
-    public ByteArrayWriter(Charset charset) throws UnsupportedEncodingException {
-        this(new ByteArrayOutputStream(), charset);
-    }
+  public ByteArrayWriter(Charset charset) throws UnsupportedEncodingException {
+    this(new ByteArrayOutputStream(), charset);
+  }
 
-    public ByteArrayWriter(ByteArrayOutputStream out, Charset cs) {
-        super(out, cs);
-        output = out;
-    }
+  public ByteArrayWriter(ByteArrayOutputStream out, Charset cs) {
+    super(out, cs);
+    output = out;
+  }
 
-    public ByteArrayWriter(ByteArrayOutputStream output) {
-        super(output);
-        this.output = output;
-    }
+  public ByteArrayWriter(ByteArrayOutputStream output) {
+    super(output);
+    this.output = output;
+  }
 
-    public byte[] toByteArray() {
-        try {
-            flush();
-        } catch (IOException e) {
-            throw Throwables.propagate(e);
-        }
-        return output.toByteArray();
+  public byte[] toByteArray() {
+    try {
+      flush();
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
     }
+    return output.toByteArray();
+  }
 }

@@ -7,10 +7,10 @@ package joshng.util.exceptions;
  */
 public class SilentExceptionHandler<E extends Throwable> extends ExceptionHandler<E> {
 
-    public SilentExceptionHandler(Class<E> errorClass) {
-        super(errorClass);
-    }
+  public SilentExceptionHandler(Class<E> errorClass) {
+    super(errorClass);
+  }
 
-    public void handle(E e) {
-    }
+  public void handle(E e) {
+  }
 }

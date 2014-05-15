@@ -16,72 +16,77 @@ import java.util.concurrent.TimeUnit;
  * Time: 1:29:26 PM
  */
 public abstract class AbstractRetrySession implements RetrySession {
-    public <T> T retry(Callable<T> callable) {
-        Exception exception;
-        do {
-            try {
-                return callable.call();
-            } catch (Exception e) {
-                exception = e;
-            }
-        } while (sleepBeforeRetry(exception));
+  public <T> T retry(Callable<T> callable) {
+    Exception exception;
+    do {
+      try {
+        return callable.call();
+      } catch (Exception e) {
+        exception = e;
+      }
+    } while (sleepBeforeRetry(exception));
 
-        throw onAborted(exception);
+    throw onAborted(exception);
+  }
+
+  public final void retry(Runnable runnable) {
+    retry(Executors.callable(runnable));
+  }
+
+  public final <T> FunFuture<T> retryAsync(final ScheduledExecutorService scheduler, final Callable<? extends FunFuture<T>> jobStarter) {
+    return new AsyncRetryPromise<>(scheduler, jobStarter);
+  }
+
+  protected abstract long computeCurrentDelay();
+
+  protected abstract boolean canRetry(Exception e);
+
+  protected abstract boolean canRetryAfterDelay(long currentDelay);
+
+  protected abstract void willRetry();
+
+  protected abstract boolean sleepBeforeRetry(Exception e);
+
+  protected RuntimeException onAborted(Exception exception) {
+    Throwables.propagateIfPossible(exception);
+    throw new RetryAbortedException(exception);
+  }
+
+
+  private class AsyncRetryPromise<T> extends Promise<T> implements Runnable {
+    private final ScheduledExecutorService scheduler;
+    private final Callable<? extends FunFuture<T>> jobStarter;
+
+    public AsyncRetryPromise(ScheduledExecutorService scheduler, Callable<? extends FunFuture<T>> jobStarter) {
+      this.scheduler = scheduler;
+      this.jobStarter = jobStarter;
+      try {
+        schedule(0);
+      } catch (Exception rejectedExecutionException) {
+        setFailure(rejectedExecutionException); // my retry
+      }
     }
 
-    public final void retry(Runnable runnable) {
-        retry(Executors.callable(runnable));
+    public void run() {
+      completeWithResultOf(jobStarter);
     }
 
-    public final <T> FunFuture<T> retryAsync(final ScheduledExecutorService scheduler, final Callable<? extends FunFuture<T>> jobStarter) {
-        return new AsyncRetryPromise<>(scheduler, jobStarter);
-    }
-
-    protected abstract long computeCurrentDelay();
-    protected abstract boolean canRetry(Exception e);
-    protected abstract boolean canRetryAfterDelay(long currentDelay);
-    protected abstract void willRetry();
-    protected abstract boolean sleepBeforeRetry(Exception e);
-
-    protected RuntimeException onAborted(Exception exception) {
-        Throwables.propagateIfPossible(exception);
-        throw new RetryAbortedException(exception);        
-    }
-
-
-    private class AsyncRetryPromise<T> extends Promise<T> implements Runnable {
-        private final ScheduledExecutorService scheduler;
-        private final Callable<? extends FunFuture<T>> jobStarter;
-
-        public AsyncRetryPromise(ScheduledExecutorService scheduler, Callable<? extends FunFuture<T>> jobStarter) {
-            this.scheduler = scheduler;
-            this.jobStarter = jobStarter;
-            try {
-                schedule(0);
-            } catch (Exception rejectedExecutionException) {
-                setFailure(rejectedExecutionException); // my retry
-            }
+    @Override
+    protected boolean handleFailure(Throwable failure) {
+      Exception e = FatalErrorHandler.castOrDie(failure);
+      if (canRetry(e)) {
+        long delay = computeCurrentDelay();
+        if (canRetryAfterDelay(delay)) {
+          willRetry();
+          schedule(delay);
+          return false;
         }
-
-        public void run() {
-            completeWithResultOf(jobStarter);
-        }
-
-        @Override protected boolean handleFailure(Throwable failure) {
-            Exception e = FatalErrorHandler.castOrDie(failure);
-            if (canRetry(e)) {
-                long delay = computeCurrentDelay();
-                if (canRetryAfterDelay(delay)) {
-                    willRetry();
-                    schedule(delay);
-                    return false;
-                }
-            }
-            return fail(failure);
-        }
-
-        private void schedule(long delay) {
-            attachFutureCompletion(scheduler.schedule(this, delay, TimeUnit.MILLISECONDS));
-        }
+      }
+      return fail(failure);
     }
+
+    private void schedule(long delay) {
+      attachFutureCompletion(scheduler.schedule(this, delay, TimeUnit.MILLISECONDS));
+    }
+  }
 }

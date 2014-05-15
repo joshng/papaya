@@ -8,23 +8,23 @@ import joshng.util.collect.Nothing;
  * Time: 10:59 AM
  */
 public interface SideEffect extends Source<Nothing>, Runnable {
-    public static SideEffect extendRunnable(final Runnable runnable) {
-        if (runnable instanceof SideEffect) return (SideEffect)runnable;
-        return runnable::run;
-    }
+  public static SideEffect extendRunnable(final Runnable runnable) {
+    if (runnable instanceof SideEffect) return (SideEffect) runnable;
+    return runnable::run;
+  }
 
-    default <T> Tapper<T> asTapper() {
-        return value -> run();
-    }
+  default <T> Tapper<T> asTapper() {
+    return value -> run();
+  }
 
-    @Override
-    default Runnable asRunnable() {
-        return this;
-    }
+  @Override
+  default Runnable asRunnable() {
+    return this;
+  }
 
-    @Override
-    default Nothing get() {
-        run();
-        return Nothing.NOTHING;
-    }
+  @Override
+  default Nothing get() {
+    run();
+    return Nothing.NOTHING;
+  }
 }

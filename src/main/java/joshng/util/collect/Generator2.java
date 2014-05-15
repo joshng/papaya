@@ -13,21 +13,21 @@ import java.lang.reflect.InvocationTargetException;
  * Time: 7:12 PM
  */
 public class Generator2<I1, I2, O> implements F2<I1, I2, O> {
-    private final Constructor constructor;
+  private final Constructor constructor;
 
-    public Generator2(Class<I1> parameterClass1, Class<I2> parameterClass2, Class<O> generatedClass) {
-        constructor = Reflect.getConstructor(generatedClass, parameterClass1, parameterClass2);
-        constructor.setAccessible(true);
-    }
+  public Generator2(Class<I1> parameterClass1, Class<I2> parameterClass2, Class<O> generatedClass) {
+    constructor = Reflect.getConstructor(generatedClass, parameterClass1, parameterClass2);
+    constructor.setAccessible(true);
+  }
 
-    @SuppressWarnings({"unchecked"})
-    public O apply(I1 input1, I2 input2) {
-        try {
-            return (O) constructor.newInstance(input1, input2);
-        } catch (InstantiationException | IllegalAccessException e) {
-            throw Throwables.propagate(e);
-        } catch (InvocationTargetException e) {
-            throw Throwables.propagate(e.getCause());
-        }
+  @SuppressWarnings({"unchecked"})
+  public O apply(I1 input1, I2 input2) {
+    try {
+      return (O) constructor.newInstance(input1, input2);
+    } catch (InstantiationException | IllegalAccessException e) {
+      throw Throwables.propagate(e);
+    } catch (InvocationTargetException e) {
+      throw Throwables.propagate(e.getCause());
     }
+  }
 }
