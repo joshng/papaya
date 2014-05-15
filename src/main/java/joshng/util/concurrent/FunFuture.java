@@ -99,7 +99,9 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         } catch (ExecutionException e) {
-            throw new UncheckedExecutionException(e.getCause());
+          Throwable cause = e.getCause();
+          if (cause instanceof UncheckedExecutionException) throw (UncheckedExecutionException)cause;
+          throw new UncheckedExecutionException(cause);
         }
     }
 
@@ -178,14 +180,18 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
         try {
             runnable.run();
         } catch (Exception e) {
-            Thread currentThread = Thread.currentThread();
-            Thread.UncaughtExceptionHandler exceptionHandler = currentThread.getUncaughtExceptionHandler();
-            if (exceptionHandler != null) {
-                exceptionHandler.uncaughtException(currentThread, e);
-            } else {
-                LOG.warn("Uncaught exception in thread {}:", currentThread, e);
-            }
+          handleUncaughtException(e);
         }
+    }
+
+    public static void handleUncaughtException(Throwable e) {
+      Thread currentThread = Thread.currentThread();
+      Thread.UncaughtExceptionHandler exceptionHandler = currentThread.getUncaughtExceptionHandler();
+      if (exceptionHandler != null) {
+        exceptionHandler.uncaughtException(currentThread, e);
+      } else {
+        LOG.warn("Uncaught exception in thread {}:", currentThread, e);
+      }
     }
 
     public static Sink<Future> cancelUnlessRunning() {

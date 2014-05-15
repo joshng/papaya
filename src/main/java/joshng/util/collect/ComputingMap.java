@@ -11,7 +11,9 @@ import java.util.function.Function;
  * User: josh
  * Date: Aug 4, 2011
  * Time: 5:40:27 PM
+ * @deprecated with java 8, just use {@link Map#computeIfAbsent}
  */
+@Deprecated
 public abstract class ComputingMap<K,V> extends ForwardingMap<K,V> implements Function<K, V> {
     private final Map<K, V> delegate;
 
