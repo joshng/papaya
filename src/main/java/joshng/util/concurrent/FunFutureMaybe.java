@@ -1,10 +1,12 @@
 package joshng.util.concurrent;
 
 import com.google.common.util.concurrent.AsyncFunction;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import joshng.util.blocks.F;
 import joshng.util.collect.Maybe;
 
+import javax.annotation.Nonnull;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -16,11 +18,16 @@ import static joshng.util.collect.Maybe.definitely;
  * Time: 10:01 AM
  */
 public interface FunFutureMaybe<T> extends FunFuture<Maybe<T>> {
-  FunFutureMaybe EMPTY_FUTURE = immediateFutureMaybe(Maybe.not());
+  FunFutureMaybe EMPTY_FUTURE = new ForwardingFunFutureMaybe<>(Futures.immediateFuture(Maybe.not()));
   F MAYBE_WRAPPER = FunFuture.maybeMapper(Maybe.of());
+  F<Maybe<?>, Boolean> IS_DEFINED = Maybe.IS_DEFINED.asFunction();
 
-  static <T> FunFutureMaybe<T> immediateFutureMaybe(T value) {
-    return new ForwardingFunFutureMaybe<>(FunFuture.immediateFuture(definitely(value)));
+//  static <T> FunFutureMaybe<T> immediateFutureMaybeOf(@Nullable T value) {
+//    return value == null ? futureMaybeNot() : immediateFutureMaybe(value);
+//  }
+
+  static <T> FunFutureMaybe<T> immediateFutureMaybe(@Nonnull T value) {
+    return new ForwardingFunFutureMaybe<>(Futures.immediateFuture(definitely(value)));
   }
 
   @SuppressWarnings("unchecked")
@@ -29,12 +36,20 @@ public interface FunFutureMaybe<T> extends FunFuture<Maybe<T>> {
   }
 
   @SuppressWarnings("unchecked")
-  static <T> F<ListenableFuture<? extends T>, FunFuture<Maybe<T>>> maybeWrapper() {
+  static <T> F<FunFuture<? extends T>, FunFuture<Maybe<T>>> maybeWrapper() {
     return MAYBE_WRAPPER;
   }
 
-  static <T> FunFuture<Maybe<T>> asFutureMaybe(Maybe<? extends ListenableFuture<? extends T>> maybeOfFuture) {
+  static <T> FunFuture<Maybe<T>> asFutureMaybe(Maybe<? extends FunFuture<? extends T>> maybeOfFuture) {
     return maybeOfFuture.map(FunFutureMaybe.<T>maybeWrapper()).getOrElse(FunFutureMaybe.<T>futureMaybeNot());
+  }
+
+  default FunFuture<Boolean> isDefined() {
+    return map(Maybe::isDefined);
+  }
+
+  default FunFuture<Boolean> isEmpty() {
+    return map(Maybe::isEmpty);
   }
 
   default <O> FunFutureMaybe<O> mapIfDefined(Function<? super T, ? extends O> f) {

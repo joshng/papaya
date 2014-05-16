@@ -245,38 +245,48 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     return EXTENDER;
   }
 
+  default <O> ForwardingFunFuture<O> wrapFuture(ListenableFuture<O> future) {
+    return new ForwardingFunFuture<>(future);
+  }
+
+  default <O> ForwardingFunFutureMaybe<O> wrapFutureMaybe(ListenableFuture<Maybe<O>> futureMaybe) {
+    return new ForwardingFunFutureMaybe<>(futureMaybe);
+  }
+
   default <O> FunFuture<O> map(Function<? super T, ? extends O> function) {
-    F<? super T, ? extends O> f = F.extendF(function);
-    return new ForwardingFunFuture<>(Futures.transform(delegate(), f));
+    return map(MoreExecutors.sameThreadExecutor(), function);
   }
 
   default <O> FunFuture<O> map(Executor executor, Function<? super T, ? extends O> function) {
     F<? super T, ? extends O> f = F.extendF(function);
-    return new ForwardingFunFuture<>(Futures.transform(delegate(), f, executor));
+    return wrapFuture(Futures.transform(delegate(), f, executor));
   }
+
 
   public static <I, O> AsyncF<ListenableFuture<? extends I>, O> mapper(final Function<? super I, ? extends O> mapper) {
     return input -> extendFuture(input).map(mapper);
   }
 
   default <O> FunFuture<O> flatMap(AsyncFunction<? super T, ? extends O> f) {
-    return new ForwardingFunFuture<>(Futures.transform(delegate(), f));
+    return flatMap(MoreExecutors.sameThreadExecutor(), f);
   }
 
   default <O> FunFuture<O> flatMap(Executor executor, AsyncFunction<? super T, ? extends O> f) {
-    return new ForwardingFunFuture<>(Futures.transform(delegate(), f, executor));
+    return wrapFuture(Futures.transform(delegate(), f, executor));
   }
 
   default <O> FunFutureMaybe<O> mapMaybe(Function<? super T, Maybe<O>> f) {
-    return new ForwardingFunFutureMaybe<>(Futures.transform(delegate(), F.extendF(f)));
+    return mapMaybe(MoreExecutors.sameThreadExecutor(), f);
   }
 
+
+
   default <O> FunFutureMaybe<O> flatMapMaybe(AsyncFunction<? super T, Maybe<O>> f) {
-    return new ForwardingFunFutureMaybe<>(Futures.transform(delegate(), f));
+    return wrapFutureMaybe(Futures.transform(delegate(), f));
   }
 
   default <O> FunFutureMaybe<O> mapMaybe(Executor executor, Function<? super T, Maybe<O>> f) {
-    return new ForwardingFunFutureMaybe<>(Futures.transform(delegate(), F.extendF(f), executor));
+    return wrapFutureMaybe(Futures.transform(delegate(), F.extendF(f), executor));
   }
 
   static <I, O> AsyncF<ListenableFuture<? extends I>, Maybe<O>> maybeMapper(Function<? super I, Maybe<O>> maybeFunction) {

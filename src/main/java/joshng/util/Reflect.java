@@ -195,6 +195,10 @@ public class Reflect {
     });
   }
 
+  public static FunIterable<Method> getAllDeclaredMethods(Class<?> klass) {
+    return getAllDeclaredMethods(klass, Object.class);
+  }
+
   public static <S, T extends S> FunIterable<Method> getAllDeclaredMethods(Class<T> klass, @Nullable Class<S> stopClass) {
     return getLineage(klass, stopClass).flatMap(new F<Class<? super T>, Iterable<Method>>() {
       public Iterable<Method> apply(Class<? super T> input) {

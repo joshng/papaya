@@ -29,14 +29,14 @@ public abstract class AbstractCompletionTracker<I, O> {
     return completionPromise;
   }
 
-  public AbstractCompletionTracker<I, O> submitAll(Iterable<? extends ListenableFuture<? extends I>> futures) {
+  public AbstractCompletionTracker<I, O> trackAll(Iterable<? extends ListenableFuture<? extends I>> futures) {
     for (ListenableFuture<? extends I> future : futures) {
-      submit(future);
+      track(future);
     }
     return this;
   }
 
-  public <F extends ListenableFuture<? extends I>> F submit(final F job) {
+  public <F extends ListenableFuture<? extends I>> F track(final F job) {
     boolean doSubmit;
     synchronized (noMore) {
       doSubmit = !(noMore.get() || completionPromise.isDone());

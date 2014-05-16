@@ -21,12 +21,12 @@ import com.google.common.util.concurrent.MoreExecutors;
  * FutureCompletionTracker tracker = new FutureCompletionTracker();
  * <p>
  * for (SomeInput input : inputs) {
- *     tracker.submit(startSomeJob(input));
+ *     tracker.track(startSomeJob(input));
  * }
  * <p>
  * FunFuture<Long> completionFuture = tracker.setNoMoreJobs();
  * <p>
- * long jobCount = completionTracker.getUnchecked(); // waits until all jobs have completed
+ * long jobCount = completionFuture.getUnchecked(); // waits until all jobs have completed
  * <p>
  *  // ... //
  * <p>

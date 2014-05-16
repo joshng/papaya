@@ -30,9 +30,9 @@ public class IncrementalFutureList<T> extends AbstractCompletionTracker<T, FunLi
   }
 
   @Override
-  public <F extends ListenableFuture<? extends T>> F submit(F job) {
+  public <F extends ListenableFuture<? extends T>> F track(F job) {
     futures.offer(job);
-    return super.submit(job);
+    return super.track(job);
   }
 
   @Override
