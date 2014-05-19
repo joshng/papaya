@@ -68,8 +68,12 @@ public interface FunFutureMaybe<T> extends FunFuture<Maybe<T>> {
     return flatMapMaybe(maybeFlatMapper(f));
   }
 
-  default FunFuture<T> getOrThrow() {
+  default FunFuture<T> getOrFail() {
     return map(Maybe.getter());
+  }
+
+  default FunFuture<T> getOrFail(String format, Object... args) {
+    return map(Maybe.getter(format, args));
   }
 
   default FunFuture<T> getOrElse(T alternateValue) {
@@ -78,10 +82,6 @@ public interface FunFutureMaybe<T> extends FunFuture<Maybe<T>> {
 
   default FunFuture<T> getOrElseFrom(Supplier<? extends T> alternateValue) {
     return map(Maybe.getterWithDefaultFrom(alternateValue));
-  }
-
-  default FunFuture<T> getOrThrow(String format, Object... args) {
-    return map(Maybe.getter(format, args));
   }
 
   default <U> FunFutureMaybe<U> cast(Class<U> castClass) {

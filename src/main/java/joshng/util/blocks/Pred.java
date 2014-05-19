@@ -162,7 +162,7 @@ public interface Pred<T> extends Predicate<T>, com.google.common.base.Predicate<
     return input -> test(first.apply(input));
   }
 
-  default Pred<T> negated() {
+  default Pred<T> negate() {
     return not(this);
   }
 
@@ -227,7 +227,7 @@ public interface Pred<T> extends Predicate<T>, com.google.common.base.Predicate<
     }
 
     @Override
-    public Pred negated() {
+    public Pred negate() {
       return ALWAYS_FALSE;
     }
 
@@ -264,7 +264,7 @@ public interface Pred<T> extends Predicate<T>, com.google.common.base.Predicate<
     }
 
     @Override
-    public Pred negated() {
+    public Pred negate() {
       return ALWAYS_TRUE;
     }
 

@@ -745,7 +745,7 @@ public interface FunIterable<T> extends Iterable<T>, Runnable {
   }
 
   public static <T> FunIterable<T> difference(Iterable<T> items, Collection<?> excluded) {
-    return filter(items, Pred.in(excluded).negated());
+    return filter(items, Pred.in(excluded).negate());
   }
 
   /**
