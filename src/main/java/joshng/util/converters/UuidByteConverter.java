@@ -22,6 +22,10 @@ public class UuidByteConverter extends Converter<UUID, byte[]> {
 
   @Override
   protected byte[] doForward(UUID identifier) {
+    return toBytes(identifier);
+  }
+
+  public static byte[] toBytes(UUID identifier) {
     return ByteBuffer.allocate(BYTE_LENGTH)
             .putLong(identifier.getMostSignificantBits())
             .putLong(identifier.getLeastSignificantBits())
@@ -30,6 +34,10 @@ public class UuidByteConverter extends Converter<UUID, byte[]> {
 
   @Override
   protected UUID doBackward(byte[] identifier) {
+    return toUuid(identifier);
+  }
+
+  public static UUID toUuid(byte[] identifier) {
     int length = identifier.length;
     checkArgument(length == BYTE_LENGTH, "Unexpected identifier length %s (expected %s for UUID key)", length, BYTE_LENGTH);
     ByteBuffer buf = ByteBuffer.wrap(identifier);

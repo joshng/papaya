@@ -249,10 +249,6 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     return new ForwardingFunFuture<>(future);
   }
 
-  default <O> ForwardingFunFutureMaybe<O> wrapFutureMaybe(ListenableFuture<Maybe<O>> futureMaybe) {
-    return new ForwardingFunFutureMaybe<>(futureMaybe);
-  }
-
   default <O> FunFuture<O> map(Function<? super T, ? extends O> function) {
     return map(MoreExecutors.sameThreadExecutor(), function);
   }
@@ -282,11 +278,11 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
 
 
   default <O> FunFutureMaybe<O> flatMapMaybe(AsyncFunction<? super T, Maybe<O>> f) {
-    return wrapFutureMaybe(Futures.transform(delegate(), f));
+    return FunFutureMaybe.wrapFutureMaybe(Futures.transform(delegate(), f));
   }
 
   default <O> FunFutureMaybe<O> mapMaybe(Executor executor, Function<? super T, Maybe<O>> f) {
-    return wrapFutureMaybe(Futures.transform(delegate(), F.extendF(f), executor));
+    return FunFutureMaybe.wrapFutureMaybe(Futures.transform(delegate(), F.extendF(f), executor));
   }
 
   static <I, O> AsyncF<ListenableFuture<? extends I>, Maybe<O>> maybeMapper(Function<? super I, Maybe<O>> maybeFunction) {

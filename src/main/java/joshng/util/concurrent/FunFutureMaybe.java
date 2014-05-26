@@ -44,6 +44,10 @@ public interface FunFutureMaybe<T> extends FunFuture<Maybe<T>> {
     return maybeOfFuture.map(FunFutureMaybe.<T>maybeWrapper()).getOrElse(FunFutureMaybe.<T>futureMaybeNot());
   }
 
+  static <O> ForwardingFunFutureMaybe<O> wrapFutureMaybe(ListenableFuture<Maybe<O>> futureMaybe) {
+    return new ForwardingFunFutureMaybe<>(futureMaybe);
+  }
+
   default FunFuture<Boolean> isDefined() {
     return map(Maybe::isDefined);
   }
