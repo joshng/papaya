@@ -1,6 +1,5 @@
 package joshng.util.converters;
 
-import com.google.common.base.Converter;
 import com.google.common.primitives.Longs;
 
 /**
@@ -8,7 +7,7 @@ import com.google.common.primitives.Longs;
  * Date: 5/14/14
  * Time: 11:51 AM
  */
-public class LongByteConverter extends Converter<Long, byte[]> {
+public class LongByteConverter extends ByteConverter<Long> {
   public static LongByteConverter INSTANCE = new LongByteConverter();
 
   private LongByteConverter() {

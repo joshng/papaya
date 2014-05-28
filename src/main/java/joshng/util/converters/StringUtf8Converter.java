@@ -1,14 +1,13 @@
 package joshng.util.converters;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Converter;
 
 /**
  * User: josh
  * Date: 5/14/14
  * Time: 12:35 PM
  */
-public class StringUtf8Converter extends Converter<String, byte[]> {
+public class StringUtf8Converter extends ByteConverter<String> {
   public static final StringUtf8Converter INSTANCE = new StringUtf8Converter();
 
   private StringUtf8Converter() {

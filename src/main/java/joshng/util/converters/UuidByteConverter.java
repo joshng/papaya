@@ -1,7 +1,5 @@
 package joshng.util.converters;
 
-import com.google.common.base.Converter;
-
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
@@ -12,13 +10,12 @@ import static com.google.common.base.Preconditions.checkArgument;
  * Date: 5/14/14
  * Time: 12:37 PM
  */
-public class UuidByteConverter extends Converter<UUID, byte[]> {
+public class UuidByteConverter extends ByteConverter<UUID> {
   public static final UuidByteConverter INSTANCE = new UuidByteConverter();
   private static final int BYTE_LENGTH = 2 * Long.BYTES;
 
   public UuidByteConverter() {
   }
-
 
   @Override
   protected byte[] doForward(UUID identifier) {

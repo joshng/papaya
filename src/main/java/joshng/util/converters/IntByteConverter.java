@@ -1,6 +1,5 @@
 package joshng.util.converters;
 
-import com.google.common.base.Converter;
 import com.google.common.primitives.Ints;
 
 /**
@@ -8,7 +7,7 @@ import com.google.common.primitives.Ints;
  * Date: 5/14/14
  * Time: 11:50 AM
  */
-public class IntByteConverter extends Converter<Integer, byte[]> {
+public class IntByteConverter extends ByteConverter<Integer> {
   public static final IntByteConverter INSTANCE = new IntByteConverter();
 
   public IntByteConverter() {

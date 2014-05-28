@@ -1,6 +1,5 @@
 package joshng.util.collect;
 
-import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Ordering;
@@ -11,6 +10,9 @@ import joshng.util.blocks.F;
 import joshng.util.blocks.F2;
 import joshng.util.blocks.Pred;
 import joshng.util.blocks.Sink;
+import joshng.util.concurrent.AsyncF;
+import joshng.util.concurrent.AsyncMaybeF;
+import joshng.util.concurrent.FunFutureMaybe;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -20,6 +22,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -133,6 +136,14 @@ public abstract class Maybe<T> implements Iterable<T> {
   public abstract <U> Maybe<U> flatMap(Function<? super T, Maybe<U>> transformer);
 
   public abstract <O> O map(MaybeFunction<? super T, O> transformer);
+
+  public <O> FunFutureMaybe<O> mapFuture(AsyncF<? super T, O> async) {
+    return FunFutureMaybe.asFutureMaybe(map(async));
+  }
+
+  public <O> FunFutureMaybe<O> flatMapFuture(AsyncF<? super T, Maybe<O>> async) {
+    return isDefined() ? AsyncMaybeF.extendMaybeF(async).apply(getOrThrow()) : FunFutureMaybe.futureMaybeNot();
+  }
 
   public abstract <K, V> Pair<K, V> mapPair(Function<? super T, ? extends Map.Entry<K, V>> pairComputer);
 
@@ -437,12 +448,12 @@ public abstract class Maybe<T> implements Iterable<T> {
 
     @Override
     public Maybe<T> filter(Predicate<? super T> filter) {
-      return filter.apply(value) ? this : Maybe.<T>not();
+      return filter.test(value) ? this : Maybe.<T>not();
     }
 
     @Override
     public Maybe<T> filterNot(Predicate<? super T> filter) {
-      return !filter.apply(value) ? this : Maybe.<T>not();
+      return !filter.test(value) ? this : Maybe.<T>not();
     }
 
     @Override
@@ -457,7 +468,7 @@ public abstract class Maybe<T> implements Iterable<T> {
 
     @Override
     public boolean valueMatches(Predicate<? super T> predicate) {
-      return predicate.apply(value);
+      return predicate.test(value);
     }
 
     @SuppressWarnings({"unchecked"})
@@ -665,22 +676,22 @@ public abstract class Maybe<T> implements Iterable<T> {
 
       @Override
       public Pair<K, V> filter(Predicate<? super Map.Entry<K, V>> filter) {
-        return filter.apply(entry) ? this : Maybe.<K, V>noPair();
+        return filter.test(entry) ? this : Maybe.<K, V>noPair();
       }
 
       @Override
       public Maybe<Map.Entry<K, V>> filterNot(Predicate<? super Map.Entry<K, V>> filter) {
-        return !filter.apply(entry) ? this : Maybe.<K, V>noPair();
+        return !filter.test(entry) ? this : Maybe.<K, V>noPair();
       }
 
       @Override
       public Pair<K, V> filterKey(Predicate<? super K> filter) {
-        return filter.apply(entry.getKey()) ? this : Maybe.<K, V>noPair();
+        return filter.test(entry.getKey()) ? this : Maybe.<K, V>noPair();
       }
 
       @Override
       public Pair<K, V> filterValue(Predicate<? super V> filter) {
-        return filter.apply(entry.getValue()) ? this : Maybe.<K, V>noPair();
+        return filter.test(entry.getValue()) ? this : Maybe.<K, V>noPair();
       }
 
       @Override
@@ -708,7 +719,7 @@ public abstract class Maybe<T> implements Iterable<T> {
 
       @Override
       public boolean valueMatches(Predicate<? super Map.Entry<K, V>> predicate) {
-        return predicate.apply(entry);
+        return predicate.test(entry);
       }
 
       @Override

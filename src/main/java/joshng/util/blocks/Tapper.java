@@ -12,6 +12,10 @@ package joshng.util.blocks;
  * This can be convenient when applying side-effects or validations to a value prior to returning it.
  */
 public interface Tapper<T> extends F<T, T> {
+  public static <T> Tapper<T> method(Tapper<T> tapper) {
+    return tapper;
+  }
+
   void tap(T value);
 
   @Override

@@ -1,7 +1,7 @@
 package joshng.util.concurrent;
 
 import com.google.common.base.Throwables;
-import joshng.util.Identifier;
+import joshng.util.StringIdentifier;
 import joshng.util.collect.Maybe;
 import joshng.util.context.StackContext;
 import org.joda.time.DateTime;
@@ -200,7 +200,7 @@ public class PausableResource extends StackContext {
     return isPaused() && (remainingPauseMillis() > 0 || !resume(currentPauseId, 0, TimeUnit.SECONDS));
   }
 
-  public static class PauseId extends Identifier {
+  public static class PauseId extends StringIdentifier {
     public static PauseId valueOf(String id) {
       return new PauseId(id);
     }

@@ -3,8 +3,6 @@ package joshng.util;
 import joshng.util.collect.ImmutableMaybeMap;
 
 import java.io.Serializable;
-import java.util.UUID;
-import java.util.regex.Pattern;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static joshng.util.collect.Functional.extend;
@@ -14,22 +12,16 @@ import static joshng.util.collect.Functional.extend;
  * Date: Apr 15, 2011
  * Time: 6:58:21 PM
  */
-public class Identifier implements Serializable {
-  protected final String identifier;
+public abstract class Identifier<T> implements Serializable, ByteSerializable<T> {
+  protected final T identifier;
 
-  public Identifier(String identifier) {
+  public Identifier(T identifier) {
     checkNotNull(identifier, "identifier");
     this.identifier = identifier;
   }
 
-  public static String generateRandomIdentifier() {
-    return UUID.randomUUID().toString();
-  }
-
-  private static final Pattern HYPHEN = Pattern.compile("-");
-
-  public static String generate32HexIdentifier() {
-    return HYPHEN.matcher(generateRandomIdentifier()).replaceAll("");
+  public T getIdentifier() {
+    return identifier;
   }
 
   @Override
@@ -49,7 +41,7 @@ public class Identifier implements Serializable {
 
   @Override
   public String toString() {
-    return identifier;
+    return identifier.toString();
   }
 
   public static class SealedRegistry<I extends Identifier> extends ImmutableMaybeMap<String, I> {

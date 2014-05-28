@@ -34,6 +34,8 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
 
   static final AsyncF SEQUENCER = (AsyncF<Iterable<ListenableFuture<Object>>, List<Object>>) FunFuture::allAsList;
   static F GET_UNCHECKED = (F<Future<Object>, Object>) FunFuture::getUnchecked;
+  FunFuture<Boolean> FALSE = FunFuture.immediateFuture(false);
+  FunFuture<Boolean> TRUE = FunFuture.immediateFuture(true);
 
   ListenableFuture<T> delegate();
 
@@ -275,8 +277,6 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     return mapMaybe(MoreExecutors.sameThreadExecutor(), f);
   }
 
-
-
   default <O> FunFutureMaybe<O> flatMapMaybe(AsyncFunction<? super T, Maybe<O>> f) {
     return FunFutureMaybe.wrapFutureMaybe(Futures.transform(delegate(), f));
   }
@@ -285,7 +285,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     return FunFutureMaybe.wrapFutureMaybe(Futures.transform(delegate(), F.extendF(f), executor));
   }
 
-  static <I, O> AsyncF<ListenableFuture<? extends I>, Maybe<O>> maybeMapper(Function<? super I, Maybe<O>> maybeFunction) {
+  static <I, O> F<ListenableFuture<? extends I>, FunFutureMaybe<O>> maybeMapper(Function<? super I, Maybe<O>> maybeFunction) {
     return future -> extendFuture(future).mapMaybe(maybeFunction);
   }
 
@@ -317,17 +317,12 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     return (FunFuture<C>) filter(Pred.instanceOf(castClass));
   }
 
-  default FunFuture<T> recover(final ThrowingFunction<? super Throwable, ? extends T> exceptionHandler) {
+  default FunFuture<T> recover(final ThrowingFunction<? super Exception, ? extends T> exceptionHandler) {
     return recover(MoreExecutors.sameThreadExecutor(), exceptionHandler);
   }
 
-  default FunFuture<T> recover(final Executor executor, final ThrowingFunction<? super Throwable, ? extends T> exceptionHandler) {
-    return extendFuture(Futures.withFallback(delegate(), new FutureFallback<T>() {
-      @Override
-      public ListenableFuture<T> create(Throwable t) throws Exception {
-        return Futures.immediateFuture(exceptionHandler.apply(t));
-      }
-    }, executor));
+  default FunFuture<T> recover(final Executor executor, final ThrowingFunction<? super Exception, ? extends T> exceptionHandler) {
+    return extendFuture(Futures.withFallback(delegate(), t -> Futures.immediateFuture(exceptionHandler.apply((Exception)t)), executor));
   }
 
   default FunFuture<T> recoverWith(final AsyncFunction<? super Throwable, ? extends T> exceptionHandler) {
@@ -348,11 +343,25 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     return uponCompletion(MoreExecutors.sameThreadExecutor(), callback);
   }
 
+  default FunFuture<T> uponCompletion2(Consumer<? super T> successObserver, Consumer<? super Exception> errorObserver) {
+    return uponCompletion(new FutureCallback<T>() {
+      @Override
+      public void onSuccess(T result) {
+        successObserver.accept(result);
+      }
+
+      @Override
+      public void onFailure(Throwable t) {
+        errorObserver.accept((Exception) t);
+      }
+    });
+  }
+
   default FunFuture<T> uponSuccess(Consumer<? super T> successObserver) {
     return uponSuccess(MoreExecutors.sameThreadExecutor(), successObserver);
   }
 
-  default FunFuture<T> uponFailure(Consumer<? super Throwable> errorObserver) {
+  default FunFuture<T> uponFailure(Consumer<? super Exception> errorObserver) {
     return uponFailure(MoreExecutors.sameThreadExecutor(), errorObserver);
   }
 
@@ -396,7 +405,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     });
   }
 
-  default FunFuture<T> uponFailure(Executor executor, final Consumer<? super Throwable> failureObserver) {
+  default FunFuture<T> uponFailure(Executor executor, final Consumer<? super Exception> failureObserver) {
     return uponCompletion(executor, new FutureCallback<T>() {
       @Override
       public void onSuccess(T result) {
@@ -404,7 +413,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
 
       @Override
       public void onFailure(Throwable t) {
-        failureObserver.accept(t);
+        failureObserver.accept((Exception)t);
       }
     });
   }

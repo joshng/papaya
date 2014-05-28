@@ -4,10 +4,12 @@ import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import joshng.util.blocks.F;
+import joshng.util.blocks.ThrowingFunction;
 import joshng.util.collect.Maybe;
 
 import javax.annotation.Nonnull;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static joshng.util.collect.Maybe.definitely;
@@ -18,7 +20,7 @@ import static joshng.util.collect.Maybe.definitely;
  * Time: 10:01 AM
  */
 public interface FunFutureMaybe<T> extends FunFuture<Maybe<T>> {
-  FunFutureMaybe EMPTY_FUTURE = new ForwardingFunFutureMaybe<>(Futures.immediateFuture(Maybe.not()));
+  FunFutureMaybe EMPTY_FUTURE = new Not();
   F MAYBE_WRAPPER = FunFuture.maybeMapper(Maybe.of());
   F<Maybe<?>, Boolean> IS_DEFINED = Maybe.IS_DEFINED.asFunction();
 
@@ -36,11 +38,11 @@ public interface FunFutureMaybe<T> extends FunFuture<Maybe<T>> {
   }
 
   @SuppressWarnings("unchecked")
-  static <T> F<FunFuture<? extends T>, FunFuture<Maybe<T>>> maybeWrapper() {
+  static <T> F<ListenableFuture<? extends T>, FunFutureMaybe<T>> maybeWrapper() {
     return MAYBE_WRAPPER;
   }
 
-  static <T> FunFuture<Maybe<T>> asFutureMaybe(Maybe<? extends FunFuture<? extends T>> maybeOfFuture) {
+  static <T> FunFutureMaybe<T> asFutureMaybe(Maybe<? extends ListenableFuture<? extends T>> maybeOfFuture) {
     return maybeOfFuture.map(FunFutureMaybe.<T>maybeWrapper()).getOrElse(FunFutureMaybe.<T>futureMaybeNot());
   }
 
@@ -92,12 +94,77 @@ public interface FunFutureMaybe<T> extends FunFuture<Maybe<T>> {
     return mapMaybe(Maybe.caster(castClass));
   }
 
+  default FunFutureMaybe<T> filterMaybe(final Predicate<T> filter) {
+    return mapMaybe(maybe -> maybe.filter(filter));
+  }
+
+  @Override
+  default FunFutureMaybe<T> recover(final ThrowingFunction<? super Exception, ? extends Maybe<T>> exceptionHandler) {
+    return FunFutureMaybe.wrapFutureMaybe(FunFuture.super.recover(exceptionHandler).delegate());
+  }
+
   static <I, O> AsyncF<Maybe<I>, Maybe<O>> flatMapper(AsyncFunction<? super I, O> f) {
     return maybe -> asFutureMaybe(maybe.map(AsyncF.asyncF(f)));
   }
 
   static <I, O> AsyncF<Maybe<I>, Maybe<O>> maybeFlatMapper(AsyncFunction<? super I, Maybe<O>> f) {
     return maybe -> maybe.map(AsyncF.asyncF(f)).getOrElse(FunFutureMaybe.futureMaybeNot());
+  }
+
+  class Not extends ForwardingFunFutureMaybe {
+    private Not() {
+      super(Futures.immediateFuture(Maybe.not()));
+    }
+
+    @Override
+    public boolean isDone() {
+      return true;
+    }
+
+    @Override
+    public FunFutureMaybe mapIfDefined(Function f) {
+      return this;
+    }
+
+    @Override
+    public FunFutureMaybe flatMapIfDefined(AsyncFunction f) {
+      return this;
+    }
+
+    @Override
+    public FunFutureMaybe mapMaybeIfDefined(Function f) {
+      return this;
+    }
+
+    @Override
+    public FunFutureMaybe flatMapMaybeIfDefined(AsyncFunction f) {
+      return this;
+    }
+
+    @Override
+    public FunFuture<Boolean> isEmpty() {
+      return FunFuture.TRUE;
+    }
+
+    @Override
+    public FunFuture<Boolean> isDefined() {
+      return FunFuture.FALSE;
+    }
+
+    @Override
+    public FunFuture getOrElse(Object alternateValue) {
+      return FunFuture.immediateFuture(alternateValue);
+    }
+
+    @Override
+    public FunFutureMaybe cast(Class castClass) {
+      return this;
+    }
+
+    @Override
+    public FunFutureMaybe filterMaybe(Predicate filter) {
+      return this;
+    }
   }
 }
 

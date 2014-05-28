@@ -50,6 +50,7 @@ public interface AsyncF<I, O> extends F<I, FunFuture<O>>, IAsyncFunction<I, O> {
   FunFuture<O> applyAsync(I input) throws Throwable;
 
   @Override
+  @Nonnull
   default FunFuture<O> apply(I input) {
     try {
       return checkNotNull(applyAsync(input), "AsyncFunction must not return null!", this);

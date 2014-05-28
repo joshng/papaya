@@ -53,8 +53,8 @@ public class Reflect {
     return method;
   }
 
-  public static Constructor getConstructor(Class<?> klass, Class<?>... parameterClasses) {
-    Constructor method;
+  public static <T> Constructor<T> getConstructor(Class<T> klass, Class<?>... parameterClasses) {
+    Constructor<T> method;
     try {
       method = klass.getDeclaredConstructor(parameterClasses);
     } catch (NoSuchMethodException e) {
