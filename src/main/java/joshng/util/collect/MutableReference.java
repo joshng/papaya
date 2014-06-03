@@ -13,4 +13,8 @@ public interface MutableReference<T> extends Supplier<T> {
   boolean compareAndSet(T expect, T update);
 
   T getAndSet(T value);
+
+  default Maybe<T> getMaybe() {
+    return Maybe.of(get());
+  }
 }
