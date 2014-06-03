@@ -1,10 +1,8 @@
 package joshng.util.exceptions;
 
 import com.google.common.base.Throwables;
-import joshng.util.LineNumbers;
 
 import javax.annotation.Nullable;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
@@ -78,9 +76,9 @@ public class Exceptions {
     handleCauseOrThrow(t, Arrays.asList(handlers));
   }
 
-  public static void setFirstStackTraceElement(Throwable e, Method method) {
-    setFirstStackTraceElement(e, LineNumbers.getStackTraceElement(method));
-  }
+//  public static void setFirstStackTraceElement(Throwable e, Method method) {
+//    setFirstStackTraceElement(e, StackTraceElements.getStackTraceElement(method));
+//  }
 
   public static void setFirstStackTraceElement(Throwable e, StackTraceElement element) {
     StackTraceElement[] trace = e.getStackTrace();
