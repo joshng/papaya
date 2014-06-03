@@ -322,7 +322,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   }
 
   default FunFuture<T> recover(final Executor executor, final ThrowingFunction<? super Exception, ? extends T> exceptionHandler) {
-    return extendFuture(Futures.withFallback(delegate(), t -> Futures.immediateFuture(exceptionHandler.apply((Exception)t)), executor));
+    return extendFuture(Futures.withFallback(delegate(), t -> Futures.immediateFuture(exceptionHandler.apply((Exception)unwrapExecutionException(t))), executor));
   }
 
   default FunFuture<T> recoverWith(final AsyncFunction<? super Throwable, ? extends T> exceptionHandler) {
@@ -330,7 +330,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
       @SuppressWarnings("unchecked")
       @Override
       public ListenableFuture<T> create(Throwable t) throws Exception {
-        return (ListenableFuture<T>) exceptionHandler.apply(t);
+        return (ListenableFuture<T>) exceptionHandler.apply(unwrapExecutionException(t));
       }
     }));
   }

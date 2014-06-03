@@ -7,6 +7,7 @@ import joshng.util.blocks.Source;
 import joshng.util.collect.Nothing;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -26,6 +27,12 @@ public class FunctionalExecutorService extends ForwardingListeningExecutorServic
       return extendFuture(getDelegate().submit(input));
     }
   };
+
+  public static FunctionalExecutorService functionalDecorator(ExecutorService executorService) {
+    return executorService instanceof FunctionalExecutorService
+            ? (FunctionalExecutorService) executorService
+            : new FunctionalExecutorService(MoreExecutors.listeningDecorator(executorService));
+  }
 
   FunctionalExecutorService(ListeningExecutorService delegate) {
     this.delegate = delegate;
@@ -74,6 +81,10 @@ public class FunctionalExecutorService extends ForwardingListeningExecutorServic
         return extendFuture(Futures.transform(input, mapper, getDelegate()));
       }
     };
+  }
+
+  public <T> FunFuture<T> submitAsync(Callable<? extends ListenableFuture<T>> asyncCallable) {
+    return extendFuture(Futures.transform(submit(asyncCallable), (AsyncFunction<ListenableFuture<? extends T>, T>) AsyncF.<T>asyncIdentity()));
   }
 
   @Override
