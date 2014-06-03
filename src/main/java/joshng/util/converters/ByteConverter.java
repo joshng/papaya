@@ -1,9 +1,17 @@
 package joshng.util.converters;
 
 import com.google.common.base.Converter;
+import com.google.common.base.Throwables;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
+import joshng.util.ByteSerializable;
+import joshng.util.Reflect;
 import joshng.util.blocks.F;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.UUID;
 
@@ -25,13 +33,51 @@ public abstract class ByteConverter<T> extends Converter<T, byte[]> implements F
           byte[].class, IDENTITY
   );
 
+  private static final LoadingCache<Class<? extends ByteSerializable>, ByteConverter<?>> BYTE_SERIALIZABLE_CONVERTERS = CacheBuilder.newBuilder().build(new CacheLoader<Class<? extends ByteSerializable>, ByteConverter<?>>() {
+    @Override
+    public ByteConverter<?> load(Class<? extends ByteSerializable> key) throws Exception {
+      return getByteSerializableConverter(key, ByteSerializable.getRepresentativeType(key));
+    }
+  });
+
   public static ByteConverter<byte[]> identity() {
     return IDENTITY;
   }
 
   @SuppressWarnings("unchecked")
   public static <T> ByteConverter<T> forType(Class<T> conversionType) {
+    if (ByteSerializable.class.isAssignableFrom(conversionType)) {
+      return (ByteConverter<T>) getByteSerializableConverter(conversionType.asSubclass(ByteSerializable.class));
+    }
     return (ByteConverter<T>)checkNotNull(BY_TYPE.get(conversionType), "No ByteConverter registered for type: %s", conversionType);
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <K extends ByteSerializable> ByteConverter<K> getByteSerializableConverter(Class<K> serializableType) {
+    return (ByteConverter<K>) BYTE_SERIALIZABLE_CONVERTERS.getUnchecked(serializableType);
+  }
+
+  private static <K extends ByteSerializable<I>, I> ByteConverter<K> getByteSerializableConverter(Class<K> keyType, Class<I> identifierType) {
+    Constructor<K> constructor = Reflect.getConstructor(keyType, identifierType);
+    constructor.setAccessible(true);
+    ByteConverter<I> byteConverter = forType(identifierType);
+    return byteConverter.compose(new Converter<K, I>() {
+      @Override
+      protected I doForward(K k) {
+        return k.getIdentifier();
+      }
+
+      @Override
+      protected K doBackward(I i) {
+        try {
+          return constructor.newInstance(i);
+        } catch (InstantiationException | IllegalAccessException e) {
+          throw new RuntimeException(e);
+        } catch (InvocationTargetException e) {
+          throw Throwables.propagate(e.getCause());
+        }
+      }
+    });
   }
 
   public <U> ByteConverter<U> compose(Converter<U, T> first) {
