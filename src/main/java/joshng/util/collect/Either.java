@@ -58,6 +58,17 @@ public abstract class Either<L, R> {
 
   public abstract <O> Either<L, O> mapRight(Function<? super R, ? extends O> transformer);
 
+  public abstract <O> O fold(Function<? super L, ? extends O> leftFn, Function<? super R, ? extends O> rightFn);
+
+  public <O> O fold(Folder<? super L, ? super R, O> folder) {
+    return fold(folder::foldLeft, folder::foldRight);
+  }
+
+  public interface Folder<L,R,O> {
+    O foldLeft(L leftValue);
+    O foldRight(R rightValue);
+  }
+
   private static class Left<L, X> extends Either<L, X> {
     private final Maybe<L> value;
 
@@ -90,7 +101,13 @@ public abstract class Either<L, R> {
     public <O> Either<L, O> mapRight(Function<? super X, ? extends O> transformer) {
       return Reflect.blindCast(this);
     }
+
+    @Override
+    public <O> O fold(Function<? super L, ? extends O> leftFn, Function<? super X, ? extends O> rightFn) {
+      return leftFn.apply(value.getOrThrow());
+    }
   }
+
 
   private static class Right<X, R> extends Either<X, R> {
     private final Maybe<R> value;
@@ -124,6 +141,10 @@ public abstract class Either<L, R> {
     public <O> Either<X, O> mapRight(Function<? super R, ? extends O> transformer) {
       return new Right<X, O>(value.map(transformer));
     }
-  }
 
+    @Override
+    public <O> O fold(Function<? super X, ? extends O> leftFn, Function<? super R, ? extends O> rightFn) {
+      return rightFn.apply(value.getOrThrow());
+    }
+  }
 }
