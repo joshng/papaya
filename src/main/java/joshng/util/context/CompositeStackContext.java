@@ -12,7 +12,7 @@ import java.util.List;
  * Date: 11/21/11
  * Time: 12:41 PM
  */
-public class CompositeStackContext extends StackContext {
+public class CompositeStackContext implements TransientContext {
   private final List<? extends TransientContext> contexts;
 
   public CompositeStackContext(List<? extends TransientContext> contexts) {

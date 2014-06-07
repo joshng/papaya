@@ -8,7 +8,6 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import joshng.util.blocks.F;
 import joshng.util.blocks.F2;
 import joshng.util.collect.MutableReference;
-import joshng.util.collect.Ref;
 import joshng.util.exceptions.MultiException;
 
 import java.util.concurrent.Callable;
@@ -30,7 +29,7 @@ public class ParallelFold<I, O> extends AbstractCompletionTracker<I, O> {
     super(foldExecutor);
     this.abortOnFailure = abortOnFailure;
     this.foldedResult = AtomicMutableReference.newReference(seedValue);
-    resultFolder = Ref.modifier(foldedResult, folder);
+    resultFolder = foldedResult.modifier(folder);
   }
 
   public static <I, O> ParallelFold<I, O> newParallelFold(O initialValue, boolean abortOnFailure, ListeningExecutorService foldExecutor, F2<? super I, ? super O, ? extends O> folder) {

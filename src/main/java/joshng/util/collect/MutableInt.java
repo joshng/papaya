@@ -93,16 +93,6 @@ public class MutableInt extends Number implements Comparable<MutableInt>, Mutabl
     this.value = value;
   }
 
-  @Override
-  public boolean compareAndSet(Integer expect, Integer update) {
-    return Ref.nonAtomicCompareAndSet(this, expect, update);
-  }
-
-  @Override
-  public Integer getAndSet(Integer value) {
-    return Ref.nonAtomicGetAndSet(this, value);
-  }
-
   //-----------------------------------------------------------------------
 
   /**

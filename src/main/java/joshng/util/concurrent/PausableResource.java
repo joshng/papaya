@@ -3,7 +3,7 @@ package joshng.util.concurrent;
 import com.google.common.base.Throwables;
 import joshng.util.StringIdentifier;
 import joshng.util.collect.Maybe;
-import joshng.util.context.StackContext;
+import joshng.util.context.TransientContext;
 import org.joda.time.DateTime;
 
 import java.util.concurrent.TimeUnit;
@@ -64,7 +64,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * }
  * }</pre>
  */
-public class PausableResource extends StackContext {
+public class PausableResource implements TransientContext {
   private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
   private final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
   private final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
@@ -72,11 +72,7 @@ public class PausableResource extends StackContext {
   private PauseId currentPauseId = null;
   private DateTime pauseExpiry = null;
 
-  private final State lockedState = new State() {
-    public void exit() {
-      release();
-    }
-  };
+  private final State lockedState = this::release;
 
   public State enter() {
     try {

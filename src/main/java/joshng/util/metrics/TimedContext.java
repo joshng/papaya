@@ -3,7 +3,7 @@ package joshng.util.metrics;
 import com.yammer.metrics.Metrics;
 import com.yammer.metrics.core.Timer;
 import com.yammer.metrics.core.TimerContext;
-import joshng.util.context.StackContext;
+import joshng.util.context.TransientContext;
 
 import java.util.concurrent.TimeUnit;
 
@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * A StackContext for yammer timers
  */
-public class TimedContext extends StackContext {
+public class TimedContext implements TransientContext {
   private final Timer timer;
 
   public static TimedContext newTimedContext(Class<?> klass, String name, TimeUnit durationUnit, TimeUnit rateUnit) {
@@ -38,13 +38,7 @@ public class TimedContext extends StackContext {
 
   @Override
   public State enter() {
-    return new State() {
-      final TimerContext timerContext = timer.time();
-
-      @Override
-      public void exit() {
-        timerContext.stop();
-      }
-    };
+    final TimerContext timerContext = timer.time();
+    return timerContext::stop;
   }
 }

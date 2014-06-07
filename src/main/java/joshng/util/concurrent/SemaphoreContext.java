@@ -1,7 +1,7 @@
 package joshng.util.concurrent;
 
 import joshng.util.blocks.SideEffect;
-import joshng.util.context.StackContext;
+import joshng.util.context.TransientContext;
 import org.joda.time.DateTime;
 
 import java.util.concurrent.Semaphore;
@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
  * Date: 9/25/13
  * Time: 1:48 PM
  */
-public class SemaphoreContext extends StackContext {
+public class SemaphoreContext implements TransientContext {
   private final Semaphore semaphore;
   private final Releaser singlePermitReleaser = new Releaser(1);
   private final long shutdownPollNanos;

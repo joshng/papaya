@@ -83,11 +83,11 @@ public abstract class LazyReference<T> extends Ref<T> {
 
   @Override
   public synchronized boolean compareAndSet(T expect, T update) {
-    return Ref.nonAtomicCompareAndSet(this, expect, update);
+    return super.compareAndSet(expect, update);
   }
 
   @Override
   public synchronized T getAndSet(T value) {
-    return Ref.nonAtomicGetAndSet(this, value);
+    return super.getAndSet(value);
   }
 }

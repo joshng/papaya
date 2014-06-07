@@ -1,10 +1,6 @@
 package joshng.util;
 
 import joshng.util.collect.MutableReference;
-import joshng.util.collect.Ref;
-import joshng.util.context.StackContext;
-
-import javax.annotation.Nullable;
 
 /**
  * User: josh
@@ -20,19 +16,6 @@ public class ThreadLocalRef<T> extends ThreadLocal<T> implements MutableReferenc
 
   public ThreadLocalRef() {
     this(null);
-  }
-
-  public StackContext contextWithValue(final T value) {
-    return Ref.contextWithValue(value, this);
-  }
-
-  public boolean compareAndSet(@Nullable T expect, @Nullable T update) {
-    return Ref.nonAtomicCompareAndSet(this, expect, update);
-  }
-
-  @Override
-  public T getAndSet(T value) {
-    return Ref.nonAtomicGetAndSet(this, value);
   }
 
   @Override
