@@ -33,6 +33,23 @@ public interface MultiException {
 
   void throwRuntimeIfAny();
 
+  default MultiException collectExceptions(Iterable<? extends Runnable> runnables) {
+    MultiException result = this;
+    for (Runnable runnable : runnables) {
+      result = result.consumeException(runnable);
+    }
+    return result;
+  }
+
+  default MultiException consumeException(Runnable runnable) {
+    try {
+      runnable.run();
+      return this;
+    } catch (Exception e) {
+      return with(e);
+    }
+  }
+
   public static final MultiException Empty = new EmptyImpl();
 
   class EmptyImpl implements MultiException {
