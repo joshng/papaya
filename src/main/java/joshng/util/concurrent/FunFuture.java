@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
@@ -170,37 +169,6 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     }
   }
 
-  public static <T> Source<FunFuture<T>> immediateSafeCallable(final Callable<T> unsafe) {
-    return new Source<FunFuture<T>>() {
-      @Override
-      public FunFuture<T> get() {
-        try {
-          return immediateFuture(unsafe.call());
-        } catch (Exception e) {
-          return immediateFailedFuture(e);
-        }
-      }
-    };
-  }
-
-  public static void runSafely(Runnable runnable) {
-    try {
-      runnable.run();
-    } catch (Exception e) {
-      handleUncaughtException(e);
-    }
-  }
-
-  public static void handleUncaughtException(Throwable e) {
-    Thread currentThread = Thread.currentThread();
-    Thread.UncaughtExceptionHandler exceptionHandler = currentThread.getUncaughtExceptionHandler();
-    if (exceptionHandler != null) {
-      exceptionHandler.uncaughtException(currentThread, e);
-    } else {
-      LOG.warn("Uncaught exception in thread {}:", currentThread, e);
-    }
-  }
-
   public static Sink<Future> cancelUnlessRunning() {
     return value -> {
       value.cancel(false);
@@ -224,6 +192,13 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   public static <T> FunFuture<T> extendFuture(ListenableFuture<T> future) {
     if (future instanceof FunFuture) return (FunFuture<T>) future;
     return new ForwardingFunFuture<>(future);
+  }
+
+  public static FunRunnableFuture<Nothing> funFutureTask(Runnable runnable) {
+    return FunFuture.funFutureTask(() -> {
+      runnable.run();
+      return Nothing.NOTHING;
+    });
   }
 
   public static <T> FunRunnableFuture<T> funFutureTask(Callable<T> callable) {
@@ -256,7 +231,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   }
 
   default <O> FunFuture<O> map(Executor executor, Function<? super T, ? extends O> function) {
-    F<? super T, ? extends O> f = F.extendF(function);
+    F<? super T, ? extends O> f = F.extendFunction(function);
     return wrapFuture(Futures.transform(delegate(), f, executor));
   }
 
@@ -282,7 +257,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   }
 
   default <O> FunFutureMaybe<O> mapMaybe(Executor executor, Function<? super T, Maybe<O>> f) {
-    return FunFutureMaybe.wrapFutureMaybe(Futures.transform(delegate(), F.extendF(f), executor));
+    return FunFutureMaybe.wrapFutureMaybe(Futures.transform(delegate(), F.extendFunction(f), executor));
   }
 
   static <I, O> F<ListenableFuture<? extends I>, FunFutureMaybe<O>> maybeMapper(Function<? super I, Maybe<O>> maybeFunction) {
@@ -371,7 +346,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     promise.attachFutureCompletion(future);
     future.addListener(() -> {
       try {
-        runSafely(sideEffect);
+        SideEffect.runIgnoringExceptions(sideEffect);
       } finally {
         promise.completeWith(future);
       }
@@ -413,27 +388,18 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
 
       @Override
       public void onFailure(Throwable t) {
-        failureObserver.accept((Exception)t);
+        failureObserver.accept((Exception) t);
       }
     });
   }
 
   public static <A, B> FunFuture<Pair<A, B>> zip(final ListenableFuture<A> a, final ListenableFuture<B> b) {
-    return extendFuture(Futures.transform(Futures.allAsList(ImmutableList.of(a, b)), new F<List<Object>, Pair<A, B>>() {
-      @Override
-      public Pair<A, B> apply(List<Object> input) {
-        return Pair.of(FunFuture.getUnchecked(a), FunFuture.getUnchecked(b));
-      }
-    }));
+    return extendFuture(Futures.transform(Futures.allAsList(ImmutableList.of(a, b)),
+            (List<Object> input) -> Pair.of(FunFuture.getUnchecked(a), FunFuture.getUnchecked(b))));
   }
 
   default <B> FunFuture<Pair<T, B>> zip(ListenableFuture<B> other) {
     return FunFuture.zip(delegate(), other);
-  }
-
-  public static <K, V> Pair<FunFuture<K>, FunFuture<V>> unzip(ListenableFuture<? extends Map.Entry<? extends K, V>> futureOfPair) {
-    FunFuture<? extends Map.Entry<? extends K, V>> f = extendFuture(futureOfPair);
-    return Pair.of(f.map(Pair.<K>getFirstFromPair()), f.map(Pair.<V>getSecondFromPair()));
   }
 
   default Source<T> asSource() {
@@ -450,10 +416,10 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     return cause;
   }
 
-  static class ForwardingFunFuture<T> extends ForwardingListenableFuture<T> implements FunFuture<T> {
+  public static class ForwardingFunFuture<T> extends ForwardingListenableFuture<T> implements FunFuture<T> {
     private ListenableFuture<T> delegate;
 
-    protected ForwardingFunFuture(ListenableFuture<T> delegate) {
+    public ForwardingFunFuture(ListenableFuture<T> delegate) {
       this.delegate = delegate;
     }
 

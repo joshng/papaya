@@ -347,12 +347,12 @@ public class FunctionalPairs<K, V> extends FunctionalIterable<Entry<K, V>> imple
 
     @Override
     public <K2> FunPairs<K2, V> mapKeys(Function<? super K, ? extends K2> keyTransformer) {
-      return new TransformedFunPairs<K, V, K2, V>(this, F.extendF(keyTransformer), F.<V>identity());
+      return new TransformedFunPairs<K, V, K2, V>(this, F.extendFunction(keyTransformer), F.<V>identity());
     }
 
     @Override
     public <V2> FunPairs<K, V2> mapValues(Function<? super V, ? extends V2> valueTransformer) {
-      return new TransformedFunPairs<K, V, K, V2>(this, F.<K>identity(), F.extendF(valueTransformer));
+      return new TransformedFunPairs<K, V, K, V2>(this, F.<K>identity(), F.extendFunction(valueTransformer));
     }
 
     @Override

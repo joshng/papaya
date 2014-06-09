@@ -135,7 +135,7 @@ public class BasicRetryPolicy implements RetryPolicy {
   }
 
   public <I, O> F<I, O> wrapFunction(Function<I, O> function) {
-    return F.<I, O>extendF(function).binder().andThen(this.<O>retry());
+    return F.<I, O>extendFunction(function).binder().andThen(this.<O>retry());
   }
 
   public <T> Source<T> wrapCallable(final Callable<T> callable) {

@@ -43,7 +43,7 @@ public abstract class Maybe<T> implements Iterable<T> {
   };
   private static final F FLATTENER = new F<Iterable<Maybe<Object>>, FunIterable<Object>>() {
     public FunIterable<Object> apply(Iterable<Maybe<Object>> input) {
-      return flatten(input);
+      return Maybe.<Object>flatten(input);
     }
   };
 
@@ -198,7 +198,7 @@ public abstract class Maybe<T> implements Iterable<T> {
   private Maybe() {
   }
 
-  public static <T> FunIterable<T> flatten(Iterable<Maybe<T>> maybes) {
+  public static <T> FunIterable<T> flatten(Iterable<? extends Maybe<? extends T>> maybes) {
     // this way is a bit more efficient than using concat:
     return FunIterable.filter(maybes, IS_DEFINED).map(Maybe.<T>getter());
   }
@@ -209,7 +209,7 @@ public abstract class Maybe<T> implements Iterable<T> {
   }
 
   @SuppressWarnings({"unchecked"})
-  public static <T> F<Maybe<T>, T> getter() {
+  public static <T> F<Maybe<? extends T>, T> getter() {
     return GET_OR_THROW;
   }
 

@@ -36,16 +36,16 @@ public interface F<I, O> extends Function<I, O>, com.google.common.base.Function
   @Override
   O apply(I input);
 
-  public static <I, O> F<I, O> method(F<I, O> f) {
+  public static <I, O> F<I, O> function(F<I, O> f) {
     return f;
   }
 
-  public static <I, O> F<I, O> extendF(final Function<I, O> f) {
+  public static <I, O> F<I, O> extendFunction(final Function<I, O> f) {
     if (f instanceof F) return (F<I, O>) f;
     return f::apply;
   }
 
-  public static <I, O> F<I, O> extendGuava(com.google.common.base.Function<I, O> f) {
+  public static <I, O> F<I, O> extendGuavaFunction(com.google.common.base.Function<I, O> f) {
     if (f instanceof F) return (F<I, O>) f;
     return f::apply;
   }
@@ -60,6 +60,10 @@ public interface F<I, O> extends Function<I, O>, com.google.common.base.Function
 
   default Sink<I> andThenSink(final Consumer<? super O> sink) {
     return value -> sink.accept(apply(value));
+  }
+
+  default Sink<I> asSink() {
+    return Sink.asSink(this);
   }
 
   default F<I, O> withSideEffect(final Runnable sideEffect) {
@@ -149,11 +153,11 @@ public interface F<I, O> extends Function<I, O>, com.google.common.base.Function
   }
 
   public static <K, V> F<K, V> forMap(Map<K, V> map) {
-    return extendGuava(Functions.forMap(map));
+    return extendGuavaFunction(Functions.forMap(map));
   }
 
   public static <K, V> F<K, V> forMap(Map<K, V> map, @Nullable V defaultValue) {
-    return extendGuava(Functions.forMap(map, defaultValue));
+    return extendGuavaFunction(Functions.forMap(map, defaultValue));
   }
 
   public static <T> F<Integer, T> forList(final List<T> list) {
@@ -202,12 +206,12 @@ public interface F<I, O> extends Function<I, O>, com.google.common.base.Function
 
     @Override
     public F andThen(Function next) {
-      return F.extendF(next);
+      return F.extendFunction(next);
     }
 
     @Override
     public F compose(Function first) {
-      return F.extendF(first);
+      return F.extendFunction(first);
     }
 
     @Override

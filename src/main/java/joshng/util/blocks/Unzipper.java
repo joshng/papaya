@@ -62,10 +62,10 @@ public interface Unzipper<I, K, V> extends F<I, Pair<K, V>> {
   }
 
   default F<? super I, ? extends K> keyTransformer() {
-    return F.method(this::getKey);
+    return F.function(this::getKey);
   }
 
   default F<? super I, ? extends V> valueTransformer() {
-    return F.method(this::getValue);
+    return F.function(this::getValue);
   }
 }

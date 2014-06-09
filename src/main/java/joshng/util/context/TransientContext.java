@@ -9,6 +9,7 @@ import joshng.util.concurrent.AsyncF;
 import joshng.util.concurrent.FunFuture;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -112,5 +113,14 @@ public interface TransientContext {
 
   default <I, O> AsyncF<I, O> wrapAsync(AsyncF<I, O> asyncFunction) {
     return input -> callInContextAsync(asyncFunction.bind(input));
+  }
+
+  default <T> FunFuture<T> wrapFutureListeners(ListenableFuture<T> future) {
+    return new FunFuture.ForwardingFunFuture<T>(future) {
+      @Override
+      public void addListener(Runnable listener, Executor exec) {
+        super.addListener(wrapRunnable(listener), exec);
+      }
+    };
   }
 }

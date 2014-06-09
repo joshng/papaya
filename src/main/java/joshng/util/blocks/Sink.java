@@ -24,7 +24,7 @@ public interface Sink<T> extends F<T, Nothing>, Consumer<T>, ThrowingConsumer<T>
   }
 
   @SuppressWarnings("unchecked")
-  public static <T> Sink<T> extendFunction(final Function<T, ?> handler) {
+  public static <T> Sink<T> asSink(final Function<T, ?> handler) {
     if (handler instanceof Sink) return (Sink<T>) handler;
     return handler::apply;
   }

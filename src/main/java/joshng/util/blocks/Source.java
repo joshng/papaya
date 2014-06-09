@@ -22,7 +22,7 @@ import static joshng.util.collect.Maybe.definitely;
 public interface Source<T> extends F<Object, T>, Callable<T>, Supplier<T>, com.google.common.base.Supplier<T> {
   static final Source NULL_SOURCE = Source.ofInstance(null);
 
-  static <T> Source<T> method(Source<T> method) {
+  static <T> Source<T> source(Source<T> method) {
     return method;
   }
 
@@ -55,7 +55,7 @@ public interface Source<T> extends F<Object, T>, Callable<T>, Supplier<T>, com.g
   }
 
   public static <I, O> F<Supplier<? extends I>, Source<O>> mapper(Function<I, O> f) {
-    final F<I, O> extended = F.extendF(f);
+    final F<I, O> extended = F.extendFunction(f);
     return extended::bindFrom;
   }
 
@@ -168,7 +168,7 @@ public interface Source<T> extends F<Object, T>, Callable<T>, Supplier<T>, com.g
     @SuppressWarnings("unchecked")
     @Override
     public <U> Source<U> andThen(Function<? super T, ? extends U> transformer) {
-      return (Source<U>) F.extendF(transformer).bind(value);
+      return (Source<U>) F.extendFunction(transformer).bind(value);
     }
 
     @Override

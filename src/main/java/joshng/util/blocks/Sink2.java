@@ -12,7 +12,7 @@ import java.util.function.Consumer;
  * Time: 1:57 AM
  */
 public interface Sink2<T, U> extends BiConsumer<T, U>, F2<T, U, Nothing>, Consumer<Map.Entry<? extends T, ? extends U>>, ThrowingConsumer<Map.Entry<? extends T, ? extends U>> {
-  static <T, U> Sink2<T, U> method(Sink2<T, U> method) {
+  static <T, U> Sink2<T, U> sink2(Sink2<T, U> method) {
     return method;
   }
 
@@ -44,7 +44,6 @@ public interface Sink2<T, U> extends BiConsumer<T, U>, F2<T, U, Nothing>, Consum
   @SuppressWarnings("unchecked")
   @Override
   default Sink<Map.Entry<? extends T, ? extends U>> tupled() {
-    F<Map.Entry<? extends T, ? extends U>, Nothing> tupled = F2.super.tupled();
-    return Sink.extendFunction(tupled);
+    return F2.super.tupled().asSink();
   }
 }

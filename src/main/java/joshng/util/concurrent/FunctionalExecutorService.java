@@ -48,7 +48,7 @@ public class FunctionalExecutorService extends ForwardingListeningExecutorServic
   }
 
   public <I, O> AsyncF<I, O> wrapFunction(Function<I, O> function) {
-    return AsyncF.extendAsyncFunction(F.extendF(function).binder().andThen(this.<O>submitter()));
+    return AsyncF.extendAsyncFunction(F.extendFunction(function).binder().andThen(this.<O>submitter()));
   }
 
   public <I, O> AsyncF<I, O> wrapAsync(final AsyncF<? super I, ? extends O> function) {

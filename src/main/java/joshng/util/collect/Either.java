@@ -24,8 +24,13 @@ public abstract class Either<L, R> {
     }
   };
 
-  private Either() {
+
+  @SuppressWarnings("unchecked")
+  public static <L,R> Builder<L,R> builder() {
+    return BUILDER;
   }
+
+  private Either() {}
 
   public static <L, R> Either<L, R> left(L value) {
     return new Left<L, R>(definitely(value));
@@ -145,6 +150,17 @@ public abstract class Either<L, R> {
     @Override
     public <O> O fold(Function<? super X, ? extends O> leftFn, Function<? super R, ? extends O> rightFn) {
       return rightFn.apply(value.getOrThrow());
+    }
+  }
+
+  private static final Builder BUILDER = new Builder();
+
+  public static class Builder<L,R> {
+    public Either<L,R> left(L leftValue) {
+      return Either.left(leftValue);
+    }
+    public Either<L,R> right(R rightValue) {
+      return Either.right(rightValue);
     }
   }
 }
