@@ -62,6 +62,10 @@ public interface Pred<T> extends Predicate<T>, com.google.common.base.Predicate<
     };
   }
 
+  public static Pred<Object> identicalTo(Object value) {
+    return value == null ? Pred.isNull() : input -> value == input;
+  }
+
   public static <T> Pred<T> in(Collection<? extends T> collection) {
     return Predicates.in(collection)::apply;
   }

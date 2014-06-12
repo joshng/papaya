@@ -220,6 +220,10 @@ public interface FunIterable<T> extends Iterable<T>, Runnable {
     return new FunctionalIterable<>(Iterables.filter(iterable, t -> predicate.test(t)));
   }
 
+  default FunIterable<T> filterNot(Predicate<? super T> predicate) {
+    return filter(predicate.negate());
+  }
+
   /**
    * Returns a filtered and casted FunIterable containing the elements from this sequence that are instances
    * of the given type (ie, {@code filteredClass.isInstance(element)}).
@@ -470,7 +474,7 @@ public interface FunIterable<T> extends Iterable<T>, Runnable {
   }
 
   public static <T> FunIterable<T> dropWhile(final Iterable<T> source, final Predicate<? super T> predicate) {
-    return filter(source, new Predicate<T>() {
+    return filter(source, new Pred<T>() {
       boolean stillDropping = true;
 
       public boolean test(T input) {

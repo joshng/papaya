@@ -17,9 +17,4 @@ public class BaseUuid extends Identifier<UUID> {
   public BaseUuid(byte[] bytes) {
     this(UuidByteConverter.toUuid(bytes));
   }
-
-  @Override
-  public byte[] toBytes() {
-    return UuidByteConverter.toBytes(getIdentifier());
-  }
 }

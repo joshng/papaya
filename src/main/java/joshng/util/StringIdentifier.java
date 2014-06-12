@@ -1,7 +1,5 @@
 package joshng.util;
 
-import com.google.common.base.Charsets;
-
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -23,10 +21,5 @@ public class StringIdentifier extends Identifier<String> {
 
   public static String generate32HexIdentifier() {
     return HYPHEN.matcher(generateRandomIdentifier()).replaceAll("");
-  }
-
-  @Override
-  public byte[] toBytes() {
-    return getIdentifier().getBytes(Charsets.UTF_8);
   }
 }

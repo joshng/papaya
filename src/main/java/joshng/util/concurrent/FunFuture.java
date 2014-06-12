@@ -39,23 +39,23 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   ListenableFuture<T> delegate();
 
   public static <T> FunFuture<T> immediateFuture(T value) {
-    return extendFuture(Futures.immediateFuture(value));
+    return newFuture(Futures.immediateFuture(value));
   }
 
   public static <T> FunFuture<T> immediateFailedFuture(Throwable e) {
-    return extendFuture(Futures.<T>immediateFailedFuture(unwrapExecutionException(e)));
+    return newFuture(Futures.<T>immediateFailedFuture(unwrapExecutionException(e)));
   }
 
   public static <T> FunFuture<T> immediateCancelledFuture() {
-    return extendFuture(Futures.<T>immediateCancelledFuture());
+    return newFuture(Futures.<T>immediateCancelledFuture());
   }
 
   public static <T> FunFuture<List<T>> allAsList(Iterable<? extends ListenableFuture<? extends T>> input) {
-    return extendFuture(Futures.allAsList(unwrapFutureIterable(input)));
+    return newFuture(Futures.allAsList(unwrapFutureIterable(input)));
   }
 
   public static <T> FunFuture<List<T>> successfulAsList(Iterable<? extends ListenableFuture<? extends T>> input) {
-    return extendFuture(Futures.successfulAsList(unwrapFutureIterable(input)));
+    return newFuture(Futures.successfulAsList(unwrapFutureIterable(input)));
   }
 
   public static Cancellable extendCancellable(final Future future) {
@@ -191,6 +191,10 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
 
   public static <T> FunFuture<T> extendFuture(ListenableFuture<T> future) {
     if (future instanceof FunFuture) return (FunFuture<T>) future;
+    return newFuture(future);
+  }
+
+  static <T> ForwardingFunFuture<T> newFuture(ListenableFuture<T> future) {
     return new ForwardingFunFuture<>(future);
   }
 
@@ -297,11 +301,11 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   }
 
   default FunFuture<T> recover(final Executor executor, final ThrowingFunction<? super Exception, ? extends T> exceptionHandler) {
-    return extendFuture(Futures.withFallback(delegate(), t -> Futures.immediateFuture(exceptionHandler.apply((Exception)unwrapExecutionException(t))), executor));
+    return newFuture(Futures.withFallback(delegate(), t -> Futures.immediateFuture(exceptionHandler.apply((Exception)unwrapExecutionException(t))), executor));
   }
 
   default FunFuture<T> recoverWith(final AsyncFunction<? super Throwable, ? extends T> exceptionHandler) {
-    return extendFuture(Futures.withFallback(delegate(), new FutureFallback<T>() {
+    return newFuture(Futures.withFallback(delegate(), new FutureFallback<T>() {
       @SuppressWarnings("unchecked")
       @Override
       public ListenableFuture<T> create(Throwable t) throws Exception {
@@ -394,7 +398,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   }
 
   public static <A, B> FunFuture<Pair<A, B>> zip(final ListenableFuture<A> a, final ListenableFuture<B> b) {
-    return extendFuture(Futures.transform(Futures.allAsList(ImmutableList.of(a, b)),
+    return newFuture(Futures.transform(Futures.allAsList(ImmutableList.of(a, b)),
             (List<Object> input) -> Pair.of(FunFuture.getUnchecked(a), FunFuture.getUnchecked(b))));
   }
 

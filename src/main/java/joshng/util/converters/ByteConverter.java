@@ -103,7 +103,7 @@ public abstract class ByteConverter<T> extends Converter<T, byte[]> implements F
   }
 
   public static class Identity extends ByteConverter<byte[]> {
-    private Identity() {};
+    private Identity() {}
 
     @Override
     protected byte[] doForward(byte[] bytes) {

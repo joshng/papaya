@@ -69,7 +69,7 @@ public class FunctionalExecutorService extends ForwardingListeningExecutorServic
     return new AsyncF<ListenableFuture<? extends I>, O>() {
       @Override
       public FunFuture<O> applyAsync(ListenableFuture<? extends I> input) {
-        return extendFuture(Futures.transform(input, f, getDelegate()));
+        return FunFuture.newFuture(Futures.transform(input, f, getDelegate()));
       }
     };
   }
@@ -78,28 +78,28 @@ public class FunctionalExecutorService extends ForwardingListeningExecutorServic
     return new AsyncF<ListenableFuture<? extends I>, O>() {
       @Override
       public FunFuture<O> applyAsync(ListenableFuture<? extends I> input) {
-        return extendFuture(Futures.transform(input, mapper, getDelegate()));
+        return FunFuture.newFuture(Futures.transform(input, mapper, getDelegate()));
       }
     };
   }
 
   public <T> FunFuture<T> submitAsync(Callable<? extends ListenableFuture<T>> asyncCallable) {
-    return extendFuture(Futures.transform(submit(asyncCallable), (AsyncFunction<ListenableFuture<? extends T>, T>) AsyncF.<T>asyncIdentity()));
+    return FunFuture.newFuture(Futures.transform(submit(asyncCallable), (AsyncFunction<ListenableFuture<? extends T>, T>) AsyncF.<T>asyncIdentity()));
   }
 
   @Override
   public <T> FunFuture<T> submit(Callable<T> task) {
-    return extendFuture(super.submit(task));
+    return FunFuture.newFuture(super.submit(task));
   }
 
   @Override
   public FunFuture<?> submit(Runnable task) {
-    return extendFuture(super.submit(task));
+    return FunFuture.newFuture(super.submit(task));
   }
 
   @Override
   public <T> FunFuture<T> submit(Runnable task, T result) {
-    return extendFuture(super.submit(task, result));
+    return FunFuture.newFuture(super.submit(task, result));
   }
 
   @Override
