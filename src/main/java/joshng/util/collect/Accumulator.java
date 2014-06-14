@@ -6,10 +6,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import joshng.util.blocks.Sink;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -72,6 +69,10 @@ public interface Accumulator<I, O> extends Sink<I>, Supplier<O> {
 
   static <K, V> BiAccumulator<K, V, LinkedHashMap<K, V>> linkedHashMap() {
     return new MutableMapAccumulator<>(new LinkedHashMap<>());
+  }
+
+  static <K, V> BiAccumulator<K, V, TreeMap<K, V>> treeMap() {
+    return new MutableMapAccumulator<>(new TreeMap<>());
   }
 
   static <K, V> BiAccumulator<K, V, ImmutableMap<K, V>> immutableMap() {

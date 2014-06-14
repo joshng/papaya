@@ -284,6 +284,10 @@ public abstract class Maybe<T> implements Iterable<T> {
     return castClass.isInstance(value) ? Maybe.definitely(castClass.cast(value)) : Maybe.<T>not();
   }
 
+  public static <T> Maybe<Class<? extends T>> asSubclass(Class<?> maybeSubclass, Class<T> superclass) {
+    return Maybe.onlyIfFrom(superclass.isAssignableFrom(maybeSubclass), () -> maybeSubclass.asSubclass(superclass));
+  }
+
   @SuppressWarnings({"unchecked"})
   public static <T> Maybe<T> not() {
     return NOT;

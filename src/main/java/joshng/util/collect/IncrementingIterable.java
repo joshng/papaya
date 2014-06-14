@@ -10,7 +10,7 @@ import java.util.Iterator;
  * Date: Sep 19, 2011
  * Time: 9:48:16 PM
  */
-public class IncrementingIterable implements Iterable<Integer> {
+public class IncrementingIterable implements AbstractFunIterable<Integer> {
   private final int start;
   private final int step;
   private final Predicate<Integer> inclusionPredicate;

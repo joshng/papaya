@@ -57,7 +57,7 @@ public class StringUtils {
     try {
       appendHexString(bytes, offset, len, hex);
     } catch (IOException e) {
-      throw new AssertionError("StringBuilder.append throw IOException (shouldn't happen!)..?");
+      throw new AssertionError("StringBuilder.append threw IOException (shouldn't happen!)..?");
     }
     return hex.toString();
   }

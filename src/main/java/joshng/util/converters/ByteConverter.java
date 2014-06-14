@@ -5,17 +5,14 @@ import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.ImmutableMap;
 import joshng.util.ByteSerializable;
 import joshng.util.Reflect;
 import joshng.util.blocks.F;
+import joshng.util.collect.Maybe;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Map;
 import java.util.UUID;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * User: josh
@@ -25,36 +22,38 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public abstract class ByteConverter<T> extends Converter<T, byte[]> implements F<T, byte[]> {
   public static final ByteConverter<byte[]> IDENTITY = new Identity();
 
-  private static final Map<Class<?>, ByteConverter<?>> BY_TYPE = ImmutableMap.of(
-          Integer.class, IntByteConverter.INSTANCE,
-          Long.class, LongByteConverter.INSTANCE,
-          String.class, StringUtf8Converter.INSTANCE,
-          UUID.class, UuidByteConverter.INSTANCE,
-          byte[].class, IDENTITY
-  );
-
-  private static final LoadingCache<Class<? extends ByteSerializable>, ByteConverter<?>> BYTE_SERIALIZABLE_CONVERTERS = CacheBuilder.newBuilder().build(new CacheLoader<Class<? extends ByteSerializable>, ByteConverter<?>>() {
+  private static final LoadingCache<Class<?>, ByteConverter<?>> BY_TYPE = CacheBuilder.newBuilder().build(new CacheLoader<Class<?>, ByteConverter<?>>() {
     @Override
-    public ByteConverter<?> load(Class<? extends ByteSerializable> key) throws Exception {
-      return getByteSerializableConverter(key, ByteSerializable.getRepresentativeType(key));
+    public ByteConverter<?> load(Class<?> key) throws Exception {
+      Class<? extends ByteSerializable> byteSerializableClass = Maybe.asSubclass(key, ByteSerializable.class).getOrThrow("No ByteConverter registered for non-ByteSerializable type", key);
+      return getByteSerializableConverter(byteSerializableClass, ByteSerializable.getRepresentativeType(byteSerializableClass));
     }
   });
+
+  static {
+    BY_TYPE.put(Integer.class, IntByteConverter.INSTANCE);
+    BY_TYPE.put(Long.class, LongByteConverter.INSTANCE);
+    BY_TYPE.put(String.class, StringUtf8Converter.INSTANCE);
+    BY_TYPE.put(UUID.class, UuidByteConverter.INSTANCE);
+    BY_TYPE.put(byte[].class, IDENTITY);
+  }
 
   public static ByteConverter<byte[]> identity() {
     return IDENTITY;
   }
 
+  public static <T> void register(Class<T> key, ByteConverter<? super T> value) {
+    BY_TYPE.put(key, value);
+  }
+
   @SuppressWarnings("unchecked")
   public static <T> ByteConverter<T> forType(Class<T> conversionType) {
-    if (ByteSerializable.class.isAssignableFrom(conversionType)) {
-      return (ByteConverter<T>) getByteSerializableConverter(conversionType.asSubclass(ByteSerializable.class));
-    }
-    return (ByteConverter<T>)checkNotNull(BY_TYPE.get(conversionType), "No ByteConverter registered for type: %s", conversionType);
+    return (ByteConverter<T>) BY_TYPE.getUnchecked(conversionType);
   }
 
   @SuppressWarnings("unchecked")
   public static <K extends ByteSerializable> ByteConverter<K> getByteSerializableConverter(Class<K> serializableType) {
-    return (ByteConverter<K>) BYTE_SERIALIZABLE_CONVERTERS.getUnchecked(serializableType);
+    return (ByteConverter<K>) BY_TYPE.getUnchecked(serializableType);
   }
 
   private static <K extends ByteSerializable<I>, I> ByteConverter<K> getByteSerializableConverter(Class<K> keyType, Class<I> identifierType) {
