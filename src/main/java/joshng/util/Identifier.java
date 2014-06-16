@@ -24,6 +24,10 @@ public abstract class Identifier<T> implements Serializable, ByteSerializable<T>
     return identifier;
   }
 
+  public T getSerializableValue() {
+    return identifier;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;

@@ -19,6 +19,10 @@ public class Exceptions {
     throw new RuntimeException(t);
   }
 
+  public static AssertionError impossibleError(Exception e) {
+    return new AssertionError(e);
+  }
+
   @Nullable
   public static <E extends Throwable> E extractCauseOrNull(Throwable t, Class<E> causeClass) {
     while (t != null && !causeClass.isInstance(t)) {

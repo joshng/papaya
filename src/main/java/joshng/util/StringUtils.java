@@ -314,4 +314,8 @@ public class StringUtils {
 
     return builder.toString();
   }
+
+  public static boolean isPrintableAscii(byte b) {
+    return b > 31 && b < 127;
+  }
 }

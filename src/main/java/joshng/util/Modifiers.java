@@ -1,9 +1,6 @@
 package joshng.util;
 
-import joshng.util.blocks.Pred;
-
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import java.lang.reflect.Member;
 import java.lang.reflect.Modifier;
 
 /**
@@ -31,10 +28,6 @@ public enum Modifiers {
 
   private final int flag;
 
-  public final Pred<Class<?>> CLASS_PREDICATE = this::matches;
-  public final Pred<Method> METHOD_PREDICATE = this::matches;
-  public final Pred<Field> FIELD_PREDICATE = this::matches;
-
   Modifiers(int flag) {
     this.flag = flag;
   }
@@ -43,11 +36,7 @@ public enum Modifiers {
     return matches(c.getModifiers());
   }
 
-  public boolean matches(Method method) {
-    return matches(method.getModifiers());
-  }
-
-  public boolean matches(Field field) {
+  public boolean matches(Member field) {
     return matches(field.getModifiers());
   }
 

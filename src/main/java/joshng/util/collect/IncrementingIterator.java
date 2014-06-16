@@ -1,7 +1,5 @@
 package joshng.util.collect;
 
-import com.google.common.base.Predicate;
-
 import java.util.Iterator;
 
 /**
@@ -11,17 +9,15 @@ import java.util.Iterator;
  */
 public class IncrementingIterator implements Iterator<Integer> {
   private final int step;
-  private final Predicate<Integer> inclusionPredicate;
   private int i;
 
-  public IncrementingIterator(int start, int step, Predicate<Integer> inclusionPredicate) {
+  public IncrementingIterator(int start, int step) {
     i = start;
     this.step = step;
-    this.inclusionPredicate = inclusionPredicate;
   }
 
   public boolean hasNext() {
-    return inclusionPredicate.apply(i);
+    return true;
   }
 
   public Integer next() {

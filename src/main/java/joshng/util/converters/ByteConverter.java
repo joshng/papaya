@@ -5,14 +5,23 @@ import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.primitives.Primitives;
 import joshng.util.ByteSerializable;
+import joshng.util.Modifiers;
 import joshng.util.Reflect;
 import joshng.util.blocks.F;
+import joshng.util.blocks.Pred;
+import joshng.util.blocks.ThrowingFunction;
+import joshng.util.collect.FunIterable;
 import joshng.util.collect.Maybe;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.UUID;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static joshng.util.collect.Functional.extend;
 
 /**
  * User: josh
@@ -26,54 +35,67 @@ public abstract class ByteConverter<T> extends Converter<T, byte[]> implements F
     @Override
     public ByteConverter<?> load(Class<?> key) throws Exception {
       Class<? extends ByteSerializable> byteSerializableClass = Maybe.asSubclass(key, ByteSerializable.class).getOrThrow("No ByteConverter registered for non-ByteSerializable type", key);
-      return getByteSerializableConverter(byteSerializableClass, ByteSerializable.getRepresentativeType(byteSerializableClass));
+      return getByteSerializableConverter(byteSerializableClass);
     }
   });
+  public static final String DESERIALIZER_ANNOTATION_NAME = "@" + ByteSerializable.Deserializer.class.getSimpleName();
+
+  public static <T> void register(Class<T> key, ByteConverter<? super T> value) {
+    BY_TYPE.put(key, value);
+  }
 
   static {
-    BY_TYPE.put(Integer.class, IntByteConverter.INSTANCE);
-    BY_TYPE.put(Long.class, LongByteConverter.INSTANCE);
-    BY_TYPE.put(String.class, StringUtf8Converter.INSTANCE);
-    BY_TYPE.put(UUID.class, UuidByteConverter.INSTANCE);
-    BY_TYPE.put(byte[].class, IDENTITY);
+    register(Integer.class, IntByteConverter.INSTANCE);
+    register(Long.class, LongByteConverter.INSTANCE);
+    register(String.class, StringUtf8Converter.INSTANCE);
+    register(UUID.class, UuidByteConverter.INSTANCE);
+    register(byte[].class, IDENTITY);
   }
 
   public static ByteConverter<byte[]> identity() {
     return IDENTITY;
   }
 
-  public static <T> void register(Class<T> key, ByteConverter<? super T> value) {
-    BY_TYPE.put(key, value);
-  }
 
   @SuppressWarnings("unchecked")
   public static <T> ByteConverter<T> forType(Class<T> conversionType) {
     return (ByteConverter<T>) BY_TYPE.getUnchecked(conversionType);
   }
 
-  @SuppressWarnings("unchecked")
-  public static <K extends ByteSerializable> ByteConverter<K> getByteSerializableConverter(Class<K> serializableType) {
-    return (ByteConverter<K>) BY_TYPE.getUnchecked(serializableType);
-  }
-
-  private static <K extends ByteSerializable<I>, I> ByteConverter<K> getByteSerializableConverter(Class<K> keyType, Class<I> identifierType) {
-    Constructor<K> constructor = Reflect.getConstructor(keyType, identifierType);
-    constructor.setAccessible(true);
+  private static <I, T extends ByteSerializable<I>> ByteConverter<T> getByteSerializableConverter(Class<T> serializableType) {
+    Class<I> identifierType = ByteSerializable.getRepresentativeType(serializableType);
     ByteConverter<I> byteConverter = forType(identifierType);
-    return byteConverter.compose(new Converter<K, I>() {
+
+    FunIterable<Method> deserializerMethods = extend(serializableType.getDeclaredMethods()).filter(Pred.annotatedWith(ByteSerializable.Deserializer.class)).toList();
+
+    ThrowingFunction<I, T> deserializer;
+    if (deserializerMethods.isEmpty()) {
+      Constructor<T> constructor = Reflect.getConstructor(serializableType, identifierType);
+      constructor.setAccessible(true);
+      deserializer = constructor::newInstance;
+    } else {
+      Method method = deserializerMethods.getOnlyElement();
+      checkArgument(Modifiers.Static.matches(method), DESERIALIZER_ANNOTATION_NAME + " method must be static", method);
+      Class<?> paramType = Primitives.wrap(extend(method.getParameters()).getOnlyElement().getType());
+      checkArgument(paramType.isAssignableFrom(identifierType), "Incorrect " + DESERIALIZER_ANNOTATION_NAME + " method signature; parameter should be of type %s", identifierType, method);
+      method.setAccessible(true);
+      deserializer = repr -> serializableType.cast(method.invoke(null, repr));
+    }
+
+    return byteConverter.compose(new Converter<T, I>() {
       @Override
-      protected I doForward(K k) {
-        return k.getIdentifier();
+      protected I doForward(T k) {
+        return k.getSerializableValue();
       }
 
       @Override
-      protected K doBackward(I i) {
+      protected T doBackward(I i) {
         try {
-          return constructor.newInstance(i);
-        } catch (InstantiationException | IllegalAccessException e) {
-          throw new RuntimeException(e);
+          return deserializer.apply(i);
         } catch (InvocationTargetException e) {
           throw Throwables.propagate(e.getCause());
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
         }
       }
     });

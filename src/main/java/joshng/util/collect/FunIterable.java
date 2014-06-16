@@ -395,7 +395,7 @@ public interface FunIterable<T> extends Iterable<T>, Runnable {
   }
 
   public static <T> FunPairs<T, Integer> zipWithIndex(Iterable<T> items) {
-    return zip(items, IncrementingIterable.countFromZero());
+    return zip(items, Count.FromZero);
   }
 
   /**
@@ -410,7 +410,7 @@ public interface FunIterable<T> extends Iterable<T>, Runnable {
   }
 
   public static <T, U> FunIterable<U> mapWithIndex(Iterable<T> delegate, F2<? super T, ? super Integer, ? extends U> visitor) {
-    return zipWith(delegate, IncrementingIterable.countFromZero(), visitor);
+    return zipWith(delegate, Count.FromZero, visitor);
   }
 
 
