@@ -12,7 +12,7 @@ import static com.google.common.base.Preconditions.checkArgument;
  */
 public class UuidByteConverter extends ByteConverter<UUID> {
   public static final UuidByteConverter INSTANCE = new UuidByteConverter();
-  private static final int BYTE_LENGTH = 2 * Long.BYTES;
+  public static final int BYTE_LENGTH = 2 * Long.BYTES;
 
   public UuidByteConverter() {
   }
@@ -31,13 +31,17 @@ public class UuidByteConverter extends ByteConverter<UUID> {
 
   @Override
   protected UUID doBackward(byte[] identifier) {
-    return toUuid(identifier);
+    return toUuid((byte[]) identifier);
   }
 
   public static UUID toUuid(byte[] identifier) {
     int length = identifier.length;
     checkArgument(length == BYTE_LENGTH, "Unexpected identifier length %s (expected %s for UUID key)", length, BYTE_LENGTH);
-    ByteBuffer buf = ByteBuffer.wrap(identifier);
+    return toUuid(identifier, 0);
+  }
+
+  public static UUID toUuid(byte[] identifier, int offset) {
+    ByteBuffer buf = ByteBuffer.wrap(identifier, offset, BYTE_LENGTH);
     long msb = buf.getLong();
     long lsb = buf.getLong();
     return new UUID(msb, lsb);

@@ -240,6 +240,15 @@ public class MoreCollections {
     return false;
   }
 
+  /**
+   * Copies src into dst, but replaces elements in the range src[index..(index+howMany)] with the provided values
+   * @param src source values to copy
+   * @param dst destination for result
+   * @param index starting index for replacement
+   * @param howMany number of items to replace with provided value(s)
+   * @param values values to overwrite [index..(index+howMany)]
+   * @return the dst array
+   */
   @SafeVarargs
   public static <T> T[] splice(T[] src, T[] dst, int index, int howMany, T... values) {
     int valueLen = values.length;

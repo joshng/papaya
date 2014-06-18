@@ -45,6 +45,7 @@ public abstract class ByteConverter<T> extends Converter<T, byte[]> implements F
   }
 
   static {
+    register(Short.class, ShortByteConverter.INSTANCE);
     register(Integer.class, IntByteConverter.INSTANCE);
     register(Long.class, LongByteConverter.INSTANCE);
     register(String.class, StringUtf8Converter.INSTANCE);
