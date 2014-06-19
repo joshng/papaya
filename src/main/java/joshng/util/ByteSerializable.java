@@ -22,7 +22,7 @@ import java.lang.reflect.Type;
  *           the {@link joshng.util.converters.ByteConverter#register(Class, joshng.util.converters.ByteConverter)} ()} method
  */
 public interface ByteSerializable<T> {
-  Type SERIALIZABLE_VALUE_TYPE = Reflect.getMethod(ByteSerializable.class, "getIdentifier").getGenericReturnType();
+  Type SERIALIZABLE_VALUE_TYPE = Reflect.getMethod(ByteSerializable.class, "getSerializableValue").getGenericReturnType();
 
   @SuppressWarnings("unchecked")
   static <T, S extends ByteSerializable<T>> Class<T> getRepresentativeType(Class<S> serializableClass) {

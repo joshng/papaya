@@ -74,7 +74,7 @@ public interface FunSet<T> extends Set<T>, FunCollection<T> {
   }
 
   @Override
-  default boolean add(Object o) {
+  default boolean add(T o) {
     throw FunCollection.rejectMutation();
   }
 
