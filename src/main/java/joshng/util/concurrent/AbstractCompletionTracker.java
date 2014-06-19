@@ -43,15 +43,12 @@ public abstract class AbstractCompletionTracker<I, O> {
       if (doSubmit) startedCount.incrementAndGet();
     }
     if (doSubmit) {
-      job.addListener(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            handleCompletedJob(job);
-          } finally {
-            completedCount.incrementAndGet();
-            checkDone();
-          }
+      job.addListener(() -> {
+        try {
+          handleCompletedJob(job);
+        } finally {
+          completedCount.incrementAndGet();
+          checkDone();
         }
       }, jobCompletionExecutor);
     } else {

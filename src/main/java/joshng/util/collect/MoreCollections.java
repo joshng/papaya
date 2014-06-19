@@ -11,6 +11,8 @@ import joshng.util.blocks.Source;
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -74,6 +76,10 @@ public class MoreCollections {
         return Lists.newArrayListWithCapacity(initialCapacity);
       }
     };
+  }
+
+  public static <T> Collector<T, ?, ArrayList<T>> arrayListCollector() {
+    return Collectors.toCollection(arrayListFactory());
   }
 
   public static int sum(Iterable<Integer> values) {
