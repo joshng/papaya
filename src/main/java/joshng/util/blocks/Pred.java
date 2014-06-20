@@ -29,7 +29,7 @@ public interface Pred<T> extends Predicate<T>, com.google.common.base.Predicate<
     return test(value);
   }
 
-  public static <T> Pred<T> method(final Pred<T> fn) {
+  public static <T> Pred<T> pred(final Pred<T> fn) {
     return fn;
   }
 

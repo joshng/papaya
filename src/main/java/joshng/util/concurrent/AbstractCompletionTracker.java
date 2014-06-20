@@ -29,6 +29,10 @@ public abstract class AbstractCompletionTracker<I, O> {
     return completionPromise;
   }
 
+  public boolean isDone() {
+    return completionPromise.isDone();
+  }
+
   public AbstractCompletionTracker<I, O> trackAll(Iterable<? extends ListenableFuture<? extends I>> futures) {
     for (ListenableFuture<? extends I> future : futures) {
       track(future);

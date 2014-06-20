@@ -195,6 +195,10 @@ public abstract class Maybe<T> implements Iterable<T> {
    */
   public abstract boolean valueMatches(Predicate<? super T> predicate);
 
+  public boolean valueMatchesNot(Predicate<? super T> predicate) {
+    return valueMatches(predicate.negate());
+  }
+
   private Maybe() {
   }
 

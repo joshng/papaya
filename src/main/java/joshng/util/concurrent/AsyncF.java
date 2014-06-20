@@ -4,8 +4,10 @@ import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.ListenableFuture;
 import joshng.util.Reflect;
 import joshng.util.blocks.F;
+import joshng.util.collect.Nothing;
 
 import javax.annotation.Nonnull;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -39,6 +41,13 @@ public interface AsyncF<I, O> extends F<I, FunFuture<O>>, IAsyncFunction<I, O> {
       public FunFuture<O> applyAsync(I input) throws Exception {
         return extendFuture(function.apply(input));
       }
+    };
+  }
+
+  public static <T> AsyncF<T, Nothing> asyncConsumer(Consumer<T> consumer) {
+    return input -> {
+      consumer.accept(input);
+      return Nothing.FUTURE;
     };
   }
 
