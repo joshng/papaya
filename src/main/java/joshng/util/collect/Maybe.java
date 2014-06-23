@@ -112,6 +112,7 @@ public abstract class Maybe<T> implements Iterable<T> {
 
   public abstract boolean isEmpty();
 
+  @Nonnull
   public abstract T getOrThrow() throws NoSuchElementException;
 
   public abstract T getOrThrow(String format, Object... args) throws NoSuchElementException;

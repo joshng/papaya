@@ -16,6 +16,11 @@ public interface Sink2<T, U> extends BiConsumer<T, U>, F2<T, U, Nothing>, Consum
     return method;
   }
 
+  static <T, U> Sink2<T, U> extendBiConsumer(BiConsumer<T, U> consumer) {
+    if (consumer instanceof Sink2) return (Sink2<T, U>) consumer;
+    return consumer::accept;
+  }
+
   default public Nothing apply(T input1, U input2) {
     accept(input1, input2);
     return Nothing.NOTHING;

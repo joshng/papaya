@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
@@ -239,6 +240,14 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     return wrapFuture(Futures.transform(delegate(), f, executor));
   }
 
+  default <K,V> FunFuturePair<K,V> mapPair(Function<? super T, ? extends Map.Entry<K,V>> function) {
+    F<? super T, ? extends Map.Entry<K,V>> f = F.extendFunction(function);
+    return newFuturePair(Futures.transform(delegate(), f));
+  }
+
+  default <K, V> FunFuturePair.ForwardingFunFuturePair<K, V> newFuturePair(ListenableFuture<? extends Map.Entry<K, V>> transformed) {
+    return new FunFuturePair.ForwardingFunFuturePair<>(transformed);
+  }
 
   public static <I, O> AsyncF<ListenableFuture<? extends I>, O> mapper(final Function<? super I, ? extends O> mapper) {
     return input -> extendFuture(input).map(mapper);
@@ -346,7 +355,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
 
   default FunFuture<T> uponCompletion(Executor executor, final Runnable sideEffect) {
     final Promise<T> promise = Promise.newPromise();
-    ListenableFuture<T> future = delegate();
+    ListenableFuture<? extends T> future = delegate();
     promise.attachFutureCompletion(future);
     future.addListener(() -> {
       try {
@@ -397,13 +406,9 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     });
   }
 
-  public static <A, B> FunFuture<Pair<A, B>> zip(final ListenableFuture<A> a, final ListenableFuture<B> b) {
-    return newFuture(Futures.transform(Futures.allAsList(ImmutableList.of(a, b)),
-            (List<Object> input) -> Pair.of(FunFuture.getUnchecked(a), FunFuture.getUnchecked(b))));
-  }
-
-  default <B> FunFuture<Pair<T, B>> zip(ListenableFuture<B> other) {
-    return FunFuture.zip(delegate(), other);
+  default <B> FunFuturePair<T, B> zip(ListenableFuture<B> other) {
+    return newFuturePair(Futures.transform(Futures.allAsList(ImmutableList.of(delegate(), other)),
+            (List<Object> input) -> Pair.of(FunFuture.getUnchecked(delegate()), FunFuture.getUnchecked(other))));
   }
 
   default Source<T> asSource() {
