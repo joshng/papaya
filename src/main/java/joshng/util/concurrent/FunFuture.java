@@ -232,10 +232,10 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   }
 
   default <O> FunFuture<O> map(Function<? super T, ? extends O> function) {
-    return map(MoreExecutors.sameThreadExecutor(), function);
+    return mapInExecutor(MoreExecutors.sameThreadExecutor(), function);
   }
 
-  default <O> FunFuture<O> map(Executor executor, Function<? super T, ? extends O> function) {
+  default <O> FunFuture<O> mapInExecutor(Executor executor, Function<? super T, ? extends O> function) {
     F<? super T, ? extends O> f = F.extendFunction(function);
     return wrapFuture(Futures.transform(delegate(), f, executor));
   }

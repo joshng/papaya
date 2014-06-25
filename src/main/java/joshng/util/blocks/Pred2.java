@@ -17,6 +17,14 @@ public interface Pred2<K, V> extends Pred<Entry<? extends K, ? extends V>>, BiPr
     }
   };
 
+  public static <K,V> Pred2<K,V> pred2(Pred2<K,V> pred) {
+    return pred;
+  }
+
+  public static <K,V> Pred2<K,V> extendBiPredicate(BiPredicate<K,V> pred) {
+    return pred instanceof Pred2 ? (Pred2<K, V>) pred : pred::test;
+  }
+
   default boolean test(Entry<? extends K, ? extends V> input) {
     return test(input.getKey(), input.getValue());
   }

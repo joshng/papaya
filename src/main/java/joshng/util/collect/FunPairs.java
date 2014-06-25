@@ -10,9 +10,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.BiConsumer;
+import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import static joshng.util.blocks.Pred2.extendBiPredicate;
 import static joshng.util.collect.MoreCollections.immutableMapWithEntries;
 import static joshng.util.collect.MoreCollections.multimapWithEntries;
 /**
@@ -185,6 +187,10 @@ public interface FunPairs<K, V> extends FunIterable<Map.Entry<K, V>> {
    */
   default FunPairs<K, V> filterValues(Predicate<? super V> predicate) {
     return new FunctionalPairs<>(Iterables.filter(delegate(), Pair.<V>getSecondFromPair().resultMatches(predicate)));
+  }
+
+  default FunPairs<K, V> filter2(BiPredicate<? super K, ? super V> predicate) {
+    return filter(extendBiPredicate(predicate));
   }
 
   /**
