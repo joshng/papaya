@@ -160,12 +160,21 @@ public class StringUtils {
 //
 //	}
 
-  public static String capitalizeFirstChar(String word) {
+  public static String upcaseFirstChar(String word) {
     if (word.length() == 0) {
       return word;
     }
     char[] chars = word.toCharArray();
     chars[0] = Character.toUpperCase(chars[0]);
+    return new String(chars);
+  }
+
+  public static String downcaseFirstChar(String word) {
+    if (word.length() == 0) {
+      return word;
+    }
+    char[] chars = word.toCharArray();
+    chars[0] = Character.toLowerCase(chars[0]);
     return new String(chars);
   }
 

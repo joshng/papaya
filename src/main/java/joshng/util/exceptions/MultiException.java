@@ -41,11 +41,28 @@ public interface MultiException {
     return result;
   }
 
+  default MultiException collectThrowables(Iterable<? extends Runnable> runnables) {
+    MultiException result = this;
+    for (Runnable runnable : runnables) {
+      result = result.consumeThrowable(runnable);
+    }
+    return result;
+  }
+
   default MultiException consumeException(Runnable runnable) {
     try {
       runnable.run();
       return this;
     } catch (Exception e) {
+      return with(e);
+    }
+  }
+
+  default MultiException consumeThrowable(Runnable runnable) {
+    try {
+      runnable.run();
+      return this;
+    } catch (Throwable e) {
       return with(e);
     }
   }
@@ -98,8 +115,7 @@ public interface MultiException {
     }
 
     public <E extends Throwable> void throwIfException(Class<E> exceptionClass) throws E {
-      Throwables.propagateIfPossible(throwable, exceptionClass);
-      throw Throwables.propagate(throwable);
+      throw Exceptions.propagate(throwable, exceptionClass);
     }
 
     public void throwRuntimeIfAny() {

@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
  */
 public interface SideEffect extends Source<Nothing>, Runnable {
   static final Logger LOG = LoggerFactory.getLogger(SideEffect.class);
+  Sink<Runnable> RUNNABLE_RUNNER = Runnable::run;
 
   public static SideEffect sideEffect(SideEffect sideEffect) {
     return sideEffect;

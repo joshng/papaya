@@ -116,6 +116,10 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     return FunFuture.getUnchecked(delegate());
   }
 
+  default <V> FunFuture<V> replace(V value) {
+    return map(Source.ofInstance(value));
+  }
+
   default Maybe<T> getWithin(long timeout, TimeUnit timeUnit) {
     try {
       return definitely(get(timeout, timeUnit));
@@ -126,6 +130,11 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     } catch (TimeoutException e) {
       return Maybe.not();
     }
+  }
+
+  default FunFuture<T> cancelAfterTimeout(boolean mayInterruptIfRunning, long timeout, TimeUnit timeUnit, ScheduledExecutorService scheduler) {
+    scheduler.schedule(() -> cancel(mayInterruptIfRunning), timeout, timeUnit);
+    return this;
   }
 
   default <E extends Throwable> T getChecked(Class<E> exceptionClass) throws E {
@@ -240,6 +249,15 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     return wrapFuture(Futures.transform(delegate(), f, executor));
   }
 
+  default <O> FunFuture<O> mapUnchecked(ThrowingFunction<? super T, ? extends O> throwingFunction) {
+    return map(t -> {
+      try {
+        return throwingFunction.apply(t);
+      } catch (Exception e) {
+        throw new UncheckedExecutionException(e);
+      }
+    });
+  }
   default <K,V> FunFuturePair<K,V> mapPair(Function<? super T, ? extends Map.Entry<K,V>> function) {
     F<? super T, ? extends Map.Entry<K,V>> f = F.extendFunction(function);
     return newFuturePair(Futures.transform(delegate(), f));
@@ -343,6 +361,10 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
         errorObserver.accept((Exception) t);
       }
     });
+  }
+
+  default void addSameThreadListener(Runnable runnable) {
+    addListener(runnable, MoreExecutors.sameThreadExecutor());
   }
 
   default FunFuture<T> uponSuccess(Consumer<? super T> successObserver) {
