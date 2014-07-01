@@ -15,7 +15,7 @@ public interface F2<I1, I2, O> extends BiFunction<I1, I2, O> {
     return (input1, input2) -> result;
   }
 
-  public static <I1, I2, O> F2<I1, I2, O> method(final F2<I1, I2, O> fn) {
+  public static <I1, I2, O> F2<I1, I2, O> function2(final F2<I1, I2, O> fn) {
     return fn;
   }
 

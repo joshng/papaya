@@ -84,7 +84,7 @@ public class FunctionalExecutorService extends ForwardingListeningExecutorServic
   }
 
   public <T> FunFuture<T> submitAsync(Callable<? extends ListenableFuture<T>> asyncCallable) {
-    return FunFuture.newFuture(Futures.transform(submit(asyncCallable), (AsyncFunction<ListenableFuture<? extends T>, T>) AsyncF.<T>asyncIdentity()));
+    return FunFuture.newFuture(Futures.transform(super.submit(asyncCallable), (AsyncFunction<ListenableFuture<? extends T>, T>) AsyncF.<T>asyncIdentity()));
   }
 
   @Override

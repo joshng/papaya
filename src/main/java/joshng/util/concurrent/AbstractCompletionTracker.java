@@ -6,27 +6,32 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.google.common.base.Preconditions.checkState;
-
 /**
  * User: josh
- * Date: 6/25/13
- * Time: 12:59 PM
+ * Date: 6/30/14
+ * Time: 11:52 AM
  */
 public abstract class AbstractCompletionTracker<I, O> {
   private final ListeningExecutorService jobCompletionExecutor;
   private final Promise<O> completionPromise = Promise.newPromise();
   private final AtomicLong startedCount = new AtomicLong();
   private final AtomicLong completedCount = new AtomicLong();
-  private final AtomicBoolean noMore = new AtomicBoolean();
   private final AtomicBoolean markedComplete = new AtomicBoolean();
 
   public AbstractCompletionTracker(ListeningExecutorService jobCompletionExecutor) {
     this.jobCompletionExecutor = jobCompletionExecutor;
   }
 
+  protected abstract void handleCompletedJob(ListenableFuture<? extends I> job) throws Exception;
+
+  protected abstract O computeResult() throws Exception;
+
   public FunFuture<O> getCompletionFuture() {
     return completionPromise;
+  }
+
+  public boolean isAcceptingNewJobs() {
+    return !isDone();
   }
 
   public boolean isDone() {
@@ -41,29 +46,20 @@ public abstract class AbstractCompletionTracker<I, O> {
   }
 
   public <F extends ListenableFuture<? extends I>> F track(final F job) {
-    boolean doSubmit;
-    synchronized (noMore) {
-      doSubmit = !(noMore.get() || completionPromise.isDone());
-      if (doSubmit) startedCount.incrementAndGet();
-    }
-    if (doSubmit) {
-      job.addListener(() -> {
-        try {
-          handleCompletedJob(job);
-        } finally {
-          completedCount.incrementAndGet();
-          checkDone();
-        }
-      }, jobCompletionExecutor);
-    } else {
-      job.cancel(completionPromise.wasCancelledWithInterruption());
-    }
+    startedCount.incrementAndGet();
+    if (!isAcceptingNewJobs()) job.cancel(completionPromise.wasCancelledWithInterruption());
+    job.addListener(() -> {
+      try {
+        handleCompletedJob(job);
+      } catch (Exception e) {
+        abort(e);
+      } finally {
+        completedCount.incrementAndGet();
+        checkDone();
+      }
+    }, jobCompletionExecutor);
     return job;
   }
-
-  protected abstract void handleCompletedJob(ListenableFuture<? extends I> job);
-
-  protected abstract void completePromise(Promise<O> completionPromise);
 
   /**
    * Completes the completion-future with the given exception, and causes all subsequently-submitted
@@ -83,19 +79,13 @@ public abstract class AbstractCompletionTracker<I, O> {
     return completedCount.get();
   }
 
-  public FunFuture<O> setNoMoreJobs() {
-    synchronized (noMore) {
-      checkState(noMore.compareAndSet(false, true), "Called setNoMoreJobs more than once");
-      checkDone();
+  protected void checkDone() {
+    if (allJobsDone() && markedComplete.compareAndSet(false, true)) {
+      completionPromise.complete(this::computeResult);
     }
-    return completionPromise;
   }
 
-  private void checkDone() {
-    if (noMore.get()
-            && getIncompleteJobCount() == 0
-            && markedComplete.compareAndSet(false, true)) {
-      completePromise(completionPromise);
-    }
+  protected boolean allJobsDone() {
+    return getIncompleteJobCount() == 0;
   }
 }

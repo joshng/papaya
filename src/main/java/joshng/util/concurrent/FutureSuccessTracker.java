@@ -1,10 +1,11 @@
 package joshng.util.concurrent;
 
-import com.google.common.util.concurrent.ListenableFuture;
-
 /**
  * Created by: josh 10/11/13 6:05 PM
  */
+
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.Uninterruptibles;
 
 /**
  * A {@link FutureCompletionTracker} that aborts if any {@link #track submitted} job fails.
@@ -12,12 +13,12 @@ import com.google.common.util.concurrent.ListenableFuture;
  * reflect the exception thrown by the first failed job, if any.
  */
 public class FutureSuccessTracker extends FutureCompletionTracker {
+  public FutureSuccessTracker() {
+    super();
+  }
+
   @Override
-  protected void handleCompletedJob(ListenableFuture<?> job) {
-    try {
-      FunFuture.getUnchecked(job);
-    } catch (Throwable e) {
-      abort(e);
-    }
+  protected void handleCompletedJob(ListenableFuture<?> job) throws Exception {
+    Uninterruptibles.getUninterruptibly(job);
   }
 }

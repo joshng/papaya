@@ -23,6 +23,10 @@ public interface Tapper<T> extends F<T, T> {
     return tapper;
   }
 
+  public static <T> Tapper<T> extendConsumer(Consumer<? super T> consumer) {
+    return tapper(consumer::accept);
+  }
+
   void tap(T value);
 
   @Override

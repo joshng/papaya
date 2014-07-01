@@ -2,6 +2,7 @@ package joshng.util.concurrent;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import joshng.util.collect.Nothing;
 
 /**
  * User: josh
@@ -33,18 +34,17 @@ import com.google.common.util.concurrent.MoreExecutors;
  * FunFuture<Something> startSomeJob(SomeInput input) { ... }
  * }</pre>
  */
-public class FutureCompletionTracker extends AbstractCompletionTracker<Object, Long> {
+public class FutureCompletionTracker extends AbstractIndependentCompletionTracker<Object, Nothing> {
   public FutureCompletionTracker() {
     super(MoreExecutors.sameThreadExecutor());
   }
 
   @Override
-  protected void handleCompletedJob(ListenableFuture<?> job) {
-    // nothing to do
+  protected void handleCompletedJob(ListenableFuture<?> job) throws Exception {
   }
 
   @Override
-  protected void completePromise(Promise<Long> completionPromise) {
-    completionPromise.setSuccess(getCompletedJobCount());
+  protected Nothing computeResult() throws Exception {
+    return Nothing.NOTHING;
   }
 }

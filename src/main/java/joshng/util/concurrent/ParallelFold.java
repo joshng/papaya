@@ -10,7 +10,6 @@ import joshng.util.blocks.F2;
 import joshng.util.collect.MutableReference;
 import joshng.util.exceptions.MultiException;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -19,7 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Date: 8/10/12
  * Time: 4:55 PM
  */
-public class ParallelFold<I, O> extends AbstractCompletionTracker<I, O> {
+public class ParallelFold<I, O> extends AbstractIndependentCompletionTracker<I, O> {
   private final MutableReference<O> foldedResult;
   private final F<I, O> resultFolder;
   private final Cache<Class<? extends Throwable>, ErrorAccumulator> errorAccumulators = CacheBuilder.newBuilder().build();
@@ -37,18 +36,14 @@ public class ParallelFold<I, O> extends AbstractCompletionTracker<I, O> {
   }
 
   @Override
-  protected void handleCompletedJob(ListenableFuture<? extends I> job) {
+  protected void handleCompletedJob(ListenableFuture<? extends I> job) throws Exception {
     try {
       resultFolder.apply(job.get());
-    } catch (final Throwable e) {
-      final Throwable cause = FunFuture.unwrapExecutionException(e);
-      if (abortOnFailure) abort(cause);
+    } catch (final Exception e) {
+      if (abortOnFailure) throw e;
+      Throwable cause = FunFuture.unwrapExecutionException(e);
       try {
-        errorAccumulators.get(cause.getClass(), new Callable<ErrorAccumulator>() {
-          public ErrorAccumulator call() throws Exception {
-            return new ErrorAccumulator(cause);
-          }
-        }).occurrenceCount.incrementAndGet();
+        errorAccumulators.get(cause.getClass(), () -> new ErrorAccumulator(cause)).occurrenceCount.incrementAndGet();
       } catch (ExecutionException unlikely) {
         throw new RuntimeException(Objects.firstNonNull(unlikely.getCause(), unlikely));
       }
@@ -56,16 +51,13 @@ public class ParallelFold<I, O> extends AbstractCompletionTracker<I, O> {
   }
 
   @Override
-  protected void completePromise(Promise<O> completionPromise) {
+  protected O computeResult() throws Exception {
     MultiException e = MultiException.Empty;
     for (ErrorAccumulator accumulator : errorAccumulators.asMap().values()) {
       e = e.with(accumulator.getRepresentativeException());
     }
-    for (Throwable throwable : e.getCombinedThrowable()) {
-      completionPromise.setFailure(throwable);
-      return;
-    }
-    completionPromise.setSuccess(foldedResult.get());
+    e.throwIfException(Exception.class);
+    return foldedResult.get();
   }
 
   public static class ErrorAccumulator {

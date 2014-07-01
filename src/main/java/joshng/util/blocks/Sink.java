@@ -23,6 +23,10 @@ public interface Sink<T> extends F<T, Nothing>, Consumer<T>, ThrowingConsumer<T>
     return handler::accept;
   }
 
+  public static Sink<Object> ignoreInput(Runnable sideEffect) {
+    return object -> sideEffect.run();
+  }
+
   @SuppressWarnings("unchecked")
   public static <T> Sink<T> asSink(final Function<T, ?> handler) {
     if (handler instanceof Sink) return (Sink<T>) handler;

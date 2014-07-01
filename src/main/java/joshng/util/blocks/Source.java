@@ -32,7 +32,7 @@ public interface Source<T> extends F<Object, T>, Callable<T>, Supplier<T>, com.g
   }
 
   public static <T> Source<T> ofInstance(final T value) {
-    return new SourceOfInstance<T>(value);
+    return new SourceOfInstance<>(value);
   }
 
   @SuppressWarnings("unchecked")
@@ -71,7 +71,7 @@ public interface Source<T> extends F<Object, T>, Callable<T>, Supplier<T>, com.g
   @Override
   default <U> Source<U> andThen(final Function<? super T, ? extends U> transformer) {
 //        return F.extendF(transformer).bindFrom(this);
-    return () -> transformer.apply(Source.this.get());
+    return () -> transformer.apply(get());
   }
 
   default <U> Source<U> map(final Function<? super T, U> transformer) {
@@ -79,7 +79,7 @@ public interface Source<T> extends F<Object, T>, Callable<T>, Supplier<T>, com.g
   }
 
   default <U> Source<U> flatMap(final Function<? super T, ? extends Supplier<U>> transformer) {
-    return () -> transformer.apply(Source.this.get()).get();
+    return () -> transformer.apply(get()).get();
   }
 
   default Source<T> memoize() {
@@ -91,12 +91,7 @@ public interface Source<T> extends F<Object, T>, Callable<T>, Supplier<T>, com.g
   }
 
   default Runnable asRunnable() {
-    return new Runnable() {
-      @Override
-      public void run() {
-        get();
-      }
-    };
+    return this::get;
   }
 
   default Supplier<T> asSupplier() {
@@ -111,31 +106,25 @@ public interface Source<T> extends F<Object, T>, Callable<T>, Supplier<T>, com.g
    * (wrapped in a RuntimeException if necessary by {@link Throwables#propagate}).
    */
   default Source<Maybe<T>> handlingExceptions(final ExceptionPolicy exceptionPolicy) {
-    return new Source<Maybe<T>>() {
-      @Override
-      public Maybe<T> get() {
-        try {
-          return definitely(Source.this.get());
-        } catch (Throwable e) {
-          if (exceptionPolicy.apply(e)) return Maybe.not();
-          throw Throwables.propagate(e);
-        }
+    return () -> {
+      try {
+        return definitely(get());
+      } catch (Throwable e) {
+        if (exceptionPolicy.apply(e)) return Maybe.not();
+        throw Throwables.propagate(e);
       }
     };
   }
 
   default Source<T> recover(final ThrowingFunction<? super Exception, ? extends T> recovery) {
-    return new Source<T>() {
-      @Override
-      public T get() {
+    return () -> {
+      try {
+        return get();
+      } catch (Exception t) {
         try {
-          return Source.this.get();
-        } catch (Exception t) {
-          try {
-            return recovery.apply(t);
-          } catch (Exception e) {
-            throw Throwables.propagate(e);
-          }
+          return recovery.apply(t);
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
         }
       }
     };

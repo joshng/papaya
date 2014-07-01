@@ -8,7 +8,7 @@ import com.google.common.base.Throwables;
  * Time: 2:32 PM
  */
 public interface ThrowingFunction<I, O> {
-  static <I, O> ThrowingFunction<I, O> method(ThrowingFunction<I, O> block) { return block; }
+  static <I, O> ThrowingFunction<I, O> throwingFunction(ThrowingFunction<I, O> block) { return block; }
 
   public O apply(I input) throws Exception;
 
