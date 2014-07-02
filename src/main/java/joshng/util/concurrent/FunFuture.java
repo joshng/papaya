@@ -12,10 +12,7 @@ import joshng.util.collect.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -53,6 +50,14 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
 
   public static <T> FunFuture<List<T>> allAsList(Iterable<? extends ListenableFuture<? extends T>> input) {
     return newFuture(Futures.allAsList(unwrapFutureIterable(input)));
+  }
+
+  public static FunFuture<Nothing> trackSuccess(ListenableFuture<?>... futures) {
+    return trackSuccess(Arrays.asList(futures));
+  }
+
+  public static FunFuture<Nothing> trackSuccess(Iterable<? extends ListenableFuture<?>> futureList) {
+    return new FutureSuccessTracker().trackAll(futureList).setNoMoreJobs();
   }
 
   public static <T> FunFuture<List<T>> successfulAsList(Iterable<? extends ListenableFuture<? extends T>> input) {
@@ -118,6 +123,10 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
 
   default <V> FunFuture<V> replace(V value) {
     return map(Source.ofInstance(value));
+  }
+
+  default FunFuture<Nothing> discardValue() {
+    return map(Nothing.SOURCE);
   }
 
   default Maybe<T> getWithin(long timeout, TimeUnit timeUnit) {

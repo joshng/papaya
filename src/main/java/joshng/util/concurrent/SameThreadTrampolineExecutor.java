@@ -1,10 +1,13 @@
 package joshng.util.concurrent;
 
 import com.google.common.collect.Queues;
+import com.google.common.util.concurrent.ListenableFuture;
 import joshng.util.ThreadLocalRef;
+import joshng.util.collect.Nothing;
 import joshng.util.exceptions.MultiException;
 
 import java.util.Queue;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 
 /**
@@ -20,15 +23,27 @@ public class SameThreadTrampolineExecutor implements Executor {
 
   @Override
   public void execute(Runnable command) {
-    trampoline.get().runWithTrampoline(command, trampoline);
+    submit(command);
   }
 
-  private static class Trampoline {
+  public FunFuture<Nothing> submit(Runnable command) {
+    return trampoline.get().runWithTrampoline(FunFuture.funFutureTask(command));
+  }
+
+  public <T> FunFuture<T> submit(Callable<T> command) {
+    return trampoline.get().runWithTrampoline(FunFuture.funFutureTask(command));
+  }
+
+  public <T> FunFuture<T> submitAsync(Callable<? extends ListenableFuture<T>> command) {
+    return submit(command).flatMap(AsyncF.<T>asyncIdentity());
+  }
+
+  private class Trampoline {
     private final Queue<Runnable> queue = Queues.newArrayDeque();
     private boolean running = false;
 
-    void runWithTrampoline(final Runnable command, ThreadLocalRef<Trampoline> trampoline) {
-      queue.offer(command);
+    <T> FunFuture<T> runWithTrampoline(FunRunnableFuture<T> task) {
+      queue.offer(task);
       if (!running) {
         running = true;
         try {
@@ -37,6 +52,7 @@ public class SameThreadTrampolineExecutor implements Executor {
           trampoline.remove();
         }
       }
+      return task;
     }
 
     private void drain() {

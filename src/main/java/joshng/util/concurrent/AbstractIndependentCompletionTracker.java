@@ -1,5 +1,6 @@
 package joshng.util.concurrent;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -27,6 +28,12 @@ public abstract class AbstractIndependentCompletionTracker<I, O> extends Abstrac
     checkState(noMore.compareAndSet(false, true), "Called setNoMoreJobs more than once");
     checkDone();
     return getCompletionFuture();
+  }
+
+  @Override
+  public AbstractIndependentCompletionTracker<I, O> trackAll(Iterable<? extends ListenableFuture<? extends I>> listenableFutures) {
+    super.trackAll(listenableFutures);
+    return this;
   }
 
   @Override
