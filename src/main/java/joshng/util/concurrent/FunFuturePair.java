@@ -14,7 +14,7 @@ import java.util.function.BiFunction;
  * Date: 6/23/14
  * Time: 12:07 PM
  */
-public interface FunFuturePair<T,U> extends FunFuture<Map.Entry<T,U>> {
+public interface FunFuturePair<T,U> extends FunFuture<Map.Entry<T,U>>, Map.Entry<FunFuture<T>, FunFuture<U>> {
   default FunFuture<T> getKey() {
     return map(Pair.getFirstFromPair());
   }
@@ -33,6 +33,11 @@ public interface FunFuturePair<T,U> extends FunFuture<Map.Entry<T,U>> {
 
   default FunFuture<Nothing> foreach2(BiConsumer<? super T, ? super U> consumer) {
     return map2(Sink2.extendBiConsumer(consumer));
+  }
+
+  @Override
+  default FunFuture<U> setValue(FunFuture<U> value) {
+    throw new UnsupportedOperationException();
   }
 
   class ForwardingFunFuturePair<T, U> extends FunFuture.ForwardingFunFuture<Map.Entry<T,U>> implements FunFuturePair<T,U> {

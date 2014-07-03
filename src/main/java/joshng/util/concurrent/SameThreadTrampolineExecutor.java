@@ -4,7 +4,6 @@ import com.google.common.collect.Queues;
 import com.google.common.util.concurrent.ListenableFuture;
 import joshng.util.ThreadLocalRef;
 import joshng.util.collect.Nothing;
-import joshng.util.exceptions.MultiException;
 
 import java.util.Queue;
 import java.util.concurrent.Callable;
@@ -56,15 +55,9 @@ public class SameThreadTrampolineExecutor implements Executor {
     }
 
     private void drain() {
-      MultiException multiException = MultiException.Empty;
       Runnable job;
       while ((job = queue.poll()) != null) {
-        try {
-          job.run();
-        } catch (Exception e) {
-          multiException = multiException.with(e);
-        }
-        multiException.throwRuntimeIfAny();
+        job.run();
       }
     }
   }

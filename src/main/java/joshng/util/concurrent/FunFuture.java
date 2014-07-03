@@ -29,7 +29,6 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   static final Logger LOG = LoggerFactory.getLogger(FunFuture.class);
   static final FunFuture NULL_FUTURE = FunFuture.<Object>immediateFuture(null);
 
-  static final AsyncF SEQUENCER = (AsyncF<Iterable<ListenableFuture<Object>>, List<Object>>) FunFuture::allAsList;
   static F GET_UNCHECKED = (F<Future<Object>, Object>) FunFuture::getUnchecked;
   FunFuture<Boolean> FALSE = FunFuture.immediateFuture(false);
   FunFuture<Boolean> TRUE = FunFuture.immediateFuture(true);
@@ -199,11 +198,6 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   }
 
   @SuppressWarnings("unchecked")
-  public static <T> AsyncF<Iterable<? extends ListenableFuture<T>>, List<T>> sequencer() {
-    return SEQUENCER;
-  }
-
-  @SuppressWarnings("unchecked")
   public static <T> FunFuture<T> nullFuture() {
     return NULL_FUTURE;
   }
@@ -258,6 +252,18 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     return wrapFuture(Futures.transform(delegate(), f, executor));
   }
 
+  default <O> FunFuture<O> thenAsync(Callable<? extends ListenableFuture<O>> nextTask) {
+    return flatMap((T ignored) -> FunFuture.callSafely(nextTask));
+  }
+
+  default <O> FunFuture<O> thenReplace(Callable<O> replacementSource) {
+    return flatMap((T ignored) -> immediateResult(replacementSource));
+  }
+
+  default FunFuture<Nothing> thenRun(Runnable runnable) {
+    return thenReplace(Executors.callable(runnable, Nothing.NOTHING));
+  }
+
   default <O> FunFuture<O> mapUnchecked(ThrowingFunction<? super T, ? extends O> throwingFunction) {
     return map(t -> {
       try {
@@ -267,6 +273,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
       }
     });
   }
+
   default <K,V> FunFuturePair<K,V> mapPair(Function<? super T, ? extends Map.Entry<K,V>> function) {
     F<? super T, ? extends Map.Entry<K,V>> f = F.extendFunction(function);
     return newFuturePair(Futures.transform(delegate(), f));
