@@ -52,7 +52,7 @@ public abstract class AbstractCompletionTracker<I, O> {
       try {
         handleCompletedJob(job);
       } catch (Exception e) {
-        abort(e);
+        abort(FunFuture.unwrapExecutionException(e));
       } finally {
         completedCount.incrementAndGet();
         checkDone();
