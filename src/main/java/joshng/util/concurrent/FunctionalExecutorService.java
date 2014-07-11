@@ -64,25 +64,6 @@ public class FunctionalExecutorService extends ForwardingListeningExecutorServic
     return wrapFunction(Sink.extendConsumer(sink));
   }
 
-  public <I, O> AsyncF<ListenableFuture<? extends I>, O> mapper(final Function<? super I, ? extends O> mapper) {
-    com.google.common.base.Function<I, O> f = mapper::apply;
-    return new AsyncF<ListenableFuture<? extends I>, O>() {
-      @Override
-      public FunFuture<O> applyAsync(ListenableFuture<? extends I> input) {
-        return FunFuture.newFuture(Futures.transform(input, f, getDelegate()));
-      }
-    };
-  }
-
-  public <I, O> AsyncF<ListenableFuture<? extends I>, O> flatMapper(final AsyncFunction<? super I, ? extends O> mapper) {
-    return new AsyncF<ListenableFuture<? extends I>, O>() {
-      @Override
-      public FunFuture<O> applyAsync(ListenableFuture<? extends I> input) {
-        return FunFuture.newFuture(Futures.transform(input, mapper, getDelegate()));
-      }
-    };
-  }
-
   public <T> FunFuture<T> submitAsync(Callable<? extends ListenableFuture<T>> asyncCallable) {
     return FunFuture.newFuture(Futures.transform(super.submit(asyncCallable), (AsyncFunction<ListenableFuture<? extends T>, T>) AsyncF.<T>asyncIdentity()));
   }

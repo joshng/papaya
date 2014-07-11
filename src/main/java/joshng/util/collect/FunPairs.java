@@ -4,6 +4,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.*;
 import joshng.util.blocks.F2;
 import joshng.util.blocks.Pred;
+import joshng.util.blocks.Pred2;
 
 import java.util.Comparator;
 import java.util.HashMap;
@@ -157,6 +158,11 @@ public interface FunPairs<K, V> extends FunIterable<Map.Entry<K, V>> {
 
   default void foreach2(BiConsumer<? super K, ? super V> visitor) {
     foreach(e -> visitor.accept(e.getKey(), e.getValue()));
+  }
+
+
+  default Maybe.Pair<K,V> find2(BiPredicate<? super K, ? super V> predicate) {
+    return find(Pred2.extendBiPredicate(predicate));
   }
 
   default <A> A accumulate2(BiAccumulator<? super K, ? super V, ? extends A> accumulator) {

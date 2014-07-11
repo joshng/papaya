@@ -40,11 +40,15 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   }
 
   public static <T> FunFuture<T> immediateFailedFuture(Throwable e) {
-    return newFuture(Futures.<T>immediateFailedFuture(unwrapExecutionException(e)));
+    return newFuture(Futures.<T>immediateFailedFuture(FutureStackTrace.annotateWithCurrentContext(unwrapExecutionException(e))));
   }
 
   public static <T> FunFuture<T> immediateCancelledFuture() {
     return newFuture(Futures.<T>immediateCancelledFuture());
+  }
+
+  public static FunFuture<Boolean> immediateBoolean(boolean value) {
+    return value ? TRUE : FALSE;
   }
 
   public static <T> FunFuture<List<T>> allAsList(Iterable<? extends ListenableFuture<? extends T>> input) {
@@ -244,12 +248,16 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   }
 
   default <O> FunFuture<O> map(Function<? super T, ? extends O> function) {
-    return mapInExecutor(MoreExecutors.sameThreadExecutor(), function);
+    AsyncF<? super T, ? extends O> asyncF = AsyncF.liftFunction(function);
+    return flatMap(asyncF);
   }
 
-  default <O> FunFuture<O> mapInExecutor(Executor executor, Function<? super T, ? extends O> function) {
-    F<? super T, ? extends O> f = F.extendFunction(function);
-    return wrapFuture(Futures.transform(delegate(), f, executor));
+  default <O> FunFuture<O> flatMap(AsyncFunction<? super T, ? extends O> f) {
+    return newFuture(Futures.transform(this, f));
+  }
+
+  default <O> FunFutureMaybe<O> mapMaybe(Function<? super T, Maybe<O>> f) {
+    return flatMapMaybe(AsyncF.liftFunction(f));
   }
 
   default <O> FunFuture<O> thenAsync(Callable<? extends ListenableFuture<O>> nextTask) {
@@ -275,8 +283,12 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   }
 
   default <K,V> FunFuturePair<K,V> mapPair(Function<? super T, ? extends Map.Entry<K,V>> function) {
-    F<? super T, ? extends Map.Entry<K,V>> f = F.extendFunction(function);
-    return newFuturePair(Futures.transform(delegate(), f));
+    return flatMapPair((AsyncF<? super T, ? extends Map.Entry<K,V>>) AsyncF.liftFunction(function));
+  }
+
+  default <K,V> FunFuturePair<K,V> flatMapPair(AsyncFunction<? super T, ? extends Map.Entry<K,V>> function) {
+    return newFuturePair(Futures.transform(this, function));
+
   }
 
   default <K, V> FunFuturePair.ForwardingFunFuturePair<K, V> newFuturePair(ListenableFuture<? extends Map.Entry<K, V>> transformed) {
@@ -287,24 +299,9 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     return input -> extendFuture(input).map(mapper);
   }
 
-  default <O> FunFuture<O> flatMap(AsyncFunction<? super T, ? extends O> f) {
-    return flatMap(MoreExecutors.sameThreadExecutor(), f);
-  }
-
-  default <O> FunFuture<O> flatMap(Executor executor, AsyncFunction<? super T, ? extends O> f) {
-    return wrapFuture(Futures.transform(delegate(), f, executor));
-  }
-
-  default <O> FunFutureMaybe<O> mapMaybe(Function<? super T, Maybe<O>> f) {
-    return mapMaybe(MoreExecutors.sameThreadExecutor(), f);
-  }
 
   default <O> FunFutureMaybe<O> flatMapMaybe(AsyncFunction<? super T, Maybe<O>> f) {
-    return FunFutureMaybe.wrapFutureMaybe(Futures.transform(delegate(), f));
-  }
-
-  default <O> FunFutureMaybe<O> mapMaybe(Executor executor, Function<? super T, Maybe<O>> f) {
-    return FunFutureMaybe.wrapFutureMaybe(Futures.transform(delegate(), F.extendFunction(f), executor));
+    return FunFutureMaybe.wrapFutureMaybe(Futures.transform(this, f));
   }
 
   static <I, O> F<ListenableFuture<? extends I>, FunFutureMaybe<O>> maybeMapper(Function<? super I, Maybe<O>> maybeFunction) {
@@ -312,7 +309,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   }
 
   default <O> FunFutureMaybe<O> flatMapMaybe(Executor executor, AsyncFunction<? super T, Maybe<O>> f) {
-    return new ForwardingFunFutureMaybe<>(Futures.transform(delegate(), f, executor));
+    return new ForwardingFunFutureMaybe<>(Futures.transform(this, f, executor));
   }
 
   default FunFuture<Nothing> foreach(Sink<? super T> sideEffect) {
@@ -344,7 +341,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   }
 
   default FunFuture<T> recover(final Executor executor, final ThrowingFunction<? super Exception, ? extends T> exceptionHandler) {
-    return newFuture(Futures.withFallback(delegate(), t -> Futures.immediateFuture(exceptionHandler.apply((Exception)unwrapExecutionException(t))), executor));
+    return newFuture(Futures.withFallback(this, t -> Futures.immediateFuture(exceptionHandler.apply((Exception)unwrapExecutionException(t))), executor));
   }
 
   default FunFuture<T> recoverWith(final AsyncFunction<? super Throwable, ? extends T> exceptionHandler) {
@@ -445,7 +442,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   }
 
   default <B> FunFuturePair<T, B> zip(ListenableFuture<B> other) {
-    return newFuturePair(Futures.transform(Futures.allAsList(ImmutableList.of(delegate(), other)),
+    return newFuturePair(Futures.transform(FunFuture.allAsList(ImmutableList.of(this, extendFuture(other))),
             (List<Object> input) -> Pair.of(FunFuture.getUnchecked(delegate()), FunFuture.getUnchecked(other))));
   }
 
@@ -473,6 +470,11 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     @Override
     public ListenableFuture<T> delegate() {
       return delegate;
+    }
+
+    @Override
+    public void addListener(Runnable listener, Executor exec) {
+      super.addListener(FutureStackTrace.getCurrentContext().wrapRunnable(listener), exec);
     }
   }
 

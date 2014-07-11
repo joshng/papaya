@@ -1,10 +1,12 @@
 package joshng.util.context;
 
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import joshng.util.blocks.F;
 import joshng.util.blocks.SideEffect;
 import joshng.util.blocks.Sink;
+import joshng.util.blocks.Source;
 import joshng.util.concurrent.AsyncF;
 import joshng.util.concurrent.FunFuture;
 
@@ -20,8 +22,8 @@ import java.util.function.Supplier;
  * Time: 12:14 AM
  */
 public interface TransientContext {
-  static CompositeStackContext of(TransientContext first, TransientContext second, TransientContext... rest) {
-    return new CompositeStackContext(Lists.asList(first, second, rest));
+  static CompositeTransientContext of(TransientContext first, TransientContext second, TransientContext... rest) {
+    return new CompositeTransientContext(Lists.asList(first, second, rest));
   }
 
   public interface State {
@@ -39,14 +41,13 @@ public interface TransientContext {
   }
 
   State enter();
-  
+
+  default TransientContext andThen(TransientContext innerContext) {
+    return of(this, innerContext);
+  }
+
   default void runInContext(Runnable r) {
-    State state = enter();
-    try {
-      r.run();
-    } finally {
-      state.exit();
-    }
+    getInContext(SideEffect.extendRunnable(r));
   }
 
   default <T> T callInContext(Callable<T> callable) throws Exception {
@@ -59,30 +60,19 @@ public interface TransientContext {
   }
 
   default <T> T getInContext(Supplier<T> supplier) {
-    State state = enter();
     try {
-      return supplier.get();
-    } finally {
-      state.exit();
+      return callInContext(Source.extendSupplier(supplier));
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
     }
   }
 
   default <I, O> O applyInContext(I input, Function<? super I, ? extends O> fn) {
-    State state = enter();
-    try {
-      return fn.apply(input);
-    } finally {
-      state.exit();
-    }
+    return getInContext(F.extendFunction(fn).bind(input));
   }
 
   default <I> void acceptInContext(I input, Consumer<? super I> consumer) {
-    State state = enter();
-    try {
-      consumer.accept(input);
-    } finally {
-      state.exit();
-    }
+    getInContext(Sink.extendConsumer(consumer).bind(input));
   }
 
   default <T> FunFuture<T> callInContextAsync(Callable<? extends ListenableFuture<T>> futureBlock) {
@@ -122,5 +112,81 @@ public interface TransientContext {
         super.addListener(wrapRunnable(listener), exec);
       }
     };
+  }
+
+  TransientContext NULL = NullContext.INSTANCE;
+
+  enum NullContext implements TransientContext {
+    INSTANCE;
+
+    @Override
+    public State enter() {
+      return State.NULL;
+    }
+
+    @Override
+    public TransientContext andThen(TransientContext innerContext) {
+      return innerContext;
+    }
+
+    @Override
+    public void runInContext(Runnable r) {
+      r.run();
+    }
+
+    @Override
+    public <T> T callInContext(Callable<T> callable) throws Exception {
+      return callable.call();
+    }
+
+    @Override
+    public <T> T getInContext(Supplier<T> supplier) {
+      return supplier.get();
+    }
+
+    @Override
+    public <I, O> O applyInContext(I input, Function<? super I, ? extends O> fn) {
+      return fn.apply(input);
+    }
+
+    @Override
+    public <I> void acceptInContext(I input, Consumer<? super I> consumer) {
+      consumer.accept(input);
+    }
+
+    @Override
+    public <T> FunFuture<T> callInContextAsync(Callable<? extends ListenableFuture<T>> futureBlock) {
+      return FunFuture.callSafely(futureBlock);
+    }
+
+    @Override
+    public SideEffect wrapRunnable(Runnable block) {
+      return SideEffect.extendRunnable(block);
+    }
+
+    @Override
+    public <O> Callable<O> wrapCallable(Callable<O> block) {
+      return block;
+    }
+
+    @Override
+    public <I, O> F<I, O> wrapFunction(Function<I, O> function) {
+      return F.extendFunction(function);
+    }
+
+    @Override
+    public <T> Sink<T> wrapSink(Consumer<T> sink) {
+      return Sink.extendConsumer(sink);
+    }
+
+    @Override
+    public <I, O> AsyncF<I, O> wrapAsync(AsyncF<I, O> asyncFunction) {
+      return asyncFunction;
+    }
+
+    @Override
+    public <T> FunFuture<T> wrapFutureListeners(ListenableFuture<T> future) {
+      return FunFuture.extendFuture(future);
+    }
   }
 }

@@ -5,17 +5,16 @@ import joshng.util.exceptions.MultiException;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.List;
 
 /**
  * User: josh
  * Date: 11/21/11
  * Time: 12:41 PM
  */
-public class CompositeStackContext implements TransientContext {
-  private final List<? extends TransientContext> contexts;
+public class CompositeTransientContext implements TransientContext {
+  private final ImmutableList<? extends TransientContext> contexts;
 
-  public CompositeStackContext(List<? extends TransientContext> contexts) {
+  public CompositeTransientContext(Iterable<? extends TransientContext> contexts) {
     this.contexts = ImmutableList.copyOf(contexts);
   }
 

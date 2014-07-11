@@ -20,10 +20,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
+import java.util.function.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -539,6 +536,8 @@ public abstract class Maybe<T> implements Iterable<T> {
     @Override
     public abstract Pair<K, V> foreach(Consumer<? super Map.Entry<K, V>> handler);
 
+    public abstract Pair<K, V> foreach2(BiConsumer<? super K, ? super V> handler);
+
     @Override
     public abstract Pair<K, V> orElseRun(Runnable runnable);
 
@@ -675,6 +674,12 @@ public abstract class Maybe<T> implements Iterable<T> {
       @Override
       public Pair<K, V> foreach(Consumer<? super Map.Entry<K, V>> handler) {
         handler.accept(entry);
+        return this;
+      }
+
+      @Override
+      public Pair<K, V> foreach2(BiConsumer<? super K, ? super V> handler) {
+        handler.accept(entry.getKey(), entry.getValue());
         return this;
       }
 
@@ -856,6 +861,11 @@ public abstract class Maybe<T> implements Iterable<T> {
 
     @Override
     public Maybe getValue() {
+      return this;
+    }
+
+    @Override
+    public Pair foreach2(BiConsumer handler) {
       return this;
     }
 

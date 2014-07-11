@@ -6,6 +6,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Ordering;
 import joshng.util.blocks.F;
 import joshng.util.collect.Pair;
+import joshng.util.exceptions.Exceptions;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -53,13 +54,16 @@ public class StringUtils {
   }
 
   public static String toHexString(byte[] bytes, int offset, int len) {
-    StringBuilder hex = new StringBuilder(len * 2);
+    return appendHexString(bytes, offset, len, new StringBuilder(len * 2)).toString();
+  }
+
+  public static StringBuilder appendHexString(byte[] bytes, int offset, int len, StringBuilder hex) {
     try {
-      appendHexString(bytes, offset, len, hex);
+      appendHexString(bytes, offset, len, (Appendable)hex);
+      return hex;
     } catch (IOException e) {
-      throw new AssertionError("StringBuilder.append threw IOException (shouldn't happen!)..?");
+      throw Exceptions.impossibleError(e);
     }
-    return hex.toString();
   }
 
   public static <A extends Appendable> A appendHexString(byte[] bytes, int offset, int len, A builder) throws IOException {
@@ -74,12 +78,7 @@ public class StringUtils {
     boolean truncated = bytes.length > offset + maxBytes;
     int len = maxBytes * 2;
     if (truncated) len += 3;
-    StringBuilder hex = new StringBuilder(len);
-    try {
-      appendHexString(bytes, offset, Math.min(bytes.length - offset, maxBytes), hex);
-    } catch (IOException e) {
-      throw new AssertionError("StringBuilder.append throw IOException (shouldn't happen!)..?");
-    }
+    StringBuilder hex = appendHexString(bytes, offset, Math.min(bytes.length - offset, maxBytes), new StringBuilder(len));
     if (truncated) hex.append("...");
     return hex.toString();
   }

@@ -35,6 +35,10 @@ public interface AsyncF<I, O> extends F<I, FunFuture<O>>, IAsyncFunction<I, O> {
     };
   }
 
+  public static <I,O> AsyncF<I, O> liftFunction(Function<I, O> function) {
+    return input -> FunFuture.immediateFuture(function.apply(input));
+  }
+
   public static <I, O> AsyncF<I, O> asyncF(final AsyncFunction<? super I, O> function) {
     if (function instanceof AsyncF) return Reflect.blindCast(function);
     return new AsyncF<I, O>() {

@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.BiConsumer;
+import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -401,6 +402,19 @@ public class FunctionalPairs<K, V> extends FunctionalIterable<Entry<K, V>> imple
         visitor.accept(it1.next(), it2.next());
       }
     }
-  }
 
+    @Override
+    public Maybe.Pair<T, U> find2(BiPredicate<? super T, ? super U> predicate) {
+      Iterator<? extends T> it1 = first.iterator();
+      Iterator<? extends U> it2 = second.iterator();
+      while (it1.hasNext() && it2.hasNext()) {
+        T key = it1.next();
+        U value = it2.next();
+        if (predicate.test(key, value)) {
+          return Maybe.definitePair(key, value);
+        }
+      }
+      return Maybe.noPair();
+    }
+  }
 }
