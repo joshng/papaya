@@ -2,6 +2,9 @@ package joshng.util.concurrent;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.MapMaker;
 import joshng.util.Reflect;
 import joshng.util.ThreadLocalRef;
@@ -29,8 +32,7 @@ public class FutureStackTrace {
   }
 
   public static TransientContext getCurrentContext() {
-    PersistentList<Object> value = get();
-    return getContext(value);
+    return getContext(get());
   }
 
   public static <E extends Throwable> E annotateWithCurrentContext(E throwable) {
@@ -59,24 +61,39 @@ public class FutureStackTrace {
   }
 
   private static final Method GET_CONTEXT = Reflect.getMethod(Annotated.class, "getContext");
+  private static final LoadingCache<Method,Method> ACCESSIBLE_THROWABLE_METHODS = CacheBuilder.newBuilder().weakKeys().weakValues().build(new CacheLoader<Method, Method>() {
+    @Override
+    public Method load(Method key) throws Exception {
+      key.setAccessible(true);
+      return key;
+    }
+  });
 
   @SuppressWarnings("unchecked")
   public static <E extends Throwable> E annotate2(E throwable, PersistentList<Object> context) {
     if (context.isEmpty()) return throwable;
     //noinspection ThrowableResultOfMethodCallIgnored
     return (E) ProxyUtil.createProxy(new UniversalInvocationHandler() {
+                                       private String message;
+
                                        @Override
                                        protected Object handle(Object proxy, Method method, Object[] args) throws Throwable {
-                                         if (method == GET_CONTEXT) return context;
-                                         if (method.getName().equals("getMessage") && args.length == 0) return buildMessage();
                                          if (method.getName().equals("fillInStackTrace") && args.length == 0) return proxy;
-                                         method.setAccessible(true);
-                                         return method.invoke(throwable, args);
+                                         if (method.getName().equals("getMessage") && args.length == 0) return getMessage();
+                                         if (method == GET_CONTEXT) return context;
+                                         return ACCESSIBLE_THROWABLE_METHODS.getUnchecked(method).invoke(throwable, args);
                                        }
 
-                                       private String buildMessage() {
-                                         return Joiner.on("\n  ").appendTo(new StringBuilder(Strings.nullToEmpty(throwable.getMessage())).append("\nFuture Context:\n  "),
-                                                 context).toString();
+                                       private String getMessage() {
+                                         if (message == null) {
+                                           String rawMessage = Strings.nullToEmpty(throwable.getMessage());
+                                           message = Joiner.on("\n  ").appendTo(
+                                                   new StringBuilder(rawMessage)
+                                                           .append("\nFuture Context:\n  "),
+                                                   context
+                                           ).toString();
+                                         }
+                                         return message;
                                        }
                                      },
             throwable.getClass(), false, Annotated.class);

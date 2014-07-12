@@ -5,10 +5,12 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import joshng.util.blocks.Pred;
 import joshng.util.collect.FunList;
+import joshng.util.exceptions.Exceptions;
 import joshng.util.exceptions.MultiException;
 
 import javax.annotation.Nullable;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -20,8 +22,7 @@ import java.lang.reflect.Method;
 public class MultiMethodInvoker<T> {
   private final ImmutableList<Method> methods;
   private static final MultiMethodInvoker NULL_INVOKER = new MultiMethodInvoker<Object>(ImmutableList.<Method>of()) {
-    @Override
-    public void invoke(Object target, boolean continueAfterException, Object... args) {
+    @Override public void invoke(Object target, boolean continueAfterException, Object... args) {
       // noooop!
     }
   };
@@ -55,9 +56,7 @@ public class MultiMethodInvoker<T> {
 
   public MultiMethodInvoker(ImmutableList<Method> methods) {
     this.methods = methods;
-    for (Method method : methods) {
-      method.setAccessible(true);
-    }
+    AccessibleObject.setAccessible(methods.toArray(new AccessibleObject[methods.size()]), true);
   }
 
   public void invoke(T target, boolean continueAfterException, Object... args) {
@@ -66,7 +65,7 @@ public class MultiMethodInvoker<T> {
       try {
         method.invoke(target, args);
       } catch (IllegalAccessException e) {
-        throw new AssertionError(e);
+        throw Exceptions.impossibleError(e);
       } catch (InvocationTargetException e) {
         if (!continueAfterException) throw Throwables.propagate(e.getCause());
         multiException = multiException.with(e.getCause());

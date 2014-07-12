@@ -47,7 +47,11 @@ public interface TransientContext {
   }
 
   default void runInContext(Runnable r) {
-    getInContext(SideEffect.extendRunnable(r));
+    try {
+      callInContext(SideEffect.extendRunnable(r));
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   default <T> T callInContext(Callable<T> callable) throws Exception {
