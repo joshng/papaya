@@ -238,6 +238,10 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     return new FunFutureTask<T>(futureTask, allowCancelToInterrupt);
   }
 
+  public static <T> FunFuture<T> dereference(ListenableFuture<? extends ListenableFuture<T>> futureOfFuture) {
+    return newFuture(Futures.dereference(futureOfFuture));
+  }
+
   @SuppressWarnings("unchecked")
   public static <T> F<ListenableFuture<T>, FunFuture<T>> extender() {
     return EXTENDER;
@@ -261,7 +265,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   }
 
   default <O> FunFuture<O> thenAsync(Callable<? extends ListenableFuture<O>> nextTask) {
-    return flatMap((T ignored) -> FunFuture.callSafely(nextTask));
+    return flatMap((T ignored) -> callSafely(nextTask));
   }
 
   default <O> FunFuture<O> thenReplace(Callable<O> replacementSource) {

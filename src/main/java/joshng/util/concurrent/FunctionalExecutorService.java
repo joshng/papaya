@@ -51,11 +51,11 @@ public class FunctionalExecutorService extends ForwardingListeningExecutorServic
     return AsyncF.extendAsyncFunction(F.extendFunction(function).binder().andThen(this.<O>submitter()));
   }
 
-  public <I, O> AsyncF<I, O> wrapAsync(final AsyncF<? super I, ? extends O> function) {
+  public <I, O> AsyncF<I, O> wrapAsync(final AsyncF<I, O> function) {
     return new AsyncF<I, O>() {
       @Override
       public FunFuture<O> applyAsync(I input) {
-        return submit(function.bind(input)).flatMap(AsyncF.<O>asyncIdentity());
+        return FunFuture.dereference(submit(function.bind(input)));
       }
     };
   }
@@ -65,7 +65,7 @@ public class FunctionalExecutorService extends ForwardingListeningExecutorServic
   }
 
   public <T> FunFuture<T> submitAsync(Callable<? extends ListenableFuture<T>> asyncCallable) {
-    return FunFuture.newFuture(Futures.transform(super.submit(asyncCallable), (AsyncFunction<ListenableFuture<? extends T>, T>) AsyncF.<T>asyncIdentity()));
+    return FunFuture.<T>dereference(submit(asyncCallable));
   }
 
   @Override

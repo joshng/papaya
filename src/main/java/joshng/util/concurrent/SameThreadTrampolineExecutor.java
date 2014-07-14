@@ -34,7 +34,7 @@ public class SameThreadTrampolineExecutor implements Executor {
   }
 
   public <T> FunFuture<T> submitAsync(Callable<? extends ListenableFuture<T>> command) {
-    return submit(command).flatMap(AsyncF.<T>asyncIdentity());
+    return FunFuture.<T>dereference(submit(command));
   }
 
   private class Trampoline {
