@@ -24,10 +24,10 @@ public class FunctionalSet<T> extends FunctionalIterable<T> implements FunSet<T>
 
   public static <T> FunSet<T> copyOf(Iterable<T> delegate) {
     if (delegate instanceof FunSet) return (FunSet<T>) delegate;
-    return extend(ImmutableSet.copyOf(delegate));
+    return extendSet(ImmutableSet.copyOf(delegate));
   }
 
-  public static <T> FunSet<T> extend(ImmutableSet<T> delegate) {
+  public static <T> FunSet<T> extendSet(ImmutableSet<T> delegate) {
     if (delegate.isEmpty()) return Functional.emptySet();
     return new FunctionalSet<>(delegate);
   }

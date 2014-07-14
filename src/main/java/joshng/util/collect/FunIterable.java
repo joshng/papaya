@@ -574,7 +574,7 @@ public interface FunIterable<T> extends Iterable<T>, Runnable {
    * @return a new FunList wrapping an ImmutableList containing the elements of this sequence
    */
   default FunList<T> toList() {
-    return FunctionalList.extend(ImmutableList.copyOf(delegate()));
+    return FunctionalList.extendList(ImmutableList.copyOf(delegate()));
   }
 
 

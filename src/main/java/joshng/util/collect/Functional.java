@@ -38,7 +38,9 @@ import static joshng.util.Reflect.blindCast;
 public interface Functional<T> extends FunIterable<T> {
   /**
    * Wraps an existing Iterable with a FunIterable.  Note that this method does not make a copy or invoke the provided
-   * Iterable in any way: changes to the underlying Iterable will be visible via the returned FunIterable.
+   * Iterable in any way (besides checking {@link Collection#isEmpty} if it is a {@link Collection}):
+   * changes to the underlying Iterable may be visible via the returned FunIterable, EXCEPT if it is initially an empty
+   * collection.
    *
    * @param delegate the iterable to extend
    * @return a FunIterable wrapping the underlying iterable.
@@ -105,7 +107,7 @@ public interface Functional<T> extends FunIterable<T> {
    */
   public static <T> FunList<T> funList(Iterable<T> delegate) {
     if (delegate instanceof FunList) return (FunList<T>) delegate;
-    return FunctionalList.extend(ImmutableList.copyOf(delegate));
+    return FunctionalList.extendList(ImmutableList.copyOf(delegate));
   }
 
   public static <T> FunList<T> funListOf(T singleton) {
@@ -161,7 +163,7 @@ public interface Functional<T> extends FunIterable<T> {
    * @see FunPairs
    */
   public static <K, V> FunPairs<K, V> funPairs(Map<K, V> map) {
-    return FunctionalPairs.extend(map);
+    return FunctionalPairs.extendMap(map);
   }
 
 

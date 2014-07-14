@@ -30,17 +30,9 @@ public class FunctionalPairs<K, V> extends FunctionalIterable<Entry<K, V>> imple
     return new FunctionalPairs<>(delegate);
   }
 
-  public static <K, V> FunPairs<K, V> extend(Map<K, V> map) {
+  public static <K, V> FunPairs<K, V> extendMap(Map<K, V> map) {
     if (map.isEmpty()) return Functional.emptyPairs();
     return new FunMapEntries<>(map);
-  }
-
-  public static <K, V> F<Map<K, V>, FunPairs<K, V>> mapExtender() {
-    return new F<Map<K, V>, FunPairs<K, V>>() {
-      public FunPairs<K, V> apply(Map<K, V> input) {
-        return extend(input);
-      }
-    };
   }
 
   public static <K, V> F2<K, V, Pair<K, V>> entryCreator() {

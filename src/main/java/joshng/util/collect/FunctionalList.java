@@ -25,7 +25,7 @@ public class FunctionalList<E> extends FunctionalIterable<E> implements FunList<
     return (ImmutableList<E>) super.delegate();
   }
 
-  public static <T> FunList<T> extend(ImmutableList<T> list) {
+  public static <T> FunList<T> extendList(ImmutableList<T> list) {
     if (list.isEmpty()) return Functional.emptyList();
     return new FunctionalList<T>(list);
   }
@@ -58,7 +58,7 @@ public class FunctionalList<E> extends FunctionalIterable<E> implements FunList<
             if (idx == end) return endOfData();
             int start = idx;
             idx = Math.min(idx + size, end);
-            return FunctionalList.extend(delegate().subList(start, idx));
+            return FunctionalList.extendList(delegate().subList(start, idx));
           }
         };
       }
@@ -66,7 +66,7 @@ public class FunctionalList<E> extends FunctionalIterable<E> implements FunList<
   }
 
   public FunList<E> subList(int fromIndex, int toIndex) {
-    return extend(delegate().subList(fromIndex, toIndex));
+    return extendList(delegate().subList(fromIndex, toIndex));
   }
 
   public Maybe<E> head() {
@@ -76,7 +76,7 @@ public class FunctionalList<E> extends FunctionalIterable<E> implements FunList<
   public FunList<E> tail() {
     if (isEmpty()) return this;
     ImmutableList<E> delegate = delegate();
-    return extend(delegate.subList(1, delegate.size()));
+    return extendList(delegate.subList(1, delegate.size()));
   }
 
   @Override
@@ -173,7 +173,7 @@ public class FunctionalList<E> extends FunctionalIterable<E> implements FunList<
     }
 
     public FunList<T> build() {
-      return extend(listBuilder.build());
+      return extendList(listBuilder.build());
     }
   }
 
