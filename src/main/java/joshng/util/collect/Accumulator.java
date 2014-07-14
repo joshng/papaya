@@ -1,10 +1,8 @@
 package joshng.util.collect;
 
-import com.google.common.collect.ImmutableBiMap;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.*;
 import joshng.util.blocks.Sink;
+import joshng.util.blocks.Source;
 
 import java.util.*;
 import java.util.function.BiConsumer;
@@ -55,12 +53,17 @@ public interface Accumulator<I, O> extends Sink<I>, Supplier<O> {
 
   static <T> Accumulator<T, ArrayList<T>> arrayList() {
     ArrayList<T> list = new ArrayList<>();
-    return of(list::add, () -> list);
+    return of(list::add, Source.ofInstance(list));
   }
 
   static <T> Accumulator<T, ImmutableSet<T>> immutableSet() {
     ImmutableSet.Builder<T> builder = ImmutableSet.builder();
     return of(builder::add, builder::build);
+  }
+
+  static <T> Accumulator<T, Multiset<T>> hashMultiset() {
+    Multiset<T> multiset = HashMultiset.create();
+    return of(multiset::add, Source.ofInstance(multiset));
   }
 
   static <K, V> BiAccumulator<K, V, HashMap<K, V>> hashMap() {

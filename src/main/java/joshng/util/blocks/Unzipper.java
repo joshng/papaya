@@ -1,5 +1,6 @@
 package joshng.util.blocks;
 
+import com.google.common.collect.Multiset;
 import joshng.util.collect.Accumulator;
 import joshng.util.collect.BiAccumulator;
 import joshng.util.collect.Pair;
@@ -17,7 +18,7 @@ public interface Unzipper<I, K, V> extends F<I, Pair<K, V>> {
 
   V getValue(I input);
 
-  static <I, K, V> Unzipper<I, K, V> of(F<? super I, ? extends K> keyMapper, F<? super I, ? extends V> valueMapper) {
+  static <I, K, V> Unzipper<I, K, V> of(F<? super I, K> keyMapper, F<? super I, V> valueMapper) {
     return new Unzipper<I, K, V>() {
       @Override
       public K getKey(I input) {
@@ -30,18 +31,18 @@ public interface Unzipper<I, K, V> extends F<I, Pair<K, V>> {
       }
 
       @Override
-      public F<? super I, ? extends K> keyTransformer() {
+      public F<? super I, K> keyTransformer() {
         return keyMapper;
       }
 
       @Override
-      public F<? super I, ? extends V> valueTransformer() {
+      public F<? super I, V> valueTransformer() {
         return valueMapper;
       }
     };
   }
 
-  default <K2> Unzipper<I, K2, V> mapKeys(Function<? super K, ? extends K2> keyMapper) {
+  default <K2> Unzipper<I, K2, V> mapKeys(Function<? super K, K2> keyMapper) {
     return of(keyTransformer().andThen(keyMapper), valueTransformer());
   }
 
@@ -61,11 +62,15 @@ public interface Unzipper<I, K, V> extends F<I, Pair<K, V>> {
     return accumulator.compose2(this);
   }
 
-  default F<? super I, ? extends K> keyTransformer() {
+  static <K> Unzipper<Multiset.Entry<K>, K, Integer> multisetEntry() {
+    return Unzipper.<Multiset.Entry<K>, K, Integer>of((Multiset.Entry<K> entry) -> entry.getElement(), (Multiset.Entry<K> entry) -> entry.getCount());
+  }
+
+  default F<? super I, K> keyTransformer() {
     return F.function(this::getKey);
   }
 
-  default F<? super I, ? extends V> valueTransformer() {
+  default F<? super I, V> valueTransformer() {
     return F.function(this::getValue);
   }
 }

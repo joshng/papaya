@@ -774,13 +774,11 @@ public interface FunIterable<T> extends Iterable<T>, Runnable {
   }
 
   public static <T, U> FunPairs<T, U> crossProduct(Iterable<T> outerItems, final Iterable<U> innerItems) {
-    return new FunctionalPairs<T, U>(
+    return new FunctionalPairs<>(
             Iterables.concat(
-                    Iterables.transform(outerItems, new F<T, Iterable<Pair<T, U>>>() {
-                      public Iterable<Pair<T, U>> apply(T outerItem) {
-                        return Iterables.transform(innerItems, FunctionalPairs.<T, U>entryCreator().bindFirst(outerItem));
-                      }
-                    })
+                    Iterables.transform(outerItems,
+                            (T outerItem) -> Iterables.transform(innerItems,
+                                    FunctionalPairs.<T, U>entryCreator().bindFirst(outerItem)))
             )
     );
   }

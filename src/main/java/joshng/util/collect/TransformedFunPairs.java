@@ -60,7 +60,7 @@ class TransformedFunPairs<K, V, K1, V1> implements FunPairs<K1, V1> {
   }
 
   @Override
-  public <O> FunIterable<O> map2(F2<? super K1, ? super V1, ? extends O> transformer) {
+  public <O> FunIterable<O> map2(F2<? super K1, ? super V1, O> transformer) {
     return new FunctionalIterable<>(() -> new AbstractIterator<O>() {
       Iterator<Map.Entry<K, V>> iterator = input.iterator();
 

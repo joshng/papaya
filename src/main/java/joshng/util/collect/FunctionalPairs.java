@@ -372,7 +372,7 @@ public class FunctionalPairs<K, V> extends FunctionalIterable<Entry<K, V>> imple
 
     // specialized overrides to avoid creating intermediate Pairs
     @Override
-    public <O> FunIterable<O> map2(final F2<? super T, ? super U, ? extends O> transformer) {
+    public <O> FunIterable<O> map2(final F2<? super T, ? super U, O> transformer) {
       return FunIterable.zipWith(first, second, transformer);
     }
 

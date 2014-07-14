@@ -152,7 +152,7 @@ public interface FunPairs<K, V> extends FunIterable<Map.Entry<K, V>> {
    * Produces as new FunIterable that, when iterated, yields the results of applying the given
    * {@link F2} {@code transformer} to each {@link Map.Entry Entry} in this sequence.
    */
-  default <O> FunIterable<O> map2(F2<? super K, ? super V, ? extends O> transformer) {
+  default <O> FunIterable<O> map2(F2<? super K, ? super V, O> transformer) {
     return map(transformer.tupled());
   }
 
