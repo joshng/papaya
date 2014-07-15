@@ -1,10 +1,10 @@
 package joshng.util.concurrent;
 
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.*;
+import joshng.util.blocks.SideEffect;
 import joshng.util.exceptions.MultiException;
 
+import javax.annotation.Nullable;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Future;
@@ -16,7 +16,8 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
  * Time: 8:30 AM
  */
 public class Promise<T> extends AbstractFunFuture<T> {
-  private static final AtomicReferenceFieldUpdater<Promise, Cancellable> CANCELLABLE_COMPLETION_UPDATER = AtomicReferenceFieldUpdater.newUpdater(Promise.class, Cancellable.class, "_cancellableCompletion");
+  private static final AtomicReferenceFieldUpdater<Promise, Cancellable> CANCELLABLE_COMPLETION_UPDATER = AtomicReferenceFieldUpdater
+          .newUpdater(Promise.class, Cancellable.class, "_cancellableCompletion");
   @SuppressWarnings("UnusedDeclaration")
   private volatile Cancellable _cancellableCompletion = null;
 
@@ -59,6 +60,51 @@ public class Promise<T> extends AbstractFunFuture<T> {
     return this;
   }
 
+  public FunFuture<T> completeOrRecoverWith(
+          ListenableFuture<T> future,
+          AsyncFunction<? super Exception, ? extends T> exceptionHandler
+  ) {
+    if (attachFutureCompletion(future)) {
+      Futures.addCallback(future, new FutureCallback<T>() {
+        @Override public void onSuccess(@Nullable T result) {
+          setSuccess(result);
+        }
+
+        @Override public void onFailure(Throwable t) {
+          if (t instanceof Exception) {
+            completeWithResultOf(() -> exceptionHandler.apply((Exception) t));
+          } else {
+            setFailure(t);
+          }
+        }
+      });
+    }
+    return this;
+  }
+
+  public <I> FunFuture<T> completeWithFlatMap(
+          ListenableFuture<I> input,
+          AsyncFunction<? super I, ? extends T> function
+  ) {
+    if (attachFutureCompletion(input)) {
+      input.addListener(() -> completeWithResultOf(() -> function.apply(Uninterruptibles.getUninterruptibly(input))),
+              MoreExecutors.sameThreadExecutor());
+    }
+    return this;
+  }
+
+  public FunFuture<T> completeWithSideEffect(ListenableFuture<? extends T> future, Runnable sideEffect) {
+    attachFutureCompletion(future);
+    future.addListener(() -> {
+      try {
+        SideEffect.runIgnoringExceptions(sideEffect);
+      } finally {
+        completeWith(future);
+      }
+    }, MoreExecutors.sameThreadExecutor());
+    return this;
+  }
+
   protected void chainResult(ListenableFuture<? extends T> futureResult) {
     Futures.addCallback(futureResult, new FutureCallback<T>() {
       @Override
@@ -73,7 +119,7 @@ public class Promise<T> extends AbstractFunFuture<T> {
     });
   }
 
-  public FunFuture<T> completeWithResultOf(Callable<? extends FunFuture<? extends T>> futureResultSupplier) {
+  public FunFuture<T> completeWithResultOf(Callable<? extends ListenableFuture<? extends T>> futureResultSupplier) {
     if (!isDone()) {
       try {
         completeWith(futureResultSupplier.call());
@@ -174,7 +220,7 @@ public class Promise<T> extends AbstractFunFuture<T> {
    * Promise was <em>already</em> cancelled.
    */
   protected boolean attachFutureCompletion(Future<?> other) {
-    return attachCancellableCompletion(FunFuture.extendCancellable(other));
+    return attachCancellableCompletion(Cancellable.extendFuture(other));
   }
 
   /**

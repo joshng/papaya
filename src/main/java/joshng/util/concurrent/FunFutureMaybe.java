@@ -166,6 +166,10 @@ public interface FunFutureMaybe<T> extends FunFuture<Maybe<T>> {
       return this;
     }
   }
+
+  class MaybePromise<T> extends Promise<Maybe<T>> implements FunFutureMaybe<T> {
+
+  }
 }
 
 class ForwardingFunFutureMaybe<T> extends FunFuture.ForwardingFunFuture<Maybe<T>> implements FunFutureMaybe<T> {

@@ -40,6 +40,8 @@ public interface FunFuturePair<T,U> extends FunFuture<Map.Entry<T,U>>, Map.Entry
     throw new UnsupportedOperationException();
   }
 
+  class PairPromise<T,U> extends Promise<Map.Entry<T,U>> implements FunFuturePair<T,U> {}
+
   class ForwardingFunFuturePair<T, U> extends FunFuture.ForwardingFunFuture<Map.Entry<T,U>> implements FunFuturePair<T,U> {
     @SuppressWarnings("unchecked")
     public ForwardingFunFuturePair(ListenableFuture<? extends Map.Entry<T, U>> delegate) {

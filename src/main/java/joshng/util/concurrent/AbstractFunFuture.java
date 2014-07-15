@@ -18,6 +18,6 @@ public abstract class AbstractFunFuture<T> extends AbstractFuture<T> implements 
 
   @Override
   public void addListener(Runnable listener, Executor exec) {
-    super.addListener(FutureStackTrace.getCurrentContext().wrapRunnable(listener), exec);
+    super.addListener(AsyncContext.getCurrentContext().wrapRunnable(listener), exec);
   }
 }

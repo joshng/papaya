@@ -26,12 +26,13 @@ import static joshng.util.collect.Maybe.definitely;
  * Time: 11:22 PM
  */
 public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
-  static final Logger LOG = LoggerFactory.getLogger(FunFuture.class);
-  static final FunFuture NULL_FUTURE = FunFuture.<Object>immediateFuture(null);
+  final Logger LOG = LoggerFactory.getLogger(FunFuture.class);
+  final FunFuture NULL_FUTURE = FunFuture.<Object>immediateFuture(null);
 
-  static F GET_UNCHECKED = (F<Future<Object>, Object>) FunFuture::getUnchecked;
+  F GET_UNCHECKED = (F<Future<Object>, Object>) FunFuture::getUnchecked;
   FunFuture<Boolean> FALSE = FunFuture.immediateFuture(false);
   FunFuture<Boolean> TRUE = FunFuture.immediateFuture(true);
+  AsyncF<Object, Nothing> REPLACE_WITH_NOTHING = (Object discarded) -> Nothing.FUTURE;
 
   ListenableFuture<T> delegate();
 
@@ -40,7 +41,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   }
 
   public static <T> FunFuture<T> immediateFailedFuture(Throwable e) {
-    return newFuture(Futures.<T>immediateFailedFuture(FutureStackTrace.annotateWithCurrentContext(unwrapExecutionException(e))));
+    return newFuture(Futures.<T>immediateFailedFuture(AsyncContext.annotateWithCurrentContext(unwrapExecutionException(e))));
   }
 
   public static <T> FunFuture<T> immediateCancelledFuture() {
@@ -67,26 +68,13 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     return newFuture(Futures.successfulAsList(unwrapFutureIterable(input)));
   }
 
-  public static Cancellable extendCancellable(final Future future) {
-    if (future instanceof Cancellable) return (Cancellable) future;
-    return new Cancellable() {
-      @Override
-      public boolean cancel(boolean mayInterruptIfRunning) {
-        return future.cancel(mayInterruptIfRunning);
-      }
-    };
-  }
-
   public static <T> FunFuture<T> any(final Iterable<? extends ListenableFuture<? extends T>> inputs) {
     final Promise<T> promise = Promise.newPromise();
-    promise.attachCancellableCompletion(new Cancellable() {
-      @Override
-      public boolean cancel(boolean mayInterruptIfRunning) {
-        for (ListenableFuture<? extends T> input : inputs) {
-          input.cancel(mayInterruptIfRunning);
-        }
-        return false;
+    promise.attachCancellableCompletion(mayInterruptIfRunning -> {
+      for (ListenableFuture<? extends T> input : inputs) {
+        input.cancel(mayInterruptIfRunning);
       }
+      return false;
     });
 
     for (ListenableFuture<? extends T> input : inputs) {
@@ -121,7 +109,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   }
 
   default T getUnchecked() {
-    return FunFuture.getUnchecked(delegate());
+    return FunFuture.getUnchecked(this);
   }
 
   default <V> FunFuture<V> replace(V value) {
@@ -129,7 +117,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   }
 
   default FunFuture<Nothing> discardValue() {
-    return map(Nothing.SOURCE);
+    return flatMap(REPLACE_WITH_NOTHING);
   }
 
   default Maybe<T> getWithin(long timeout, TimeUnit timeUnit) {
@@ -239,7 +227,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   }
 
   public static <T> FunFuture<T> dereference(ListenableFuture<? extends ListenableFuture<T>> futureOfFuture) {
-    return newFuture(Futures.dereference(futureOfFuture));
+    return Promise.<T>newPromise().completeWithFlatMap(futureOfFuture, AsyncF.asyncIdentity());
   }
 
   @SuppressWarnings("unchecked")
@@ -257,7 +245,12 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   }
 
   default <O> FunFuture<O> flatMap(AsyncFunction<? super T, ? extends O> f) {
-    return newFuture(Futures.transform(this, f));
+    return flatMapToPromise(f, Promise.newPromise());
+  }
+
+  default <O, P extends Promise<O>> P flatMapToPromise(AsyncFunction<? super T, ? extends O> f, P promise) {
+    promise.completeWithFlatMap(this, f);
+    return promise;
   }
 
   default <O> FunFutureMaybe<O> mapMaybe(Function<? super T, Maybe<O>> f) {
@@ -281,18 +274,18 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
       try {
         return throwingFunction.apply(t);
       } catch (Exception e) {
+        Throwables.propagateIfPossible(e);
         throw new UncheckedExecutionException(e);
       }
     });
   }
 
   default <K,V> FunFuturePair<K,V> mapPair(Function<? super T, ? extends Map.Entry<K,V>> function) {
-    return flatMapPair((AsyncF<? super T, ? extends Map.Entry<K,V>>) AsyncF.liftFunction(function));
+    return flatMapPair((AsyncF<? super T, ? extends Map.Entry<K, V>>) AsyncF.liftFunction(function));
   }
 
   default <K,V> FunFuturePair<K,V> flatMapPair(AsyncFunction<? super T, ? extends Map.Entry<K,V>> function) {
-    return newFuturePair(Futures.transform(this, function));
-
+    return flatMapToPromise(function, new FunFuturePair.PairPromise<>());
   }
 
   default <K, V> FunFuturePair.ForwardingFunFuturePair<K, V> newFuturePair(ListenableFuture<? extends Map.Entry<K, V>> transformed) {
@@ -303,36 +296,25 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     return input -> extendFuture(input).map(mapper);
   }
 
-
   default <O> FunFutureMaybe<O> flatMapMaybe(AsyncFunction<? super T, Maybe<O>> f) {
-    return FunFutureMaybe.wrapFutureMaybe(Futures.transform(this, f));
+    return flatMapToPromise(f, new FunFutureMaybe.MaybePromise<>());
   }
 
   static <I, O> F<ListenableFuture<? extends I>, FunFutureMaybe<O>> maybeMapper(Function<? super I, Maybe<O>> maybeFunction) {
     return future -> extendFuture(future).mapMaybe(maybeFunction);
   }
 
-  default <O> FunFutureMaybe<O> flatMapMaybe(Executor executor, AsyncFunction<? super T, Maybe<O>> f) {
-    return new ForwardingFunFutureMaybe<>(Futures.transform(this, f, executor));
-  }
-
   default FunFuture<Nothing> foreach(Sink<? super T> sideEffect) {
     return map(sideEffect);
   }
 
-  default FunFuture<T> filter(final Predicate<? super T> filter) {
-    return map(new Tapper<T>() {
-      public void tap(T value) {
-        if (!filter.test(value)) throw new FilteredFutureException();
-      }
-    });
+  default FunFutureMaybe<T> filter(final Predicate<? super T> filter) {
+    return mapMaybe(value -> Maybe.onlyIf(filter.test(value), value));
   }
 
-  default FunFuture<T> filter(final AsyncFunction<? super T, Boolean> filter) {
-    return flatMap(value -> extendFuture(filter.apply(value)).map(input -> {
-      if (!input) throw new FilteredFutureException();
-      return value;
-    }));
+  default FunFutureMaybe<T> filter(final AsyncFunction<? super T, Boolean> filter) {
+    return flatMapMaybe(value -> extendFuture(filter.apply(value)).map(filterResult ->
+            Maybe.onlyIf(filterResult, value)));
   }
 
   @SuppressWarnings("unchecked")
@@ -341,29 +323,11 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   }
 
   default FunFuture<T> recover(final ThrowingFunction<? super Exception, ? extends T> exceptionHandler) {
-    return recover(MoreExecutors.sameThreadExecutor(), exceptionHandler);
+    return recoverWith(throwable -> Futures.immediateFuture(exceptionHandler.apply(throwable)));
   }
 
-  default FunFuture<T> recover(final Executor executor, final ThrowingFunction<? super Exception, ? extends T> exceptionHandler) {
-    return newFuture(Futures.withFallback(this, t -> Futures.immediateFuture(exceptionHandler.apply((Exception)unwrapExecutionException(t))), executor));
-  }
-
-  default FunFuture<T> recoverWith(final AsyncFunction<? super Throwable, ? extends T> exceptionHandler) {
-    return newFuture(Futures.withFallback(delegate(), new FutureFallback<T>() {
-      @SuppressWarnings("unchecked")
-      @Override
-      public ListenableFuture<T> create(Throwable t) throws Exception {
-        return (ListenableFuture<T>) exceptionHandler.apply(unwrapExecutionException(t));
-      }
-    }));
-  }
-
-  default FunFuture<T> uponCompletion(Runnable runnable) {
-    return uponCompletion(MoreExecutors.sameThreadExecutor(), runnable);
-  }
-
-  default FunFuture<T> uponCompletion(final FutureCallback<? super T> callback) {
-    return uponCompletion(MoreExecutors.sameThreadExecutor(), callback);
+  default FunFuture<T> recoverWith(final AsyncFunction<? super Exception, ? extends T> exceptionHandler) {
+    return Promise.<T>newPromise().completeOrRecoverWith(this, exceptionHandler);
   }
 
   default FunFuture<T> uponCompletion2(Consumer<? super T> successObserver, Consumer<? super Exception> errorObserver) {
@@ -384,43 +348,24 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     addListener(runnable, MoreExecutors.sameThreadExecutor());
   }
 
-  default FunFuture<T> uponSuccess(Consumer<? super T> successObserver) {
-    return uponSuccess(MoreExecutors.sameThreadExecutor(), successObserver);
-  }
-
-  default FunFuture<T> uponFailure(Consumer<? super Exception> errorObserver) {
-    return uponFailure(MoreExecutors.sameThreadExecutor(), errorObserver);
-  }
-
-  default FunFuture<T> uponCompletion(Executor executor, final Runnable sideEffect) {
+  default FunFuture<T> uponCompletion(Runnable sideEffect) {
     final Promise<T> promise = Promise.newPromise();
-    ListenableFuture<? extends T> future = delegate();
-    promise.attachFutureCompletion(future);
-    future.addListener(() -> {
-      try {
-        SideEffect.runIgnoringExceptions(sideEffect);
-      } finally {
-        promise.completeWith(future);
-      }
-    }, executor);
+    promise.completeWithSideEffect(this, sideEffect);
     return promise;
   }
 
-  default FunFuture<T> uponCompletion(Executor executor, final FutureCallback<? super T> callback) {
-    return uponCompletion(executor, new Runnable() {
-      @Override
-      public void run() {
-        try {
-          callback.onSuccess(Uninterruptibles.getUninterruptibly(delegate()));
-        } catch (ExecutionException e) {
-          callback.onFailure(e.getCause());
-        }
+  default FunFuture<T> uponCompletion(final FutureCallback<? super T> callback) {
+    return uponCompletion(() -> {
+      try {
+        callback.onSuccess(Uninterruptibles.getUninterruptibly(this));
+      } catch (ExecutionException e) {
+        callback.onFailure(e.getCause());
       }
     });
   }
 
-  default FunFuture<T> uponSuccess(Executor executor, final Consumer<? super T> successObserver) {
-    return uponCompletion(executor, new FutureCallback<T>() {
+  default FunFuture<T> uponSuccess(final Consumer<? super T> successObserver) {
+    return uponCompletion(new FutureCallback<T>() {
       @Override
       public void onSuccess(T result) {
         successObserver.accept(result);
@@ -432,8 +377,8 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     });
   }
 
-  default FunFuture<T> uponFailure(Executor executor, final Consumer<? super Exception> failureObserver) {
-    return uponCompletion(executor, new FutureCallback<T>() {
+  default FunFuture<T> uponFailure(Consumer<? super Exception> failureObserver) {
+    return uponCompletion(new FutureCallback<T>() {
       @Override
       public void onSuccess(T result) {
       }
@@ -445,13 +390,14 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     });
   }
 
-  default <B> FunFuturePair<T, B> zip(ListenableFuture<B> other) {
-    return newFuturePair(Futures.transform(FunFuture.allAsList(ImmutableList.of(this, extendFuture(other))),
-            (List<Object> input) -> Pair.of(FunFuture.getUnchecked(delegate()), FunFuture.getUnchecked(other))));
+  default <V> FunFuturePair<T, V> zip(ListenableFuture<V> other) {
+    return FunFuture.allAsList(ImmutableList.<ListenableFuture<? extends Object>>of(this, extendFuture(other)))
+                    .mapPair((List<Object> input) ->
+                            Pair.of(getUnchecked(), FunFuture.getUnchecked(other)));
   }
 
   default Source<T> asSource() {
-    return FunFuture.<T>getFromFuture().bind(delegate());
+    return FunFuture.<T>getFromFuture().bind(this);
   }
 
   public static Throwable unwrapExecutionException(Throwable e) {
@@ -478,7 +424,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
 
     @Override
     public void addListener(Runnable listener, Executor exec) {
-      super.addListener(FutureStackTrace.getCurrentContext().wrapRunnable(listener), exec);
+      super.addListener(AsyncContext.getCurrentContext().wrapRunnable(listener), exec);
     }
   }
 
