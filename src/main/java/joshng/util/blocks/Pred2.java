@@ -4,6 +4,7 @@ import com.google.common.base.Objects;
 
 import java.util.Map.Entry;
 import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 
 /**
  * User: josh
@@ -23,6 +24,14 @@ public interface Pred2<K, V> extends Pred<Entry<? extends K, ? extends V>>, BiPr
 
   public static <K,V> Pred2<K,V> extendBiPredicate(BiPredicate<K,V> pred) {
     return pred instanceof Pred2 ? (Pred2<K, V>) pred : pred::test;
+  }
+
+  public static <K> Pred2<K, Object> ignoringSecond(Predicate<? super K> firstPredicate) {
+    return (k, v) -> firstPredicate.test(k);
+  }
+
+  public static <V> Pred2<Object, V> ignoringFirst(Predicate<? super V> firstPredicate) {
+    return (k, v) -> firstPredicate.test(v);
   }
 
   default boolean test(Entry<? extends K, ? extends V> input) {

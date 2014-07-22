@@ -160,6 +160,13 @@ public interface FunPairs<K, V> extends FunIterable<Map.Entry<K, V>> {
     foreach(e -> visitor.accept(e.getKey(), e.getValue()));
   }
 
+  default Maybe.Pair<K,V> findByKey(Predicate<? super K> predicate) {
+    return find2(Pred2.ignoringSecond(predicate));
+  }
+
+  default Maybe.Pair<K,V> findByValue(Predicate<? super V> predicate) {
+    return find2(Pred2.ignoringFirst(predicate));
+  }
 
   default Maybe.Pair<K,V> find2(BiPredicate<? super K, ? super V> predicate) {
     return find(Pred2.extendBiPredicate(predicate));

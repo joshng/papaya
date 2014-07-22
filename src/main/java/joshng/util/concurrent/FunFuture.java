@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -394,6 +395,11 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     return FunFuture.allAsList(ImmutableList.<ListenableFuture<? extends Object>>of(this, extendFuture(other)))
                     .mapPair((List<Object> input) ->
                             Pair.of(getUnchecked(), FunFuture.getUnchecked(other)));
+  }
+
+  default <U, V> FunFuture<V> zipWith(ListenableFuture<U> other, BiFunction<? super T, ? super U, ? extends ListenableFuture<V>> zipper) {
+    return FunFuture.allAsList(ImmutableList.of(this, other))
+                    .thenAsync(() -> zipper.apply(get(), other.get()));
   }
 
   default Source<T> asSource() {
