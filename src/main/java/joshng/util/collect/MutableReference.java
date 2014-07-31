@@ -1,6 +1,7 @@
 package joshng.util.collect;
 
 import com.google.common.base.Function;
+import com.google.common.base.Objects;
 import joshng.util.blocks.F;
 import joshng.util.blocks.F2;
 import joshng.util.context.TransientContext;
@@ -16,7 +17,7 @@ public interface MutableReference<T> extends Supplier<T> {
   void set(T value);
 
   default boolean compareAndSet(T expect, T update) {
-    boolean matched = com.google.common.base.Objects.equal(get(), expect);
+    boolean matched = Objects.equal(get(), expect);
     if (matched) set(update);
     return matched;
   }
@@ -29,6 +30,14 @@ public interface MutableReference<T> extends Supplier<T> {
 
   default Maybe<T> getMaybe() {
     return Maybe.of(get());
+  }
+
+  default T computeIfAbsent(Supplier<? extends T> defaultComputer) {
+    T value;
+    do {
+      value = get();
+    } while (value == null && !compareAndSet(null, value = defaultComputer.get()));
+    return value;
   }
 
   default T modify(Function<? super T, ? extends T> transformer) {

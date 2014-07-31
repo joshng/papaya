@@ -101,6 +101,10 @@ public class PersistentList<T> extends AbstractSequentialList<T> {
     return new Builder<T>().addAll(values).build();
   }
 
+  public static <T> PersistentList<T> prepend(Iterable<? extends T> beginning, PersistentList<T> end) {
+    return PersistentList.<T>builder().addAll(beginning).buildOnto(end);
+  }
+
   public static <T> Builder<T> builder() {
     return new Builder<T>();
   }
@@ -154,6 +158,10 @@ public class PersistentList<T> extends AbstractSequentialList<T> {
     } while (list.contains(x));
     // list is now the longest tail that doesn't contain x
     return save.buildOnto(list);
+  }
+
+  public PersistentList<T> prepend(Iterable<? extends T> items) {
+    return prepend(items, this);
   }
 
   /**

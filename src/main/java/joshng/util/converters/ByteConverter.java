@@ -40,8 +40,8 @@ public abstract class ByteConverter<T> extends Converter<T, byte[]> implements F
   });
   public static final String DESERIALIZER_ANNOTATION_NAME = "@" + ByteSerializable.Deserializer.class.getSimpleName();
 
-  public static <T> void register(Class<T> key, ByteConverter<? super T> value) {
-    BY_TYPE.put(key, value);
+  public static <T> void register(Class<T> convertibleType, ByteConverter<? super T> converter) {
+    BY_TYPE.put(convertibleType, converter);
   }
 
   static {

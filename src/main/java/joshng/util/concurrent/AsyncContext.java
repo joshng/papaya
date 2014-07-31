@@ -1,142 +1,117 @@
 package joshng.util.concurrent;
 
-import com.google.common.base.Joiner;
-import com.google.common.base.Strings;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import joshng.util.Reflect;
+import com.google.common.base.Objects;
+import gnu.trove.map.TLongObjectMap;
+import gnu.trove.map.hash.TLongObjectHashMap;
 import joshng.util.ThreadLocalRef;
-import joshng.util.collect.PersistentList;
+import joshng.util.collect.ForwardingMaybe;
+import joshng.util.collect.Maybe;
+import joshng.util.collect.MutableReference;
 import joshng.util.context.TransientContext;
-import joshng.util.proxy.ProxyUtil;
-import joshng.util.proxy.UniversalInvocationHandler;
 
-import java.lang.reflect.Method;
-import java.util.concurrent.Callable;
+import javax.annotation.Nonnull;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * User: josh
- * Date: 7/8/14
- * Time: 1:53 PM
+ * Date: 7/25/14
+ * Time: 10:22 AM
  */
-public abstract class AsyncContext implements TransientContext {
-  private static final ThreadLocalRef<PersistentList<Object>> REF = new ThreadLocalRef<>(PersistentList.nil());
+public class AsyncContext<T> implements ForwardingMaybe<T>, MutableReference<T> {
+  private static final ThreadLocalRef<TLongObjectMap<Object>> CURRENT_VALUES = new ThreadLocalRef<>();
+  private static final AtomicLong IDENTITY = new AtomicLong();
 
-  public static PersistentList<Object> get() {
-    return REF.get();
+  private final long key = IDENTITY.getAndIncrement();
+
+  public static TransientContext snapshot() {
+    TLongObjectMap<Object> values = CURRENT_VALUES.get();
+    if (values == null) return TransientContext.NULL;
+    return CURRENT_VALUES.contextWithValue(new TLongObjectHashMap<>(values));
   }
 
-  public static TransientContext getCurrentContext() {
-    return getContext(get());
+  @Override public void set(T value) {
+    doSet(value, CURRENT_VALUES.get());
   }
 
-  public static <E extends Throwable> E annotateWithCurrentContext(E throwable) {
-    return annotateThrowable(throwable, get());
-  }
-
-  private static TransientContext getContext(final PersistentList<Object> value) {
-    return value.isEmpty() ? TransientContext.NULL : new SnapshotAsyncContext(value);
-  }
-
-  public static TransientContext getNestedContext(Object additionalState) {
-    return new NestedAsyncContext(additionalState);
-  }
-
-  @SuppressWarnings("unchecked")
-  private static <E extends Throwable> E annotateThrowable(E error, PersistentList<Object> value) {
-    if (value.isEmpty()) return error;
-    //noinspection ThrowableResultOfMethodCallIgnored
-    return (E) ProxyUtil.createProxy(new UniversalInvocationHandler() {
-                                       private String message;
-
-                                       @Override
-                                       protected Object handle(Object proxy, Method method, Object[] args) throws Throwable {
-                                         if (method.getName().equals("fillInStackTrace") && args.length == 0) return proxy;
-                                         if (method.getName().equals("getMessage") && args.length == 0) return getMessage();
-                                         if (method.equals(GET_CONTEXT)) return value;
-                                         return ACCESSIBLE_THROWABLE_METHODS.getUnchecked(method).invoke(error, args);
-                                       }
-
-                                       private String getMessage() {
-                                         if (message == null) {
-                                           String rawMessage = Strings.nullToEmpty(error.getMessage());
-                                           message = Joiner.on("\n  ").appendTo(
-                                                   new StringBuilder(rawMessage)
-                                                           .append("\nAsyncContext:\n  "),
-                                                   value
-                                           ).toString();
-                                         }
-                                         return message;
-                                       }
-                                     },
-            error.getClass(), false, Annotated.class);
-  }
-
-  public interface Annotated {
-    PersistentList<Object> getContext();
-  }
-
-  private static final Method GET_CONTEXT = Reflect.getMethod(Annotated.class, "getContext");
-  private static final LoadingCache<Method,Method> ACCESSIBLE_THROWABLE_METHODS = CacheBuilder.newBuilder().weakKeys().weakValues().build(new CacheLoader<Method, Method>() {
-    @Override
-    public Method load(Method key) throws Exception {
-      key.setAccessible(true);
-      return key;
-    }
-  });
-
-
-  @Override
-  public State enter() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public <T> T callInContext(Callable<T> callable) throws Exception {
-    PersistentList<Object> parent = get();
-    PersistentList<Object> newContext = getNewContext(parent);
-    REF.set(newContext);
-    try {
-      return callable.call();
-    } catch (Exception e) {
-      throw annotateThrowable(e, newContext);
-    } finally {
-      REF.set(parent);
+  private void doSet(T value, TLongObjectMap<Object> values) {
+    if (value == null) {
+      doRemove(values);
+    } else {
+      setNonNull(value, values);
     }
   }
 
-  abstract PersistentList<Object> getNewContext(PersistentList<Object> existingContext);
-
-  private static class SnapshotAsyncContext extends AsyncContext {
-    private final PersistentList<Object> value;
-
-    public SnapshotAsyncContext(PersistentList<Object> value) {
-      this.value = value;
-    }
-
-    @Override
-    PersistentList<Object> getNewContext(PersistentList<Object> existingContext) {
-      return value;
-    }
-
-    @Override
-    public String toString() {
-      return Joiner.on("\n  ").appendTo(new StringBuilder("SnapshotAsyncContext:\n  "), value).toString();
-    }
+  @SuppressWarnings("unchecked") @Override public T get() {
+    TLongObjectMap<Object> values = CURRENT_VALUES.get();
+    return values != null ? (T) values.get(key) : null;
   }
 
-  private static class NestedAsyncContext extends AsyncContext {
-    private final Object additionalContext;
-
-    private NestedAsyncContext(Object additionalContext) {
-      this.additionalContext = additionalContext;
-    }
-
-    @Override
-    PersistentList<Object> getNewContext(PersistentList<Object> existingContext) {
-      return existingContext.with(additionalContext);
-    }
+  public void remove() {
+    doRemove(CURRENT_VALUES.get());
   }
 
+  private void doRemove(TLongObjectMap<Object> values) {
+    if (values != null) values.remove(key);
+  }
+
+  private void setNonNull(T value, TLongObjectMap<Object> values) {
+    if (values == null) {
+      values = new TLongObjectHashMap<>();
+      CURRENT_VALUES.set(values);
+    }
+    values.put(key, value);
+  }
+
+  @Override public Maybe<T> getMaybe() {
+    return MutableReference.super.getMaybe();
+  }
+
+  @Override public boolean compareAndSet(T expect, T update) {
+    TLongObjectMap<Object> values = CURRENT_VALUES.get();
+    boolean matched;
+    if (values != null) {
+      Object actual = values.get(key);
+      matched = Objects.equal(expect, actual);
+      if (matched) {
+        if (update != null) {
+          values.put(key, update);
+        } else {
+          values.remove(key);
+        }
+      }
+    } else {
+      matched = expect == null;
+      if (matched) {
+        if (update != null) {
+          initialize(update);
+        }
+      }
+    }
+    return matched;
+  }
+
+  private void initialize(@Nonnull T update) {
+    TLongObjectHashMap<Object> values = new TLongObjectHashMap<>();
+    values.put(key, update);
+    CURRENT_VALUES.set(values);
+  }
+
+  @SuppressWarnings("unchecked") @Override public T getAndSet(T value) {
+    TLongObjectMap<Object> values = CURRENT_VALUES.get();
+    T prev;
+    if (values == null) {
+      prev = null;
+      if (value != null) initialize(value);
+    } else if (value != null) {
+      prev = (T) values.put(key, value);
+    } else {
+      prev = (T) values.remove(key);
+    }
+    return prev;
+  }
+
+  //TODO
+//  @Override public T modify(Function<? super T, ? extends T> transformer) {
+//
+//  }
 }

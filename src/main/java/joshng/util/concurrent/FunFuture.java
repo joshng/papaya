@@ -42,7 +42,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   }
 
   public static <T> FunFuture<T> immediateFailedFuture(Throwable e) {
-    return newFuture(Futures.<T>immediateFailedFuture(AsyncContext.annotateWithCurrentContext(unwrapExecutionException(e))));
+    return newFuture(Futures.<T>immediateFailedFuture(AsyncTrace.annotateWithCurrentContext(unwrapExecutionException(e))));
   }
 
   public static <T> FunFuture<T> immediateCancelledFuture() {
@@ -430,7 +430,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
 
     @Override
     public void addListener(Runnable listener, Executor exec) {
-      super.addListener(AsyncContext.getCurrentContext().wrapRunnable(listener), exec);
+      super.addListener(AsyncTrace.getCurrentContext().wrapRunnable(listener), exec);
     }
   }
 

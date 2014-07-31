@@ -28,7 +28,11 @@ public interface FunFutureMaybe<T> extends FunFuture<Maybe<T>> {
 //    return value == null ? futureMaybeNot() : immediateFutureMaybe(value);
 //  }
 
-  static <T> FunFutureMaybe<T> immediateFutureMaybe(@Nonnull T value) {
+  static <T> FunFutureMaybe<T> immediateFutureOfMaybe(Maybe<T> maybe) {
+    return maybe.isDefined() ? new ForwardingFunFutureMaybe<>(Futures.immediateFuture(maybe)) : futureMaybeNot();
+  }
+
+  static <T> FunFutureMaybe<T> immediateDefiniteFuture(@Nonnull T value) {
     return new ForwardingFunFutureMaybe<>(Futures.immediateFuture(definitely(value)));
   }
 
