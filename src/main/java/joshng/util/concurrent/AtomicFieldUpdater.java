@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
  */
 public class AtomicFieldUpdater<T, V> implements MutableReference<V> {
   private final T obj;
-  private AtomicReferenceFieldUpdater<T, V> updater;
+  private final AtomicReferenceFieldUpdater<T, V> updater;
 
   private AtomicFieldUpdater(AtomicReferenceFieldUpdater<T, V> updater, T obj) {
     this.obj = obj;
