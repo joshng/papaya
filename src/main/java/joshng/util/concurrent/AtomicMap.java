@@ -28,11 +28,14 @@ public class AtomicMap<K, V> extends ForwardingMap<K,V> implements ConcurrentMap
     return storage;
   }
 
+  @SuppressWarnings("unchecked")
   public V put(K key, V value) {
     return (V) storageUpdater.getAndUpdate(this, s -> s.plus(key, value)).get(key);
   }
 
-  @Override public void putAll(Map<? extends K, ? extends V> values) {
+  @SuppressWarnings("unchecked")
+  @Override
+  public void putAll(Map<? extends K, ? extends V> values) {
     if (!values.isEmpty()) {
       storageUpdater.getAndUpdate(this, s -> s.plusAll(values));
     }
@@ -58,7 +61,9 @@ public class AtomicMap<K, V> extends ForwardingMap<K,V> implements ConcurrentMap
 
   }
 
-  @Override public V remove(Object key) {
+  @SuppressWarnings("unchecked")
+  @Override
+  public V remove(Object key) {
     K k = (K) key;
     V removed;
     PMap<K, V> currentStorage;
@@ -69,12 +74,15 @@ public class AtomicMap<K, V> extends ForwardingMap<K,V> implements ConcurrentMap
     return removed;
   }
 
-  @Override public boolean remove(Object key, Object value) {
+  @SuppressWarnings("unchecked")
+  @Override
+  public boolean remove(Object key, Object value) {
+    K k = (K) key;
     PMap<K, V> currentStorage;
     boolean matched;
     do {
       currentStorage = storage;
-    } while ((matched = Objects.equal(currentStorage.get(key), value))
+    } while ((matched = Objects.equal(currentStorage.get(k), value))
             && !storageUpdater.compareAndSet(this, currentStorage, currentStorage.minus(key)));
     return matched;
   }
