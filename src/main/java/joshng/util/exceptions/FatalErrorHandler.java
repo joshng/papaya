@@ -2,9 +2,13 @@ package joshng.util.exceptions;
 
 import com.google.common.base.Throwables;
 import joshng.util.Localhost;
-import joshng.util.blocks.Sink;
+import joshng.util.concurrent.NamedThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * User: josh
@@ -13,12 +17,8 @@ import org.slf4j.LoggerFactory;
  */
 public class FatalErrorHandler {
   private static final Logger LOG = LoggerFactory.getLogger(FatalErrorHandler.class);
-  public static final Sink<Throwable> FATAL_ERROR_SINK = new Sink<Throwable>() {
-    @Override
-    public void accept(Throwable value) {
-      terminateProcess(value);
-    }
-  };
+  private static final ExecutorService TERMINATION_THREAD = Executors.newSingleThreadExecutor(new NamedThreadFactory("fatal-error-shutdown"));
+  private static final AtomicBoolean TERMINATED = new AtomicBoolean();
 
   public static Error terminateProcess(Throwable throwable) {
     return terminateProcess("", throwable);
@@ -28,11 +28,12 @@ public class FatalErrorHandler {
     try {
       String fullMessage = "FATAL ERROR, terminating! " + message + "\nHost: " + Localhost.getDescription();
       Error error = new Error(fullMessage, throwable);
-      error.fillInStackTrace();
       LOG.error(fullMessage, error);
       throw error;
     } finally {
-      System.exit(2);
+      TERMINATION_THREAD.submit(() -> {
+        if (TERMINATED.compareAndSet(false, true)) System.exit(2);
+      });
     }
   }
 

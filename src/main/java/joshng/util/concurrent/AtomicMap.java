@@ -2,7 +2,7 @@ package joshng.util.concurrent;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ForwardingMap;
-import org.pcollections.HashTreePMap;
+import org.pcollections.Empty;
 import org.pcollections.PMap;
 
 import java.util.Map;
@@ -18,7 +18,7 @@ import java.util.function.Function;
 public class AtomicMap<K, V> extends ForwardingMap<K,V> implements ConcurrentMap<K, V> {
   private static final AtomicReferenceFieldUpdater<AtomicMap, PMap> storageUpdater
           = AtomicReferenceFieldUpdater.newUpdater(AtomicMap.class, PMap.class, "storage");
-  private volatile PMap<K, V> storage = HashTreePMap.empty();
+  private volatile PMap<K, V> storage = Empty.map();
 
   public static <K, V> AtomicMap<K, V> newAtomicMap() {
     return new AtomicMap<>();
