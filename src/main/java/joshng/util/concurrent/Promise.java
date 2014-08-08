@@ -254,9 +254,4 @@ public class Promise<T> extends AbstractFunFuture<T> {
   protected final boolean set(T result) {
     return succeed(result);
   }
-
-  @Override
-  public ListenableFuture<T> delegate() {
-    return this;
-  }
 }

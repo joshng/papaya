@@ -323,8 +323,12 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     return (FunFuture<C>) filter(Pred.instanceOf(castClass));
   }
 
-  default FunFuture<T> recover(final ThrowingFunction<? super Exception, ? extends T> exceptionHandler) {
-    return recoverWith(throwable -> Futures.immediateFuture(exceptionHandler.apply(throwable)));
+  default <E extends Exception> FunFuture<T> recover(Class<E> exceptionType, ThrowingFunction<? super E, ? extends T> alternateResultSource) {
+    return recover(Pred.instanceOf(exceptionType), (ThrowingFunction<Exception, ? extends T>) alternateResultSource);
+  }
+
+  default FunFuture<T> recover(Predicate<? super Exception> exceptionFilter, ThrowingFunction<? super Exception, ? extends T> alternateResultSource) {
+    return recoverWith(throwable -> exceptionFilter.test(throwable) ? Futures.immediateFuture(alternateResultSource.apply(throwable)) : Futures.immediateFailedFuture(throwable));
   }
 
   default FunFuture<T> recoverWith(final AsyncFunction<? super Exception, ? extends T> exceptionHandler) {

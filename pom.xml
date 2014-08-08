@@ -76,12 +76,6 @@
       <version>2.1</version>
     </dependency>
     <dependency>
-      <!-- TODO: is this the best way to get the asm impl required by the LineNumbers class? -->
-      <groupId>org.eclipse.jetty.orbit</groupId>
-      <artifactId>org.objectweb.asm</artifactId>
-      <version>3.3.1.v201105211655</version>
-    </dependency>
-    <dependency>
       <groupId>joda-time</groupId>
       <artifactId>joda-time</artifactId>
       <version>2.3</version>

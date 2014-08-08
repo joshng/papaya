@@ -103,8 +103,13 @@ public interface FunFutureMaybe<T> extends FunFuture<Maybe<T>> {
   }
 
   @Override
-  default FunFutureMaybe<T> recover(final ThrowingFunction<? super Exception, ? extends Maybe<T>> exceptionHandler) {
-    return FunFutureMaybe.wrapFutureMaybe(FunFuture.super.recover(exceptionHandler).delegate());
+  default <E extends Exception> FunFutureMaybe<T> recover(Class<E> exceptionType, ThrowingFunction<? super E, ? extends Maybe<T>> alternateResultSource) {
+    return (FunFutureMaybe<T>) FunFuture.super.recover(exceptionType, alternateResultSource);
+  }
+
+  @Override
+  default FunFutureMaybe<T> recover(Predicate<? super Exception> exceptionFilter, final ThrowingFunction<? super Exception, ? extends Maybe<T>> exceptionHandler) {
+    return FunFutureMaybe.wrapFutureMaybe(FunFuture.super.recover(exceptionFilter, exceptionHandler).delegate());
   }
 
   static <I, O> AsyncF<Maybe<I>, Maybe<O>> flatMapper(AsyncFunction<? super I, O> f) {

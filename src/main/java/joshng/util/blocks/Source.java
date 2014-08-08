@@ -21,6 +21,9 @@ import static joshng.util.collect.Maybe.definitely;
 @FunctionalInterface
 public interface Source<T> extends F<Object, T>, Callable<T>, Supplier<T>, com.google.common.base.Supplier<T> {
   static final Source NULL_SOURCE = Source.ofInstance(null);
+  static final Source MAYBE_NOT = Source.ofInstance(Maybe.not());
+  static final Source<Boolean> FALSE = Source.ofInstance(Boolean.FALSE);
+  static final Source<Boolean> TRUE = Source.ofInstance(Boolean.TRUE);
 
   static <T> Source<T> source(Source<T> method) {
     return method;
@@ -29,6 +32,11 @@ public interface Source<T> extends F<Object, T>, Callable<T>, Supplier<T>, com.g
   @SuppressWarnings("unchecked")
   public static <T> Source<T> nullSource() {
     return NULL_SOURCE;
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <T> Source<Maybe<T>> maybeNot() {
+    return MAYBE_NOT;
   }
 
   public static <T> Source<T> ofInstance(final T value) {
