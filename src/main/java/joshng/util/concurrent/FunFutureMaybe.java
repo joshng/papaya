@@ -4,6 +4,7 @@ import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import joshng.util.blocks.F;
+import joshng.util.blocks.Source;
 import joshng.util.blocks.ThrowingFunction;
 import joshng.util.collect.Maybe;
 
@@ -110,6 +111,14 @@ public interface FunFutureMaybe<T> extends FunFuture<Maybe<T>> {
   @Override
   default FunFutureMaybe<T> recover(Predicate<? super Exception> exceptionFilter, final ThrowingFunction<? super Exception, ? extends Maybe<T>> exceptionHandler) {
     return FunFutureMaybe.wrapFutureMaybe(FunFuture.super.recover(exceptionFilter, exceptionHandler).delegate());
+  }
+
+  default <E extends Exception> FunFutureMaybe<T> recoverAsUndefined(Class<E> exceptionType) {
+    return recover(exceptionType, Source.maybeNot());
+  }
+
+  default FunFutureMaybe<T> recoverAsUndefined(Predicate<? super Exception> exceptionFilter) {
+    return recover(exceptionFilter, Source.maybeNot());
   }
 
   static <I, O> AsyncF<Maybe<I>, Maybe<O>> flatMapper(AsyncFunction<? super I, O> f) {
