@@ -5,10 +5,12 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import joshng.util.blocks.F;
 import joshng.util.blocks.Source;
+import joshng.util.blocks.Tapper;
 import joshng.util.blocks.ThrowingFunction;
 import joshng.util.collect.Maybe;
 
 import javax.annotation.Nonnull;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -79,6 +81,10 @@ public interface FunFutureMaybe<T> extends FunFuture<Maybe<T>> {
     return flatMapMaybe(maybeFlatMapper(f));
   }
 
+  default FunFutureMaybe<T> foreachIfDefined(Consumer<? super T> consumer) {
+    return mapIfDefined(Tapper.extendConsumer(consumer));
+  }
+
   default FunFuture<T> getOrFail() {
     return map(Maybe.getter());
   }
@@ -95,6 +101,10 @@ public interface FunFutureMaybe<T> extends FunFuture<Maybe<T>> {
     return map(Maybe.getterWithDefaultFrom(alternateValue));
   }
 
+  default FunFutureMaybe<T> orElseFrom(Supplier<? extends ListenableFuture<Maybe<T>>> alternateFutureSupplier) {
+    return flatMapMaybe(maybe -> maybe.isDefined() ? this : alternateFutureSupplier.get());
+  }
+
   default <U> FunFutureMaybe<U> cast(Class<U> castClass) {
     return mapMaybe(Maybe.caster(castClass));
   }
@@ -109,8 +119,20 @@ public interface FunFutureMaybe<T> extends FunFuture<Maybe<T>> {
   }
 
   @Override
-  default FunFutureMaybe<T> recover(Predicate<? super Exception> exceptionFilter, final ThrowingFunction<? super Exception, ? extends Maybe<T>> exceptionHandler) {
-    return FunFutureMaybe.wrapFutureMaybe(FunFuture.super.recover(exceptionFilter, exceptionHandler).delegate());
+  default FunFutureMaybe<T> recover(Predicate<? super Exception> exceptionFilter, final ThrowingFunction<? super Exception, ? extends Maybe<T>> alternateResultSource) {
+    return (FunFutureMaybe<T>) FunFuture.super.recover(exceptionFilter, alternateResultSource);
+  }
+
+  default <E extends Exception> FunFutureMaybe<T> recoverWith(Class<E> exceptionType, AsyncFunction<? super E, ? extends Maybe<T>> alternateResultSource) {
+    return (FunFutureMaybe<T>) FunFuture.super.recoverWith(exceptionType, alternateResultSource);
+  }
+
+  default FunFutureMaybe<T> recoverWith(Predicate<? super Exception> exceptionFilter, AsyncFunction<? super Exception, ? extends Maybe<T>> alternateResultSource) {
+    return (FunFutureMaybe<T>) FunFuture.super.recoverWith(exceptionFilter, alternateResultSource);
+  }
+
+  default FunFutureMaybe<T> recoverWith(final AsyncFunction<? super Exception, ? extends Maybe<T>> exceptionHandler) {
+    return new MaybePromise<T>().completeOrRecoverWith(this, exceptionHandler);
   }
 
   default <E extends Exception> FunFutureMaybe<T> recoverAsUndefined(Class<E> exceptionType) {
@@ -186,7 +208,13 @@ public interface FunFutureMaybe<T> extends FunFuture<Maybe<T>> {
   }
 
   class MaybePromise<T> extends Promise<Maybe<T>> implements FunFutureMaybe<T> {
-
+    @Override public FunFutureMaybe<T> completeOrRecoverWith(
+            ListenableFuture<Maybe<T>> future,
+            AsyncFunction<? super Exception, ? extends Maybe<T>> exceptionHandler
+    ) {
+      super.completeOrRecoverWith(future, exceptionHandler);
+      return this;
+    }
   }
 }
 
