@@ -71,8 +71,10 @@ public class Promise<T> extends AbstractFunFuture<T> {
         }
 
         @Override public void onFailure(Throwable t) {
-          if (t instanceof Exception) {
-            completeWithResultOf(() -> exceptionHandler.apply((Exception) t));
+          //noinspection ThrowableResultOfMethodCallIgnored
+          Throwable cause = FunFuture.unwrapExecutionException(t);
+          if (cause instanceof Exception) {
+            completeWithResultOf(() -> exceptionHandler.apply((Exception) cause));
           } else {
             setFailure(t);
           }
@@ -253,10 +255,5 @@ public class Promise<T> extends AbstractFunFuture<T> {
 
   protected final boolean set(T result) {
     return succeed(result);
-  }
-
-  @Override
-  public ListenableFuture<T> delegate() {
-    return this;
   }
 }

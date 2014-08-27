@@ -43,6 +43,11 @@
 
 
     <dependency>
+      <groupId>com.github.mdr</groupId>
+      <artifactId>ascii-graphs_2.10</artifactId>
+      <version>0.0.6</version>
+    </dependency>
+    <dependency>
       <groupId>com.yammer.metrics</groupId>
       <artifactId>metrics-core</artifactId>
       <version>2.2.0</version>
@@ -74,12 +79,6 @@
       <groupId>org.objenesis</groupId>
       <artifactId>objenesis</artifactId>
       <version>2.1</version>
-    </dependency>
-    <dependency>
-      <!-- TODO: is this the best way to get the asm impl required by the LineNumbers class? -->
-      <groupId>org.eclipse.jetty.orbit</groupId>
-      <artifactId>org.objectweb.asm</artifactId>
-      <version>3.3.1.v201105211655</version>
     </dependency>
     <dependency>
       <groupId>joda-time</groupId>

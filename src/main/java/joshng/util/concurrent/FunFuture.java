@@ -323,13 +323,26 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     return (FunFuture<C>) filter(Pred.instanceOf(castClass));
   }
 
-  default FunFuture<T> recover(final ThrowingFunction<? super Exception, ? extends T> exceptionHandler) {
-    return recoverWith(throwable -> Futures.immediateFuture(exceptionHandler.apply(throwable)));
+  default <E extends Exception> FunFuture<T> recover(Class<E> exceptionType, ThrowingFunction<? super E, ? extends T> alternateResultSource) {
+    return recover(Pred.instanceOf(exceptionType), (ThrowingFunction<Exception, ? extends T>) alternateResultSource);
+  }
+
+  default FunFuture<T> recover(Predicate<? super Exception> exceptionFilter, ThrowingFunction<? super Exception, ? extends T> alternateResultSource) {
+    return recoverWith(throwable -> exceptionFilter.test(throwable) ? Futures.immediateFuture(alternateResultSource.apply(throwable)) : Futures.immediateFailedFuture(throwable));
   }
 
   default FunFuture<T> recoverWith(final AsyncFunction<? super Exception, ? extends T> exceptionHandler) {
     return Promise.<T>newPromise().completeOrRecoverWith(this, exceptionHandler);
   }
+
+  default <E extends Exception> FunFuture<T> recoverWith(Class<E> exceptionType, AsyncFunction<? super E, ? extends T> alternateResultSource) {
+    return recoverWith(Pred.instanceOf(exceptionType), (AsyncFunction<? super Exception, ? extends T>) alternateResultSource);
+  }
+
+  default FunFuture<T> recoverWith(Predicate<? super Exception> exceptionFilter, AsyncFunction<? super Exception, ? extends T> alternateResultSource) {
+    return recoverWith(throwable -> exceptionFilter.test(throwable) ? (ListenableFuture<T>)alternateResultSource.apply(throwable) : Futures.immediateFailedFuture(throwable));
+  }
+
 
   default FunFuture<T> uponCompletion2(Consumer<? super T> successObserver, Consumer<? super Exception> errorObserver) {
     return uponCompletion(new FutureCallback<T>() {
