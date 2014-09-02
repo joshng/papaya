@@ -10,7 +10,7 @@ import java.util.function.BiFunction;
  * Date: Sep 23, 2011
  * Time: 9:00:40 AM
  */
-public interface F2<I1, I2, O> extends BiFunction<I1, I2, O> {
+public interface F2<I1, I2, O> extends BiFunction<I1, I2, O>, ThrowingBiFunction<I1, I2, O> {
   public static <T> F2<Object, Object, T> constant(final T result) {
     return (input1, input2) -> result;
   }
@@ -118,5 +118,6 @@ public interface F2<I1, I2, O> extends BiFunction<I1, I2, O> {
     return (input1, input2) -> next.apply(apply(input1, input2));
   }
 
+  @Override
   O apply(I1 input1, I2 input2);
 }

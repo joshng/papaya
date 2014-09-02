@@ -16,7 +16,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static joshng.util.collect.Maybe.definitely;
@@ -33,7 +32,8 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   F GET_UNCHECKED = (F<Future<Object>, Object>) FunFuture::getUnchecked;
   FunFuture<Boolean> FALSE = FunFuture.immediateFuture(false);
   FunFuture<Boolean> TRUE = FunFuture.immediateFuture(true);
-  AsyncF<Object, Nothing> REPLACE_WITH_NOTHING = (Object discarded) -> Nothing.FUTURE;
+  FunFuture<Nothing> NOTHING = Nothing.FUTURE;
+  AsyncF<Object, Nothing> REPLACE_WITH_NOTHING = (Object discarded) -> NOTHING;
 
   ListenableFuture<T> delegate();
 
@@ -114,7 +114,11 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   }
 
   default <V> FunFuture<V> replace(V value) {
-    return map(Source.ofInstance(value));
+    return replaceWith(Futures.immediateFuture(value));
+  }
+
+  default <V> FunFuture<V> replaceWith(ListenableFuture<V> replacement) {
+    return flatMap(v -> replacement);
   }
 
   default FunFuture<Nothing> discardValue() {
@@ -240,7 +244,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     return new ForwardingFunFuture<>(future);
   }
 
-  default <O> FunFuture<O> map(Function<? super T, ? extends O> function) {
+  default <O> FunFuture<O> map(ThrowingFunction<? super T, ? extends O> function) {
     AsyncF<? super T, ? extends O> asyncF = AsyncF.liftFunction(function);
     return flatMap(asyncF);
   }
@@ -254,7 +258,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     return promise;
   }
 
-  default <O> FunFutureMaybe<O> mapMaybe(Function<? super T, Maybe<O>> f) {
+  default <O> FunFutureMaybe<O> mapMaybe(ThrowingFunction<? super T, Maybe<O>> f) {
     return flatMapMaybe(AsyncF.liftFunction(f));
   }
 
@@ -281,7 +285,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     });
   }
 
-  default <K,V> FunFuturePair<K,V> mapPair(Function<? super T, ? extends Map.Entry<K,V>> function) {
+  default <K,V> FunFuturePair<K,V> mapPair(ThrowingFunction<? super T, ? extends Map.Entry<K,V>> function) {
     return flatMapPair((AsyncF<? super T, ? extends Map.Entry<K, V>>) AsyncF.liftFunction(function));
   }
 
@@ -293,15 +297,11 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     return new FunFuturePair.ForwardingFunFuturePair<>(transformed);
   }
 
-  public static <I, O> AsyncF<ListenableFuture<? extends I>, O> mapper(final Function<? super I, ? extends O> mapper) {
-    return input -> extendFuture(input).map(mapper);
-  }
-
   default <O> FunFutureMaybe<O> flatMapMaybe(AsyncFunction<? super T, Maybe<O>> f) {
     return flatMapToPromise(f, new FunFutureMaybe.MaybePromise<>());
   }
 
-  static <I, O> F<ListenableFuture<? extends I>, FunFutureMaybe<O>> maybeMapper(Function<? super I, Maybe<O>> maybeFunction) {
+  static <I, O> F<ListenableFuture<? extends I>, FunFutureMaybe<O>> maybeMapper(ThrowingFunction<? super I, Maybe<O>> maybeFunction) {
     return future -> extendFuture(future).mapMaybe(maybeFunction);
   }
 
@@ -407,7 +407,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   default <V> FunFuturePair<T, V> zip(ListenableFuture<V> other) {
     return FunFuture.allAsList(ImmutableList.<ListenableFuture<? extends Object>>of(this, extendFuture(other)))
                     .mapPair((List<Object> input) ->
-                            Pair.of(getUnchecked(), FunFuture.getUnchecked(other)));
+                            Pair.of(get(), other.get()));
   }
 
   default <U, V> FunFuture<V> zipWith(ListenableFuture<U> other, BiFunction<? super T, ? super U, ? extends ListenableFuture<V>> zipper) {

@@ -4,6 +4,7 @@ import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.ListenableFuture;
 import joshng.util.Reflect;
 import joshng.util.blocks.F;
+import joshng.util.blocks.ThrowingFunction;
 import joshng.util.collect.Nothing;
 
 import javax.annotation.Nonnull;
@@ -35,7 +36,7 @@ public interface AsyncF<I, O> extends F<I, FunFuture<O>>, IAsyncFunction<I, O> {
     };
   }
 
-  public static <I,O> AsyncF<I, O> liftFunction(Function<I, O> function) {
+  public static <I,O> AsyncF<I, O> liftFunction(ThrowingFunction<I, O> function) {
     return input -> FunFuture.immediateFuture(function.apply(input));
   }
 

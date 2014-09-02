@@ -46,11 +46,6 @@ public class Pair<T, U> extends PublicImmutableEntry<T, U> {
       return pair.getValue();
     }
   };
-  private static final F2 FACTORY = new F2() {
-    public Pair apply(Object input1, Object input2) {
-      return new Pair<>(input1, input2);
-    }
-  };
   public static final F SWAPPER = new F<Map.Entry, Map.Entry>() {
     @Override
     public Map.Entry apply(Map.Entry input) {
@@ -62,7 +57,7 @@ public class Pair<T, U> extends PublicImmutableEntry<T, U> {
   private Integer hashCode;
 
   public static <T, U> F2<T, U, Pair<T, U>> creator() {
-    return blindCast(FACTORY);
+    return Pair::new;
   }
 
   public Pair(T first, U second) {

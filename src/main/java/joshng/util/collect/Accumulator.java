@@ -51,8 +51,15 @@ public interface Accumulator<I, O> extends Sink<I>, Supplier<O> {
     return of(builder::add, builder::build);
   }
 
+  static <T> Accumulator<T, ArrayList<T>> arrayListWithCapacity(int capacity) {
+    return toList(new ArrayList<>(capacity));
+  }
+
   static <T> Accumulator<T, ArrayList<T>> arrayList() {
-    ArrayList<T> list = new ArrayList<>();
+    return toList(new ArrayList<>());
+  }
+
+  static <T, L extends List<T>> Accumulator<T, L> toList(L list) {
     return of(list::add, Source.ofInstance(list));
   }
 
