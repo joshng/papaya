@@ -46,4 +46,8 @@ public class ByteArrayKey implements ByteSerializable<byte[]> {
   public byte[] getSerializableValue() {
     return bytes;
   }
+
+  public int getLength() {
+    return bytes.length;
+  }
 }

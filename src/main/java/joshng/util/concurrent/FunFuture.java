@@ -305,8 +305,11 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     return future -> extendFuture(future).mapMaybe(maybeFunction);
   }
 
-  default FunFuture<Nothing> foreach(Sink<? super T> sideEffect) {
-    return map(sideEffect);
+  default FunFuture<Nothing> foreach(ThrowingConsumer<? super T> sideEffect) {
+    return flatMap(t -> {
+      sideEffect.accept(t);
+      return Nothing.FUTURE;
+    });
   }
 
   default FunFutureMaybe<T> filter(final Predicate<? super T> filter) {
