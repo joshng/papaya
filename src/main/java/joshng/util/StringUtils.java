@@ -68,10 +68,23 @@ public class StringUtils {
 
   public static <A extends Appendable> A appendHexString(byte[] bytes, int offset, int len, A builder) throws IOException {
     for (int i = offset; i < len; i++) {
-      builder.append(Character.forDigit((bytes[i] & 0XF0) >> 4, 16));
-      builder.append(Character.forDigit((bytes[i] & 0X0F), 16));
+      appendHexByte(bytes[i], builder);
     }
     return builder;
+  }
+
+  public static <A extends Appendable> void appendHexByte(byte b, A builder) throws IOException {
+    builder.append(Character.forDigit((b & 0XF0) >> 4, 16));
+    builder.append(Character.forDigit((b & 0X0F), 16));
+  }
+
+  public static StringBuilder appendHexByte(byte b, StringBuilder builder) {
+    try {
+      appendHexByte(b, (Appendable)builder);
+      return builder;
+    } catch (IOException e) {
+      throw Exceptions.impossibleError(e);
+    }
   }
 
   public static String toHexStringTruncatedWithEllipsis(byte[] bytes, int offset, int maxBytes) {
