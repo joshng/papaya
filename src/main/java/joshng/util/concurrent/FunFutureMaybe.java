@@ -89,6 +89,10 @@ public interface FunFutureMaybe<T> extends FunFuture<Maybe<T>> {
     return map(Maybe.getter());
   }
 
+  default FunFuture<T> getOrFailFrom(Supplier<? extends Exception> exceptionSupplier) {
+    return map((ThrowingFunction<Maybe<T>, T>)maybe -> maybe.getOrThrowFrom(exceptionSupplier));
+  }
+
   default FunFuture<T> getOrFail(String format, Object... args) {
     return map(Maybe.getter(format, args));
   }
