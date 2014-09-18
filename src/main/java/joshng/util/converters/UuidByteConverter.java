@@ -23,15 +23,17 @@ public class UuidByteConverter extends ByteConverter<UUID> {
   }
 
   public static byte[] toBytes(UUID identifier) {
-    return ByteBuffer.allocate(BYTE_LENGTH)
-            .putLong(identifier.getMostSignificantBits())
-            .putLong(identifier.getLeastSignificantBits())
-            .array();
+    return putBytes(ByteBuffer.allocate(BYTE_LENGTH), identifier).array();
   }
 
   @Override
   protected UUID doBackward(byte[] identifier) {
-    return toUuid((byte[]) identifier);
+    return toUuid(identifier);
+  }
+
+  public static ByteBuffer putBytes(ByteBuffer buf, UUID identifier) {
+    return buf.putLong(identifier.getMostSignificantBits())
+              .putLong(identifier.getLeastSignificantBits());
   }
 
   public static UUID toUuid(byte[] identifier) {

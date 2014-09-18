@@ -22,17 +22,6 @@ public abstract class LazyReference<T> extends Ref<T> {
     super(null);
   }
 
-  private static class SuppliedLazyReference<T> extends LazyReference<T> {
-    private final Supplier<T> instanceSupplier;
-
-    private SuppliedLazyReference(Supplier<T> instanceSupplier) {
-      this.instanceSupplier = instanceSupplier;
-    }
-
-    protected T supplyValue() {
-      return instanceSupplier.get();
-    }
-  }
 
   protected abstract T supplyValue();
 
@@ -89,5 +78,17 @@ public abstract class LazyReference<T> extends Ref<T> {
   @Override
   public synchronized T getAndSet(T value) {
     return super.getAndSet(value);
+  }
+
+  private static class SuppliedLazyReference<T> extends LazyReference<T> {
+    private final Supplier<T> instanceSupplier;
+
+    private SuppliedLazyReference(Supplier<T> instanceSupplier) {
+      this.instanceSupplier = instanceSupplier;
+    }
+
+    protected T supplyValue() {
+      return instanceSupplier.get();
+    }
   }
 }

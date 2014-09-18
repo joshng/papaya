@@ -105,11 +105,19 @@ public interface FunFutureMaybe<T> extends FunFuture<Maybe<T>> {
     return map(Maybe.getterWithDefaultFrom(alternateValue));
   }
 
-  default FunFutureMaybe<T> orElseFrom(Supplier<? extends ListenableFuture<Maybe<T>>> alternateFutureSupplier) {
+  default FunFutureMaybe<T> orElseFrom(Supplier<? extends Maybe<T>> alternateMaybe) {
+    return mapMaybe(maybe -> maybe.orElseFrom(alternateMaybe));
+  }
+
+  default FunFutureMaybe<T> orElseFromFlattened(Supplier<? extends ListenableFuture<Maybe<T>>> alternateFutureSupplier) {
     return flatMapMaybe(maybe -> maybe.isDefined() ? this : alternateFutureSupplier.get());
   }
 
-  default <U> FunFutureMaybe<U> cast(Class<U> castClass) {
+  default FunFuture<T> getOrElseFromFlattened(Supplier<? extends ListenableFuture<T>> alternateFuture) {
+    return flatMap(maybe -> maybe.<ListenableFuture<T>>map(FunFuture::immediateFuture).getOrElseFrom(alternateFuture));
+  }
+
+  default <U> FunFutureMaybe<U> castMaybe(Class<U> castClass) {
     return mapMaybe(Maybe.caster(castClass));
   }
 
@@ -201,7 +209,7 @@ public interface FunFutureMaybe<T> extends FunFuture<Maybe<T>> {
     }
 
     @Override
-    public FunFutureMaybe cast(Class castClass) {
+    public FunFutureMaybe castMaybe(Class castClass) {
       return this;
     }
 
