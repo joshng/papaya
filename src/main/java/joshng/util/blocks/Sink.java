@@ -14,7 +14,7 @@ import java.util.function.Predicate;
  */
 @FunctionalInterface
 public interface Sink<T> extends F<T, Nothing>, Consumer<T>, ThrowingConsumer<T> {
-  Consumer<Object> NOOP = obj -> {};
+  Sink<Object> NOOP = obj -> {};
 
   public static <T> Sink<T> sink(Sink<T> sink) {
     return sink;
