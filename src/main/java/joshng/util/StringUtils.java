@@ -15,6 +15,7 @@ import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CoderResult;
+import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -247,9 +248,23 @@ public class StringUtils {
    * @throws IllegalArgumentException if the string does not contain the requested separator
    */
   public static Pair<String, String> splitOnFirst(char separator, String str) {
+    return splitOnFirst(separator, str, Pair::of);
+  }
+
+  /**
+   * Splits the given string at the first occurrence of the given {@code separator}.<br/><br/>
+   * The separator character is OMITTED from the resulting strings.
+   *
+   * @param separator the char to find
+   * @param str       the string to split
+   * @param consumer logic to apply to the prefix/suffix surrounding the requested separator
+   * @return The result of passing the prefix/suffix to the provided consumer
+   * @throws IllegalArgumentException if the string does not contain the requested separator
+   */
+  public static <O> O splitOnFirst(char separator, String str, BiFunction<? super String, ? super String, O> consumer) {
     int sepIdx = str.indexOf(separator);
     checkArgument(sepIdx >= 0, "Separator not found", separator, str);
-    return splitAroundIndex(sepIdx, str);
+    return splitAroundIndex(sepIdx, str, consumer);
   }
 
   /**
@@ -277,7 +292,25 @@ public class StringUtils {
    * @throws IndexOutOfBoundsException if the index is outside the range of the given string
    */
   public static Pair<String, String> splitAroundIndex(int index, String str) {
-    return Pair.of(str.substring(0, index), str.substring(index + 1));
+    return splitAroundIndex(index, str, Pair::of);
+  }
+
+  /**
+   * Splits the given string "around" the given {@code index}.<br/><br/>
+   * The character at the index is OMITTED from the resulting strings.
+   *
+   * @param index the index to split around
+   * @param str   the string to split
+   * @param consumer
+   * @return Pair.of(str.substring(0, index), str.substring(index + 1))
+   * @throws IndexOutOfBoundsException if the index is outside the range of the given string
+   */
+  public static <O> O splitAroundIndex(
+          int index,
+          String str,
+          BiFunction<? super String, ? super String, O> consumer
+  ) {
+    return consumer.apply(str.substring(0, index), str.substring(index + 1));
   }
 
   /**

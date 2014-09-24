@@ -17,6 +17,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 import java.util.function.ToIntFunction;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static joshng.util.Reflect.blindCast;
 
 /**
@@ -483,7 +484,7 @@ class FunctionalIterable<T> implements Functional<T> {
   private final Iterable<T> delegate;
 
   public FunctionalIterable(Iterable<T> delegate) {
-    this.delegate = delegate;
+    this.delegate = checkNotNull(delegate, "iterable");
   }
 
   @Override

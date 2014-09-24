@@ -109,6 +109,10 @@ public interface ForwardingMaybe<T> {
     return getMaybe().valueMatches(predicate);
   }
 
+  default boolean valueMatchesNot(Predicate<? super T> predicate) {
+    return getMaybe().valueMatchesNot(predicate);
+  }
+
   default boolean isDefined() {
     return getMaybe().isDefined();
   }

@@ -59,7 +59,7 @@ enum ClassImposterizer {
 
   private final Objenesis objenesis = new ObjenesisStd();
 
-  private static final NamingPolicy DEFAULT_POLICY = new DefaultNamingPolicy() {
+  static final NamingPolicy DEFAULT_POLICY = new DefaultNamingPolicy() {
     /**
      * {@inheritDoc}
      */

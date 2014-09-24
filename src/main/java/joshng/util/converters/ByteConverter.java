@@ -18,6 +18,7 @@ import joshng.util.collect.Maybe;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.ByteBuffer;
 import java.util.UUID;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -50,13 +51,9 @@ public abstract class ByteConverter<T> extends Converter<T, byte[]> implements F
     register(Long.class, LongByteConverter.INSTANCE);
     register(String.class, StringUtf8Converter.INSTANCE);
     register(UUID.class, UuidByteConverter.INSTANCE);
+    register(ByteBuffer.class, ByteBufferConverter.INSTANCE);
     register(byte[].class, IDENTITY);
   }
-
-  public static ByteConverter<byte[]> identity() {
-    return IDENTITY;
-  }
-
 
   @SuppressWarnings("unchecked")
   public static <T> ByteConverter<T> forType(Class<T> conversionType) {
