@@ -1,6 +1,7 @@
 package joshng.util.blocks;
 
 import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 
 /**
  * User: josh
@@ -17,7 +18,8 @@ public interface ThrowingFunction<I, O> {
       try {
         return throwingFunction.apply(input);
       } catch (Exception e) {
-        throw Throwables.propagate(e);
+        Throwables.propagateIfPossible(e);
+        throw new UncheckedExecutionException(e);
       }
     };
   }

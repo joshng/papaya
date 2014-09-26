@@ -66,6 +66,10 @@ public interface F<I, O> extends Function<I, O>, com.google.common.base.Function
     return Sink.asSink(this);
   }
 
+  @Override default F<I, O> unchecked() {
+    return this;
+  }
+
   default F<I, O> withSideEffect(final Runnable sideEffect) {
     final F<I, O> function = F.this;
     return input -> applyWithSideEffect(input, function, sideEffect);

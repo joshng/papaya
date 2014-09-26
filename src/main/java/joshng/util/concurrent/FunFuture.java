@@ -3,8 +3,22 @@ package joshng.util.concurrent;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.*;
-import joshng.util.blocks.*;
+import com.google.common.util.concurrent.AsyncFunction;
+import com.google.common.util.concurrent.ForwardingListenableFuture;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListenableFutureTask;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.UncheckedExecutionException;
+import com.google.common.util.concurrent.Uninterruptibles;
+import joshng.util.blocks.F;
+import joshng.util.blocks.Pred;
+import joshng.util.blocks.Sink;
+import joshng.util.blocks.Source;
+import joshng.util.blocks.ThrowingConsumer;
+import joshng.util.blocks.ThrowingFunction;
+import joshng.util.collect.Either;
 import joshng.util.collect.FunIterable;
 import joshng.util.collect.Maybe;
 import joshng.util.collect.Nothing;
@@ -12,8 +26,19 @@ import joshng.util.collect.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -260,6 +285,14 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
 
   default <O> FunFutureMaybe<O> mapMaybe(ThrowingFunction<? super T, Maybe<O>> f) {
     return flatMapMaybe(AsyncF.liftFunction(f));
+  }
+
+  default <L, R> FunFutureEither<L, R> mapEither(ThrowingFunction<? super T, Either<L, R>> f) {
+    return flatMapEither(AsyncF.liftFunction(f));
+  }
+
+  default <L, R> FunFutureEither<L, R> flatMapEither(AsyncFunction<? super T, ? extends Either<L, R>> f) {
+    return flatMapToPromise(f, new FunFutureEither.EitherPromise<>());
   }
 
   default <O> FunFuture<O> thenAsync(Callable<? extends ListenableFuture<O>> nextTask) {

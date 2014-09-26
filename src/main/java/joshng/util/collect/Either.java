@@ -40,15 +40,6 @@ public abstract class Either<L, R> {
     return new Right<L, R>(definitely(value));
   }
 
-  public static <L, R, O> F<Either<L, R>, Either<O, R>> liftLeft(final Function<? super L, ? extends O> mapper) {
-    return new F<Either<L, R>, Either<O, R>>() {
-      @Override
-      public Either<O, R> apply(Either<L, R> input) {
-        return input.mapLeft(mapper);
-      }
-    };
-  }
-
   public abstract boolean isRight();
 
   public boolean isLeft() {
@@ -59,9 +50,11 @@ public abstract class Either<L, R> {
 
   public abstract Maybe<R> right();
 
-  public abstract <O> Either<O, R> mapLeft(Function<? super L, ? extends O> transformer);
+  public abstract <O> Either<O, R> mapLeft(Function<? super L, O> transformer);
 
-  public abstract <O> Either<L, O> mapRight(Function<? super R, ? extends O> transformer);
+  public abstract <O> Either<L, O> mapRight(Function<? super R, O> transformer);
+
+  public abstract <O> Either<L, O> flatMapRight(Function<? super R, ? extends Either<L, O>> transformer);
 
   public abstract <O> O fold(Function<? super L, ? extends O> leftFn, Function<? super R, ? extends O> rightFn);
 
@@ -98,12 +91,16 @@ public abstract class Either<L, R> {
     }
 
     @Override
-    public <O> Either<O, X> mapLeft(Function<? super L, ? extends O> transformer) {
+    public <O> Either<O, X> mapLeft(Function<? super L, O> transformer) {
       return new Left<O, X>(value.map(transformer));
     }
 
     @Override
-    public <O> Either<L, O> mapRight(Function<? super X, ? extends O> transformer) {
+    public <O> Either<L, O> mapRight(Function<? super X, O> transformer) {
+      return Reflect.blindCast(this);
+    }
+
+    @Override public <O> Either<L, O> flatMapRight(Function<? super X, ? extends Either<L, O>> transformer) {
       return Reflect.blindCast(this);
     }
 
@@ -138,13 +135,17 @@ public abstract class Either<L, R> {
     }
 
     @Override
-    public <O> Either<O, R> mapLeft(Function<? super X, ? extends O> transformer) {
+    public <O> Either<O, R> mapLeft(Function<? super X, O> transformer) {
       return Reflect.blindCast(this);
     }
 
     @Override
-    public <O> Either<X, O> mapRight(Function<? super R, ? extends O> transformer) {
+    public <O> Either<X, O> mapRight(Function<? super R, O> transformer) {
       return new Right<X, O>(value.map(transformer));
+    }
+
+    @Override public <O> Either<X, O> flatMapRight(Function<? super R, ? extends Either<X, O>> transformer) {
+      return transformer.apply(value.getOrThrow());
     }
 
     @Override
