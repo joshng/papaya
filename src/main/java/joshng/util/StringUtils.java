@@ -27,16 +27,8 @@ import static com.google.common.base.Preconditions.checkArgument;
  * Time: 11:23:41 PM
  */
 public class StringUtils {
-  public static final F<String, String> TO_LOWER = new F<String, String>() {
-    public String apply(String input) {
-      return input.toLowerCase();
-    }
-  };
-  public static final F<String, String> TO_UPPER = new F<String, String>() {
-    public String apply(String input) {
-      return input.toUpperCase();
-    }
-  };
+  public static final F<Object, String> TO_STRING = Object::toString;
+
   //private static final Pattern WORD_SEPARATOR = Pattern.compile("\\W+");
   private static final Pattern LAST_NONWORD_PATTERN = Pattern.compile("\\W\\w*$");
   public static final Charset UTF8_CHARSET = Charsets.UTF_8;
