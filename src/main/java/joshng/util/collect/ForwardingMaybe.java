@@ -24,10 +24,6 @@ public interface ForwardingMaybe<T> {
     return getMaybe().getOrThrow(format, args);
   }
 
-  default <E extends Throwable> T getOrThrow(E throwable) throws E {
-    return getMaybe().getOrThrow(throwable);
-  }
-
   default <E extends Throwable> T getOrThrowFrom(Supplier<E> throwableSupplier) throws E {
     return getMaybe().getOrThrowFrom(throwableSupplier);
   }
