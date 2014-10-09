@@ -5,8 +5,11 @@ import org.joda.time.*;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
+import java.time.ZoneId;
+
 public class SystemTime implements WallClock {
   public static final DateTimeZone PACIFIC_TIMEZONE = DateTimeZone.forID("America/Los_Angeles");
+  public static final ZoneId PACIFIC_ZONE_ID = ZoneId.of("America/Los_Angeles");
   @SuppressWarnings({"unchecked"})
   public static final Ordering<Comparable> EARLIEST_TO_LATEST_ORDERING = Ordering.natural();
   public static final Ordering<Comparable> LATEST_TO_EARLIEST_ORDERING = EARLIEST_TO_LATEST_ORDERING.reverse();

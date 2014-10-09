@@ -46,10 +46,10 @@ public interface Functional<T> extends FunIterable<T> {
    * @param delegate the iterable to extend
    * @return a FunIterable wrapping the underlying iterable.
    */
-  public static <T> FunIterable<T> extend(final Iterable<T> delegate) {
+  public static <T> FunIterable<T> extend(final Iterable<? extends T> delegate) {
     if (delegate instanceof FunIterable) return (FunIterable<T>) delegate;
     if (MoreCollections.isCollectionThatIsEmpty(delegate)) return Functional.<T>empty();
-    return new FunctionalIterable<>(delegate);
+    return new FunctionalIterable<>((Iterable<T>) delegate);
   }
 
   public static <T> FunList<T> extend(final Maybe<T> delegate) {

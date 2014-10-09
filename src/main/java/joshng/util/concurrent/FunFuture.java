@@ -16,6 +16,7 @@ import joshng.util.blocks.F;
 import joshng.util.blocks.Pred;
 import joshng.util.blocks.Sink;
 import joshng.util.blocks.Source;
+import joshng.util.blocks.Tapper;
 import joshng.util.blocks.ThrowingConsumer;
 import joshng.util.blocks.ThrowingFunction;
 import joshng.util.collect.Either;
@@ -305,6 +306,10 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
 
   default FunFuture<Nothing> thenRun(Runnable runnable) {
     return thenReplace(Executors.callable(runnable, Nothing.NOTHING));
+  }
+
+  default FunFuture<T> tap(Consumer<? super T> sideEffect) {
+    return map(Tapper.extendConsumer(sideEffect));
   }
 
   default <O> FunFuture<O> mapUnchecked(ThrowingFunction<? super T, ? extends O> throwingFunction) {
