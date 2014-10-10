@@ -1,15 +1,17 @@
 package joshng.util.concurrent;
 
-import com.google.common.util.concurrent.*;
-import joshng.util.blocks.F;
+import com.google.common.util.concurrent.ForwardingListeningExecutorService;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import joshng.util.blocks.Sink;
 import joshng.util.blocks.Source;
+import joshng.util.blocks.ThrowingFunction;
 import joshng.util.collect.Nothing;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static joshng.util.concurrent.FunFuture.extendFuture;
@@ -47,8 +49,8 @@ public class FunctionalExecutorService extends ForwardingListeningExecutorServic
     return this.<T>submitter().bind(supplier::get);
   }
 
-  public <I, O> AsyncF<I, O> wrapFunction(Function<I, O> function) {
-    return AsyncF.extendAsyncFunction(F.extendFunction(function).binder().andThen(this.<O>submitter()));
+  public <I, O> AsyncF<I, O> wrapFunction(ThrowingFunction<I, O> function) {
+    return input -> submit(() -> function.apply(input));
   }
 
   public <I, O> AsyncF<I, O> wrapAsync(final AsyncF<I, O> function) {
