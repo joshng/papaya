@@ -144,6 +144,23 @@ public interface Functional<T> extends FunIterable<T> {
   public static <T> FunSet<T> funSet(Iterable<T> items) {
     return FunctionalSet.copyOf(items);
   }
+  
+  public static <T> FunSet<T> funSetOf(T singleton) {
+    return new FunctionalSet<T>(ImmutableSet.of(singleton));
+  }
+
+  @SafeVarargs
+  public static <T> FunSet<T> funSetOf(T item1, T... items) {
+    return new FunctionalSet<>(ImmutableSet.copyOf(Lists.asList(item1, items)));
+  }
+
+  /**
+   * Copies the contents of the array into a new {@link FunSet}. To avoid the copy (but be exposed to
+   * possible changes in the underlying array), consider using {@link #extend(T[])} instead.
+   */
+  public static <T> FunSet<T> funSet(T[] items) {
+    return funSet(Arrays.asList(items));
+  }
 
   /**
    * Wraps the provided Iterable of Entries (or Pairs) with a {@link FunPairs}. Changes to the underlying
