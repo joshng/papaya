@@ -19,6 +19,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
+import java.time.Instant;
 import java.util.UUID;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -49,6 +50,7 @@ public abstract class ByteConverter<T> extends Converter<T, byte[]> implements F
     register(Short.class, ShortByteConverter.INSTANCE);
     register(Integer.class, IntByteConverter.INSTANCE);
     register(Long.class, LongByteConverter.INSTANCE);
+    register(Instant.class, InstantByteConverter.INSTANCE);
     register(String.class, StringUtf8Converter.INSTANCE);
     register(UUID.class, UuidByteConverter.INSTANCE);
     register(ByteBuffer.class, ByteBufferConverter.INSTANCE);
