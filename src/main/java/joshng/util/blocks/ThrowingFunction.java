@@ -8,6 +8,7 @@ import com.google.common.util.concurrent.UncheckedExecutionException;
  * Date: 12/26/11
  * Time: 2:32 PM
  */
+@FunctionalInterface
 public interface ThrowingFunction<I, O> {
   static <I, O> ThrowingFunction<I, O> throwingFunction(ThrowingFunction<I, O> block) { return block; }
 

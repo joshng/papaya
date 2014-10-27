@@ -26,4 +26,8 @@ public interface ThrowingBiFunction<I1, I2, O> extends ThrowingFunction<Map.Entr
   default O apply(Map.Entry<? extends I1, ? extends I2> pair) throws Exception {
     return apply(pair.getKey(), pair.getValue());
   }
+
+  default <O2> ThrowingBiFunction<I1, I2, O2> andThen(ThrowingFunction<O, O2> next) {
+    return (input1, input2) -> next.apply(apply(input1, input2));
+  }
 }

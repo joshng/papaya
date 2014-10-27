@@ -1,9 +1,9 @@
 package joshng.util.concurrent;
 
-import com.google.common.base.Throwables;
 import joshng.util.StringIdentifier;
 import joshng.util.collect.Maybe;
 import joshng.util.context.TransientContext;
+import joshng.util.exceptions.UncheckedInterruptedException;
 import org.joda.time.DateTime;
 
 import java.util.concurrent.TimeUnit;
@@ -79,7 +79,7 @@ public class PausableResource implements TransientContext {
       obtain();
       return lockedState;
     } catch (InterruptedException e) {
-      throw Throwables.propagate(e);
+      throw UncheckedInterruptedException.propagate(e);
     }
   }
 
@@ -145,15 +145,21 @@ public class PausableResource implements TransientContext {
 
       currentPauseId = pauseId;
       pauseExpiry = new DateTime().plusMillis((int) timeUnit.toMillis(maxPauseDuration));
+
       onPaused();
+
       return Maybe.definitely(currentPauseId);
     } finally {
       writeLock.unlock();
     }
   }
 
-  protected void onPaused() {
-  }
+  /**
+   * Override this to invoke behavior when a pause begins.<p/>
+   *
+   * <b>Careful!</b> Don't spend much time here, because the resource is PAUSED!
+   */
+  protected void onPaused() {  }
 
   /**
    * Resumes access to this resource, allowing requests to obtain() the resource to proceed.
@@ -176,6 +182,7 @@ public class PausableResource implements TransientContext {
         currentPauseId = null;
         pauseExpiry = null;
         resumeCondition.signalAll();
+
         onResumed();
       }
       return matched;

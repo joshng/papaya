@@ -70,5 +70,4 @@ public interface Sink<T> extends F<T, Nothing>, Consumer<T>, ThrowingConsumer<T>
       if (inputFilter.test(value)) Sink.this.accept(value);
     };
   }
-
 }

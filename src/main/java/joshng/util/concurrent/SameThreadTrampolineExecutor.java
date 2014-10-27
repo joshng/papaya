@@ -5,14 +5,16 @@ import com.google.common.util.concurrent.ListenableFuture;
 import joshng.util.ThreadLocalRef;
 import joshng.util.collect.Nothing;
 
+import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by: josh 10/24/13 1:53 PM
  */
-public class SameThreadTrampolineExecutor implements Executor {
+public class SameThreadTrampolineExecutor extends AbstractExecutorService {
   private final ThreadLocalRef<Trampoline> trampoline = new ThreadLocalRef<Trampoline>() {
     @Override
     protected Trampoline initialValue() {
@@ -60,5 +62,25 @@ public class SameThreadTrampolineExecutor implements Executor {
         job.run();
       }
     }
+  }
+
+  @Override public void shutdown() {
+    throw new UnsupportedOperationException("SameThreadTrampolineExecutor.shutdown has not been implemented");
+  }
+
+  @Override public List<Runnable> shutdownNow() {
+    throw new UnsupportedOperationException("SameThreadTrampolineExecutor.shutdownNow has not been implemented");
+  }
+
+  @Override public boolean isShutdown() {
+    throw new UnsupportedOperationException("SameThreadTrampolineExecutor.isShutdown has not been implemented");
+  }
+
+  @Override public boolean isTerminated() {
+    throw new UnsupportedOperationException("SameThreadTrampolineExecutor.isTerminated has not been implemented");
+  }
+
+  @Override public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+    throw new UnsupportedOperationException("SameThreadTrampolineExecutor.awaitTermination has not been implemented");
   }
 }

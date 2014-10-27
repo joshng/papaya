@@ -9,9 +9,9 @@ import org.slf4j.LoggerFactory;
  * Date: 5/23/13
  * Time: 10:59 AM
  */
-public interface SideEffect extends Source<Nothing>, Runnable {
+/** A pimped Runnable/side-effect */
+public interface SideEffect extends Source<Nothing>, Runnable, ThrowingRunnable {
   static final Logger LOG = LoggerFactory.getLogger(SideEffect.class);
-  Sink<Runnable> RUNNABLE_RUNNER = Runnable::run;
 
   public static SideEffect sideEffect(SideEffect sideEffect) {
     return sideEffect;
@@ -26,7 +26,7 @@ public interface SideEffect extends Source<Nothing>, Runnable {
     runIgnoringExceptions(this);
   }
 
-  static void runIgnoringExceptions(Runnable runnable) {
+  public static void runIgnoringExceptions(Runnable runnable) {
     try {
       runnable.run();
     } catch (Exception e) {
@@ -49,13 +49,12 @@ public interface SideEffect extends Source<Nothing>, Runnable {
   }
 
   @Override
-  default Runnable asRunnable() {
-    return this;
-  }
-
-  @Override
   default Nothing get() {
     run();
     return Nothing.NOTHING;
+  }
+
+  @Override default Nothing call() {
+    return get();
   }
 }

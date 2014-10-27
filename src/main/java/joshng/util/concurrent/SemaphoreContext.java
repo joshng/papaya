@@ -2,6 +2,7 @@ package joshng.util.concurrent;
 
 import joshng.util.blocks.SideEffect;
 import joshng.util.context.TransientContext;
+import joshng.util.exceptions.UncheckedInterruptedException;
 import org.joda.time.DateTime;
 
 import java.util.concurrent.Semaphore;
@@ -36,7 +37,7 @@ public class SemaphoreContext implements TransientContext {
     try {
       return acquireOnePermit();
     } catch (InterruptedException e) {
-      throw new RuntimeException(e);
+      throw UncheckedInterruptedException.propagate(e);
     }
   }
 

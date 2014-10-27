@@ -24,6 +24,7 @@ import joshng.util.collect.FunIterable;
 import joshng.util.collect.Maybe;
 import joshng.util.collect.Nothing;
 import joshng.util.collect.Pair;
+import joshng.util.exceptions.UncheckedInterruptedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -127,7 +128,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     try {
       return future.get();
     } catch (InterruptedException e) {
-      throw new RuntimeException(e);
+      throw UncheckedInterruptedException.propagate(e);
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
       if (cause instanceof UncheckedExecutionException) throw (UncheckedExecutionException) cause;
@@ -155,7 +156,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     try {
       return definitely(get(timeout, timeUnit));
     } catch (InterruptedException e) {
-      throw new RuntimeException(e);
+      throw UncheckedInterruptedException.propagate(e);
     } catch (ExecutionException e) {
       throw new UncheckedExecutionException(e.getCause());
     } catch (TimeoutException e) {
@@ -172,7 +173,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     try {
       return get();
     } catch (InterruptedException e) {
-      throw new RuntimeException(e);
+      throw UncheckedInterruptedException.propagate(e);
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
       Throwables.propagateIfPossible(cause, exceptionClass);
@@ -184,7 +185,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     try {
       return definitely(get(timeout, timeUnit));
     } catch (InterruptedException e) {
-      throw new RuntimeException(e);
+      throw UncheckedInterruptedException.propagate(e);
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
       Throwables.propagateIfPossible(cause, exceptionClass);

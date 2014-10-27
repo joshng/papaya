@@ -19,7 +19,7 @@ import static joshng.util.collect.Maybe.definitely;
  * Time: 9:10:50 AM
  */
 @FunctionalInterface
-public interface Source<T> extends F<Object, T>, Callable<T>, Supplier<T>, com.google.common.base.Supplier<T> {
+public interface Source<T> extends F<Object, T>, Supplier<T>, com.google.common.base.Supplier<T>, Callable<T> {
   static final Source NULL_SOURCE = Source.ofInstance(null);
   static final Source MAYBE_NOT = Source.ofInstance(Maybe.not());
   static final Source<Boolean> FALSE = Source.ofInstance(Boolean.FALSE);
@@ -62,17 +62,9 @@ public interface Source<T> extends F<Object, T>, Callable<T>, Supplier<T>, com.g
     };
   }
 
-  public static <I, O> F<Supplier<? extends I>, Source<O>> mapper(Function<I, O> f) {
-    final F<I, O> extended = F.extendFunction(f);
-    return extended::bindFrom;
-  }
-
-  public static <I, O> F<Supplier<? extends I>, Source<O>> flatMapper(final Function<I, ? extends Supplier<O>> f) {
-    return input -> extendSupplier(input).flatMap(f);
-  }
-
   @SuppressWarnings({"unchecked"})
   public static <T> F<Supplier<? extends T>, T> getter() {
+    // despite IntelliJ's suggestion, a method reference does NOT work here. Don't ask me...
     return s -> s.get();
   }
 
@@ -96,14 +88,6 @@ public interface Source<T> extends F<Object, T>, Callable<T>, Supplier<T>, com.g
 
   default Source<T> memoizeWithExpiration(long duration, TimeUnit timeUnit) {
     return extendGuava(Suppliers.memoizeWithExpiration(this, duration, timeUnit));
-  }
-
-  default Runnable asRunnable() {
-    return this::get;
-  }
-
-  default Supplier<T> asSupplier() {
-    return this;
   }
 
   /**
@@ -139,13 +123,14 @@ public interface Source<T> extends F<Object, T>, Callable<T>, Supplier<T>, com.g
   }
 
   default Source<Either<Exception, T>> exceptionToLeft() {
-    return () -> F.applyExceptionToLeft(null, Source.this);
+    return () -> F.applyExceptionToLeft(null, this);
   }
 
   default T apply(Object input) {
     return get();
   }
 
+  @Override
   default T call() {
     return get();
   }

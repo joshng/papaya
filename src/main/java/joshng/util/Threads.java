@@ -1,6 +1,6 @@
 package joshng.util;
 
-import com.google.common.base.Throwables;
+import joshng.util.exceptions.UncheckedInterruptedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +20,7 @@ public class Threads {
     try {
       Thread.sleep(timeUnit.toMillis(time));
     } catch (InterruptedException e) {
-      throw Throwables.propagate(e);
+      throw UncheckedInterruptedException.propagate(e);
     }
   }
 

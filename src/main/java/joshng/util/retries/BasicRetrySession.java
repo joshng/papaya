@@ -1,7 +1,7 @@
 package joshng.util.retries;
 
-import com.google.common.base.Throwables;
 import joshng.util.exceptions.ExceptionPolicy;
+import joshng.util.exceptions.UncheckedInterruptedException;
 
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -65,7 +65,7 @@ public class BasicRetrySession extends AbstractRetrySession {
     try {
       Thread.sleep(delay);
     } catch (InterruptedException e) {
-      throw Throwables.propagate(e);
+      throw UncheckedInterruptedException.propagate(e);
     }
 
     willRetry();
