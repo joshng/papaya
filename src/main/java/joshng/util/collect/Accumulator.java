@@ -16,7 +16,7 @@ import java.util.stream.Collector;
  * Time: 11:57 AM
  */
 public interface Accumulator<I, O> extends Sink<I>, Supplier<O> {
-  static <I, A, O> Accumulator<I, O> from(Collector<I, A, O> collector) {
+  static <I, A, O> Accumulator<I, O> fromCollector(Collector<I, A, O> collector) {
     A instance = collector.supplier().get();
     BiConsumer<A, I> accumulator = collector.accumulator();
     return new Accumulator<I, O>() {
@@ -30,6 +30,10 @@ public interface Accumulator<I, O> extends Sink<I>, Supplier<O> {
         return collector.finisher().apply(instance);
       }
     };
+  }
+
+  static <I, O> Accumulator<I, O> into(Consumer<? super I> adder, O accumulation) {
+    return of(adder, Source.ofInstance(accumulation));
   }
 
   static <I, O> Accumulator<I, O> of(Consumer<? super I> consumer, Supplier<? extends O> supplier) {

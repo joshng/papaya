@@ -293,7 +293,13 @@ public interface FunIterable<T> extends Iterable<T>, Runnable {
   }
 
   public static <T> FunIterable<T> sort(Iterable<T> iterable, Ordering<? super T> ordering) {
-    return new FunctionalIterable<T>(ordering.<T>sortedCopy(iterable));
+    return new FunctionalIterable<T>(ordering.sortedCopy(iterable));
+  }
+
+  default FunIterable<T> toShuffledCopy() {
+    List<T> list = accumulate(Accumulator.arrayList());
+    Collections.shuffle(list);
+    return new FunctionalIterable<>(list);
   }
 
   /**

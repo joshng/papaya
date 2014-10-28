@@ -20,7 +20,11 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.function.*;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -134,6 +138,8 @@ public abstract class Maybe<T> implements Iterable<T> {
   public abstract <U> Maybe<U> flatMap(Function<? super T, Maybe<U>> transformer);
 
   public abstract <O> O map(MaybeFunction<? super T, O> transformer);
+
+  public abstract <U> Maybe.Pair<T, U> zip(Maybe<U> other);
 
   public <O> FunFutureMaybe<O> mapFuture(AsyncF<? super T, O> async) {
     return FunFutureMaybe.asFutureMaybe(map(async));
@@ -431,6 +437,10 @@ public abstract class Maybe<T> implements Iterable<T> {
       return transformer.whenDefined(value);
     }
 
+    @Override public <U> Pair<T, U> zip(Maybe<U> other) {
+      return other.mapPair(u -> joshng.util.collect.Pair.of(value, u));
+    }
+
     @Override
     public <K, V> Pair<K, V> mapPair(Function<? super T, ? extends Map.Entry<K, V>> pairComputer) {
       return definitely(pairComputer.apply(value));
@@ -661,6 +671,10 @@ public abstract class Maybe<T> implements Iterable<T> {
         return transformer.whenDefined(entry);
       }
 
+      @Override public <U> Pair<Map.Entry<K, V>, U> zip(Maybe<U> other) {
+        return other.mapPair(u -> joshng.util.collect.Pair.of(entry, u));
+      }
+
       @Override
       public <K2, V2> Pair<K2, V2> flatMapPair(Function<? super Map.Entry<K, V>, ? extends Pair<K2, V2>> pairComputer) {
         return pairComputer.apply(entry);
@@ -846,6 +860,10 @@ public abstract class Maybe<T> implements Iterable<T> {
 
     @Override
     public Maybe map(Function transformer) {
+      return this;
+    }
+
+    @Override public Pair zip(Maybe other) {
       return this;
     }
 
