@@ -1,13 +1,20 @@
 package joshng.util.collect;
 
 import com.google.common.base.Joiner;
-import com.google.common.collect.*;
+import com.google.common.collect.ImmutableBiMap;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Ordering;
 import joshng.util.blocks.F2;
 import joshng.util.blocks.Pred;
 import joshng.util.blocks.Pred2;
 
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.BiConsumer;
@@ -298,8 +305,8 @@ public interface FunPairs<K, V> extends FunIterable<Map.Entry<K, V>> {
   }
 
   @Override
-  default Maybe.Pair<K, V> last() {
-    return (Maybe.Pair<K, V>) FunIterable.super.last();
+  default Maybe.Pair<K, V> foot() {
+    return (Maybe.Pair<K, V>) FunIterable.super.foot();
   }
 
 
@@ -388,13 +395,29 @@ public interface FunPairs<K, V> extends FunIterable<Map.Entry<K, V>> {
     return new FunctionalPairs<>(Iterables.skip(delegate(), skippedElements));
   }
 
-
   default <K2, V2> FunPairs<K2, V2> mapPairs2(F2<? super K, ? super V, ? extends Entry<K2, V2>> transformer) {
     return mapPairs(transformer.tupled());
   }
 
   default <K2, V2> FunPairs<K2, V2> flatMapPairs2(F2<? super K, ? super V, ? extends Iterable<? extends Entry<K2, V2>>> transformer) {
     return flatMapPairs(transformer.tupled());
+  }
+
+  default <K2> FunPairs<K2, V> mapKeys2(F2<? super K, ? super V, K2> keyComputer) {
+    return new FunctionalPairs<>(Iterables.transform(delegate(), pair -> new Pair<>(keyComputer.apply(pair.getKey(), pair.getValue()), pair.getValue())));
+  }
+
+  default <V2> FunPairs<K, V2> mapValues2(F2<? super K, ? super V, V2> valueComputer) {
+    return new FunctionalPairs<>(Iterables.transform(delegate(), pair -> new Pair<>(pair.getKey(), valueComputer.apply(pair.getKey(), pair.getValue()))));
+  }
+
+  /**
+   * @returns a FunPairs containing an eagerly precomputed list of the values produced by this sequence
+   */
+  default FunPairs<K, V> reifiedPairs() {
+    List<Entry<K, V>> reifiedDelegate = ImmutableList.copyOf(delegate());
+    if (reifiedDelegate == delegate()) return this;
+    return new FunctionalPairs<>(reifiedDelegate);
   }
 
   default FunPairs<V, K> swap() {

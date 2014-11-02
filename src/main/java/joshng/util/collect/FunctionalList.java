@@ -80,7 +80,7 @@ public class FunctionalList<E> extends FunctionalIterable<E> implements FunList<
   }
 
   @Override
-  public Maybe<E> last() {
+  public Maybe<E> foot() {
     return isEmpty() ? Maybe.<E>not() : Maybe.definitely(delegate().get(size() - 1));
   }
 

@@ -19,8 +19,13 @@ public enum Count implements IncrementingIterable {
     return start;
   }
 
+  public FunIterable<Integer> upTo(int stop) {
+    return limit(stop - start);
+  }
+
   @Override
   public int getStep() {
     return 1;
   }
+
 }

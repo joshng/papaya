@@ -250,7 +250,7 @@ public interface Functional<T> extends FunIterable<T> {
       return this;
     }
 
-    public Maybe last() {
+    public Maybe foot() {
       return Maybe.not();
     }
 

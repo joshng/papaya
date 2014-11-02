@@ -64,7 +64,7 @@ public interface Accumulator<I, O> extends Sink<I>, Supplier<O> {
   }
 
   static <T, L extends List<T>> Accumulator<T, L> toList(L list) {
-    return of(list::add, Source.ofInstance(list));
+    return into(list::add, list);
   }
 
   static <T> Accumulator<T, ImmutableSet<T>> immutableSet() {
@@ -74,19 +74,27 @@ public interface Accumulator<I, O> extends Sink<I>, Supplier<O> {
 
   static <T> Accumulator<T, Multiset<T>> hashMultiset() {
     Multiset<T> multiset = HashMultiset.create();
-    return of(multiset::add, Source.ofInstance(multiset));
+    return into(multiset::add, multiset);
   }
 
   static <K, V> BiAccumulator<K, V, HashMap<K, V>> hashMap() {
-    return new MutableMapAccumulator<>(new HashMap<>());
+    return toMap(new HashMap<>());
   }
 
   static <K, V> BiAccumulator<K, V, LinkedHashMap<K, V>> linkedHashMap() {
-    return new MutableMapAccumulator<>(new LinkedHashMap<>());
+    return toMap(new LinkedHashMap<>());
   }
 
   static <K, V> BiAccumulator<K, V, TreeMap<K, V>> treeMap() {
-    return new MutableMapAccumulator<>(new TreeMap<>());
+    return toMap(new TreeMap<>());
+  }
+
+  static <E extends Enum<E>, V> BiAccumulator<E, V, EnumMap<E, V>> enumMap(Class<E> enumClass) {
+    return toMap(Maps.newEnumMap(enumClass));
+  }
+
+  static <K, V, M extends Map<K, V>> BiAccumulator<K, V, M> toMap(M map) {
+    return new MutableMapAccumulator<>(map);
   }
 
   static <K, V> BiAccumulator<K, V, ImmutableMap<K, V>> immutableMap() {

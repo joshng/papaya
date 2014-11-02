@@ -3,19 +3,36 @@ package joshng.util.collect;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
-import com.google.common.collect.*;
+import com.google.common.collect.ImmutableBiMap;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import joshng.util.blocks.F;
 import joshng.util.blocks.Pred;
 import joshng.util.blocks.Source;
 
 import javax.annotation.Nullable;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.EnumSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * User: josh
@@ -69,49 +86,12 @@ public class MoreCollections {
     return ARRAY_LIST_FACTORY;
   }
 
-  public static <T> Source<ArrayList<T>> arrayListWithCapacityFactory(final int initialCapacity) {
-    return new Source<ArrayList<T>>() {
-      @Override
-      public ArrayList<T> get() {
-        return Lists.newArrayListWithCapacity(initialCapacity);
-      }
-    };
-  }
-
   public static <T> Collector<T, ?, ArrayList<T>> arrayListCollector() {
     return Collectors.toCollection(arrayListFactory());
   }
 
-  public static int sum(Iterable<Integer> values) {
-    int sum = 0;
-    for (int value : values) {
-      sum += value;
-    }
-    return sum;
-  }
-
-  public static <K, V> ImmutableMap<K, V> immutableMapTo(Iterable<K> keys, Function<? super K, ? extends V> valueComputer) {
-    ImmutableMap.Builder<K, V> builder = ImmutableMap.builder();
-    for (K key : keys) {
-      builder.put(key, valueComputer.apply(key));
-    }
-    return builder.build();
-  }
-
-  public static <K, V> ImmutableMap<K, V> immutableMapBy(Iterable<V> values, Function<? super V, ? extends K> keyComputer) {
-    ImmutableMap.Builder<K, V> builder = ImmutableMap.builder();
-    for (V value : values) {
-      builder.put(keyComputer.apply(value), value);
-    }
-    return builder.build();
-  }
-
-  public static <T, K, V> ImmutableMap<K, V> immutableMap(Iterable<T> values, Function<? super T, ? extends K> keyComputer, Function<? super T, ? extends V> valueComputer) {
-    ImmutableMap.Builder<K, V> builder = ImmutableMap.builder();
-    for (T value : values) {
-      builder.put(keyComputer.apply(value), valueComputer.apply(value));
-    }
-    return builder.build();
+  public static <T> T pickRandomItem(List<T> items, Random random) {
+    return items.get(random.nextInt(items.size()));
   }
 
   public static <K, V> ImmutableMap<K, V> immutableMapWithEntries(Iterable<? extends Map.Entry<K, V>> entries) {
@@ -151,11 +131,6 @@ public class MoreCollections {
     return new ArrayDeque<T>(capacity);
   }
 
-  @SuppressWarnings({"unchecked"})
-  public static <T> T[] appendArray(T[] array, T toAppend) {
-    return concat(array, toAppend);
-  }
-
   @SafeVarargs
   public static <T> T[] concat(T[] first, T... second) {
     T[] result = Arrays.copyOf(first, first.length + second.length);
@@ -171,29 +146,6 @@ public class MoreCollections {
     return source.subList(fromIndex, toIndex);
   }
 
-  @SuppressWarnings("unchecked")
-  public static <T> T getFromMap(Map map, String key) {
-    return (T) checkNotNull(MoreCollections.getFromMapOrNull(map, key), "%s not found from map", key);
-  }
-
-  @Nullable
-  @SuppressWarnings({"unchecked"})
-  public static <T> T getFromMapOrNull(Map map, String key) {
-    return (T) map.get(key);
-  }
-
-  public static <T, P extends Predicate<T>> Iterable<P> selectMatchingPredicates(final T target, Iterable<P> predicates) {
-    return Iterables.filter(predicates, new Predicate<P>() {
-      public boolean apply(P input) {
-        return input.apply(target);
-      }
-    });
-  }
-
-  public static <I, O> ImmutableList<O> transformedCopy(Iterable<I> inputs, Function<? super I, ? extends O> transformer) {
-    return ImmutableList.copyOf(Iterables.transform(inputs, transformer));
-  }
-
   public static <T> int count(Iterable<T> iterable, Predicate<T> predicate) {
     int count = 0;
     for (T item : iterable) {
@@ -203,33 +155,6 @@ public class MoreCollections {
     }
 
     return count;
-  }
-
-  public static <X, Y> List<Pair<X, Y>> zip(Iterable<X> xs, Iterable<Y> ys) {
-    Iterator<X> xIterator = xs.iterator();
-    Iterator<Y> yIterator = ys.iterator();
-    List<Pair<X, Y>> pairs = Lists.newArrayList();
-    while (xIterator.hasNext() && yIterator.hasNext()) {
-      pairs.add(Pair.of(xIterator.next(), yIterator.next()));
-    }
-    checkArgument(!xIterator.hasNext(), "First collection had too many elements");
-    checkArgument(!yIterator.hasNext(), "Second collection had too many elements");
-    return pairs;
-  }
-
-  public static <K extends Enum<K>, V> EnumMap<K, V> enumMapOf(Class<K> enumClass, Function<K, Maybe<V>> valueComputer) {
-    return enumMapOf(enumClass, Arrays.asList(enumClass.getEnumConstants()), valueComputer);
-  }
-
-  public static <K extends Enum<K>, V> EnumMap<K, V> enumMapOf(Class<K> enumClass, Iterable<K> enumConstants, Function<K, Maybe<V>> valueComputer) {
-    EnumMap<K, V> map = Maps.newEnumMap(enumClass);
-    for (K k : enumConstants) {
-      for (V v : valueComputer.apply(k)) {
-        map.put(k, v);
-      }
-    }
-
-    return map;
   }
 
   public static boolean notEmpty(@Nullable Collection collection) {

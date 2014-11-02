@@ -1,7 +1,13 @@
 package joshng.util.collect;
 
 import com.google.common.base.Joiner;
-import com.google.common.collect.*;
+import com.google.common.collect.AbstractIterator;
+import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Multimaps;
+import com.google.common.collect.Ordering;
 import joshng.util.Reflect;
 import joshng.util.blocks.F;
 import joshng.util.blocks.F2;
@@ -9,8 +15,19 @@ import joshng.util.blocks.Pred;
 import joshng.util.blocks.Unzipper;
 import joshng.util.concurrent.LazyReference;
 
-import java.util.*;
-import java.util.function.*;
+import javax.annotation.Nonnull;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.ToIntFunction;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -87,19 +104,25 @@ public interface FunIterable<T> extends Iterable<T>, Runnable {
     return Iterables.isEmpty(delegate) ? Functional.<T>empty() : new FunctionalIterable<T>(Iterables.skip(delegate, 1));
   }
 
+  @Nonnull default T first() {
+    return head().getOrThrow();
+  }
 
   /**
    * @return a {@link Maybe} containing the last element of this sequence, or {@link Maybe.Not} if the sequence
    * is empty.
    */
-  default Maybe<T> last() {
-    return last(delegate());
+  default Maybe<T> foot() {
+    return foot(delegate());
   }
 
-  public static <T> Maybe<T> last(Iterable<T> delegate) {
+  public static <T> Maybe<T> foot(Iterable<T> delegate) {
     return Maybe.of(Iterables.getLast(delegate, null));
   }
 
+  @Nonnull default T last() {
+    return foot().getOrThrow();
+  }
 
   /**
    * @return the count of elements in this sequence.  Note that, unless this instance wraps a {@link Collection},

@@ -62,35 +62,19 @@ public class FunctionalPairs<K, V> extends FunctionalIterable<Entry<K, V>> imple
   }
 
   public static <K, V, K2> F<Entry<? extends K, ? extends V>, Pair<K2, V>> keyMapper(final Function<? super K, ? extends K2> transformer) {
-    return new F<Entry<? extends K, ? extends V>, Pair<K2, V>>() {
-      public Pair<K2, V> apply(Entry<? extends K, ? extends V> input) {
-        return mapKey(input, transformer);
-      }
-    };
+    return input -> mapKey(input, transformer);
   }
 
   public static <K, V, K2> F<Entry<? extends K, ? extends V>, Iterable<Pair<K2, V>>> keyFlatMapper(final Function<? super K, ? extends Iterable<? extends K2>> transformer) {
-    return new F<Entry<? extends K, ? extends V>, Iterable<Pair<K2, V>>>() {
-      public Iterable<Pair<K2, V>> apply(Entry<? extends K, ? extends V> input) {
-        return flatMapKey(input, transformer);
-      }
-    };
+    return input -> flatMapKey(input, transformer);
   }
 
   public static <T, U, V> F<Map.Entry<? extends T, ? extends U>, Pair<T, V>> valueMapper(final Function<? super U, ? extends V> transformer) {
-    return new F<Entry<? extends T, ? extends U>, Pair<T, V>>() {
-      public Pair<T, V> apply(Entry<? extends T, ? extends U> input) {
-        return mapValue(input, transformer);
-      }
-    };
+    return input -> mapValue(input, transformer);
   }
 
   public static <K, V, V2> F<Entry<? extends K, ? extends V>, Iterable<Pair<K, V2>>> valueFlatMapper(final Function<? super V, ? extends Iterable<? extends V2>> transformer) {
-    return new F<Entry<? extends K, ? extends V>, Iterable<Pair<K, V2>>>() {
-      public Iterable<Pair<K, V2>> apply(Entry<? extends K, ? extends V> input) {
-        return flatMapValue(input, transformer);
-      }
-    };
+    return input -> flatMapValue(input, transformer);
   }
 
   static EmptyPairs EMPTY = new EmptyPairs();
@@ -114,7 +98,7 @@ public class FunctionalPairs<K, V> extends FunctionalIterable<Entry<K, V>> imple
     }
 
     @Override
-    public Maybe.Pair last() {
+    public Maybe.Pair foot() {
       return Maybe.noPair();
     }
 
