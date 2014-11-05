@@ -72,11 +72,22 @@ public interface TransientContext {
   }
 
   default <I, O> O applyInContext(I input, Function<? super I, ? extends O> fn) {
-    return getInContext(F.extendFunction(fn).bind(input));
+    try {
+      return callInContext(() -> fn.apply(input));
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   default <I> void acceptInContext(I input, Consumer<? super I> consumer) {
-    getInContext(Sink.extendConsumer(consumer).bind(input));
+    try {
+      callInContext(() -> {
+                consumer.accept(input);
+                return null;
+              });
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   default <T> FunFuture<T> callInContextAsync(Callable<? extends ListenableFuture<T>> futureBlock) {

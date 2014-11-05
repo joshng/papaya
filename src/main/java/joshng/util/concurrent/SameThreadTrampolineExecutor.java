@@ -2,19 +2,20 @@ package joshng.util.concurrent;
 
 import com.google.common.collect.Queues;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import joshng.util.ThreadLocalRef;
-import joshng.util.collect.Nothing;
 
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Created by: josh 10/24/13 1:53 PM
  */
-public class SameThreadTrampolineExecutor extends AbstractExecutorService {
+public class SameThreadTrampolineExecutor extends AbstractExecutorService implements ListeningExecutorService {
   private final ThreadLocalRef<Trampoline> trampoline = new ThreadLocalRef<Trampoline>() {
     @Override
     protected Trampoline initialValue() {
@@ -27,8 +28,12 @@ public class SameThreadTrampolineExecutor extends AbstractExecutorService {
     submit(command);
   }
 
-  public FunFuture<Nothing> submit(Runnable command) {
+  public FunFuture<?> submit(Runnable command) {
     return trampoline.get().runWithTrampoline(FunFuture.funFutureTask(command));
+  }
+
+  @Override public <T> FunFuture<T> submit(Runnable task, T result) {
+    return submit(Executors.callable(task, result));
   }
 
   public <T> FunFuture<T> submit(Callable<T> command) {

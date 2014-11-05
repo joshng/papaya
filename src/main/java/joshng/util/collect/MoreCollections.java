@@ -26,9 +26,9 @@ import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.IntUnaryOperator;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
@@ -90,8 +90,8 @@ public class MoreCollections {
     return Collectors.toCollection(arrayListFactory());
   }
 
-  public static <T> T pickRandomItem(List<T> items, Random random) {
-    return items.get(random.nextInt(items.size()));
+  public static <T> T pickRandomItem(List<T> items, IntUnaryOperator random) {
+    return items.get(random.applyAsInt(items.size()));
   }
 
   public static <K, V> ImmutableMap<K, V> immutableMapWithEntries(Iterable<? extends Map.Entry<K, V>> entries) {

@@ -63,7 +63,7 @@ public abstract class AbstractRetrySession implements RetrySession {
       try {
         schedule(0);
       } catch (Exception rejectedExecutionException) {
-        setFailure(rejectedExecutionException); // my retry
+        setFailure(rejectedExecutionException); // may retry
       }
     }
 
