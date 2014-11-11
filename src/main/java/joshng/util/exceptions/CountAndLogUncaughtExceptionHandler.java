@@ -1,6 +1,6 @@
 package joshng.util.exceptions;
 
-import com.yammer.metrics.core.Counter;
+import com.codahale.metrics.Meter;
 import org.slf4j.Logger;
 
 /**
@@ -8,16 +8,16 @@ import org.slf4j.Logger;
  */
 public class CountAndLogUncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
   private final Logger logger;
-  private final Counter uncaughtExceptionCounter;
+  private final Meter uncaughtExceptionCounter;
 
-  public CountAndLogUncaughtExceptionHandler(Logger logger, Counter uncaughtExceptionCounter) {
+  public CountAndLogUncaughtExceptionHandler(Logger logger, Meter uncaughtExceptionCounter) {
     this.logger = logger;
     this.uncaughtExceptionCounter = uncaughtExceptionCounter;
   }
 
   @Override
   public void uncaughtException(Thread t, Throwable e) {
-    uncaughtExceptionCounter.inc();
+    uncaughtExceptionCounter.mark();
     logger.error("Uncaught exception on thread {}", t, FatalErrorHandler.castOrDie(e));
   }
 }

@@ -116,6 +116,10 @@ public interface TransientContext {
     return input -> acceptInContext(input, sink);
   }
 
+  default <T> Callable<FunFuture<T>> wrapAsyncCallable(Callable<? extends ListenableFuture<T>> futureBlock) {
+    return () -> callInContextAsync(futureBlock);
+  }
+
   default <I, O> AsyncF<I, O> wrapAsync(AsyncF<I, O> asyncFunction) {
     return input -> callInContextAsync(asyncFunction.bind(input));
   }

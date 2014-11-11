@@ -1,7 +1,7 @@
 package joshng.util;
 
+import com.codahale.metrics.Meter;
 import com.google.common.collect.ObjectArrays;
-import com.yammer.metrics.core.Meter;
 import joshng.util.blocks.Source;
 import joshng.util.collect.Maybe;
 import org.slf4j.Logger;
@@ -71,7 +71,7 @@ public class CountingThrottler implements Source<Maybe<Long>> {
   }
 
   public long getCount() {
-    return meter.count();
+    return meter.getCount();
   }
 
   public void logCountWithThrottling(Logger logger, LogLevel level, String format) {

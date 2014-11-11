@@ -45,6 +45,10 @@ public class FunctionalExecutorService extends ForwardingListeningExecutorServic
     return submitter;
   }
 
+  public <T> Callable<FunFuture<T>> wrapCallable(Callable<T> callable) {
+    return () -> submit(callable);
+  }
+
   public <T> Source<FunFuture<T>> wrapSource(Supplier<T> supplier) {
     return this.<T>submitter().bind(supplier::get);
   }

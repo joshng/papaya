@@ -1,7 +1,7 @@
 package joshng.util.exceptions;
 
+import com.codahale.metrics.Meter;
 import com.google.common.base.Preconditions;
-import com.yammer.metrics.core.Meter;
 import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
