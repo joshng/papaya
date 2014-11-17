@@ -19,7 +19,7 @@ import java.lang.reflect.Type;
  * accepting an instance of type {@code T}, or a static method annotated with @{@link joshng.util.ByteSerializable.Deserializer}
  * that accepts the same.
  * @param <T> the "representative type", which must be a type with a converter registered with
- *           the {@link joshng.util.converters.ByteConverter#register(Class, joshng.util.converters.ByteConverter)} ()} method
+ *           the {@link joshng.util.converters.ByteConverters#register(Class, joshng.util.converters.ByteConverter)} ()} method
  */
 public interface ByteSerializable<T> {
   Type SERIALIZABLE_VALUE_TYPE = Reflect.getMethod(ByteSerializable.class, "getSerializableValue").getGenericReturnType();
