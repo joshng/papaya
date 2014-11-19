@@ -1,5 +1,7 @@
 package joshng.util;
 
+import joshng.util.blocks.Pred;
+
 import java.lang.reflect.Member;
 import java.lang.reflect.Modifier;
 
@@ -8,7 +10,7 @@ import java.lang.reflect.Modifier;
  * Date: 3/8/12
  * Time: 5:04 PM
  */
-public enum Modifiers {
+public enum Modifiers implements Pred<Class<?>> {
   Public(Modifier.PUBLIC),
   Private(Modifier.PRIVATE),
   Protected(Modifier.PROTECTED),
@@ -32,8 +34,13 @@ public enum Modifiers {
     this.flag = flag;
   }
 
-  public boolean matches(Class<?> c) {
+  @Override
+  public boolean test(Class<?> c) {
     return matches(c.getModifiers());
+  }
+
+  public Pred<Member> member() {
+    return this::matches;
   }
 
   public boolean matches(Member field) {

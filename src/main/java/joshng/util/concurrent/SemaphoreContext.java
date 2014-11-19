@@ -3,8 +3,8 @@ package joshng.util.concurrent;
 import joshng.util.blocks.SideEffect;
 import joshng.util.context.TransientContext;
 import joshng.util.exceptions.UncheckedInterruptedException;
-import org.joda.time.DateTime;
 
+import java.time.Instant;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -70,12 +70,12 @@ public class SemaphoreContext implements TransientContext {
 
   public void acquire(int permits) throws InterruptedException {
     int tryCount = 0;
-    DateTime blockedSince = null;
+    Instant blockedSince = null;
     do {
       ShutdownException.throwIf(shutdown);
       if (++tryCount == 1) {
         if (semaphore.tryAcquire(permits)) return;
-        blockedSince = new DateTime();
+        blockedSince = Instant.now();
       } else {
         onBlocked(tryCount, blockedSince);
       }
@@ -84,10 +84,10 @@ public class SemaphoreContext implements TransientContext {
     onUnblocked(tryCount, blockedSince);
   }
 
-  protected void onBlocked(int tryCount, DateTime blockedSince) {
+  protected void onBlocked(int tryCount, Instant blockedSince) {
   }
 
-  protected void onUnblocked(int tryCount, DateTime blockedSince) {
+  protected void onUnblocked(int tryCount, Instant blockedSince) {
   }
 }
 

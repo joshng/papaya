@@ -6,9 +6,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import joshng.util.blocks.Source;
 import joshng.util.collect.PersistentMap;
-import org.joda.time.Duration;
 
 import javax.annotation.concurrent.Immutable;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -36,7 +36,7 @@ public abstract class BaseBuilder<T, SELF extends BaseBuilder<T, SELF>> implemen
     }
 
     public PropertyValue<T, Long> of(Duration duration) {
-      return of(duration.getMillis());
+      return of(duration.toMillis());
     }
 
     public DurationProperty withDefault(long duration, TimeUnit timeUnit) {

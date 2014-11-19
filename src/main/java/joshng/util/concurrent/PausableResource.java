@@ -4,8 +4,8 @@ import joshng.util.StringIdentifier;
 import joshng.util.collect.Maybe;
 import joshng.util.context.TransientContext;
 import joshng.util.exceptions.UncheckedInterruptedException;
-import org.joda.time.DateTime;
 
+import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -70,7 +70,7 @@ public class PausableResource implements TransientContext {
   private final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
   private final Condition resumeCondition = writeLock.newCondition();
   private PauseId currentPauseId = null;
-  private DateTime pauseExpiry = null;
+  private Instant pauseExpiry = null;
 
   private final State lockedState = this::release;
 
@@ -144,7 +144,7 @@ public class PausableResource implements TransientContext {
       if (isPaused()) return Maybe.not();
 
       currentPauseId = pauseId;
-      pauseExpiry = new DateTime().plusMillis((int) timeUnit.toMillis(maxPauseDuration));
+      pauseExpiry = Instant.now().plusMillis((int) timeUnit.toMillis(maxPauseDuration));
 
       onPaused();
 
@@ -195,7 +195,7 @@ public class PausableResource implements TransientContext {
   }
 
   private long remainingPauseMillis() {
-    return pauseExpiry.getMillis() - System.currentTimeMillis();
+    return pauseExpiry.toEpochMilli() - System.currentTimeMillis();
   }
 
   // must be invoked while holding the writeLock

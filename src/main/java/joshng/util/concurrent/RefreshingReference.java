@@ -1,12 +1,10 @@
 package joshng.util.concurrent;
 
 import com.google.common.base.Function;
-import joshng.util.SystemTime;
-import joshng.util.WallClock;
 import joshng.util.blocks.Source;
-import org.joda.time.DateTime;
-import org.joda.time.ReadableInstant;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -18,25 +16,25 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public abstract class RefreshingReference<T> implements Source<T> {
 
-  private final WallClock clock;
+  private final Clock clock;
   private final Object lock = new Object();
   @SuppressWarnings("unchecked")
   private volatile ExpiringContainer<T> currentContainer = ExpiringContainer.NULL;
 
-  public static <T> RefreshingReference<T> from(long refreshPeriod, TimeUnit timeUnit, Function<? super ReadableInstant, ? extends T> newInstanceSupplier) {
-    return from(refreshPeriod, timeUnit, WallClock.SYSTEM_CLOCK, newInstanceSupplier);
+  public static <T> RefreshingReference<T> from(long refreshPeriod, TimeUnit timeUnit, Function<? super Instant, ? extends T> newInstanceSupplier) {
+    return from(refreshPeriod, timeUnit, Clock.systemUTC(), newInstanceSupplier);
   }
 
-  public static <T> RefreshingReference<T> from(long refreshPeriod, TimeUnit timeUnit, WallClock clock, Function<? super ReadableInstant, ? extends T> newInstanceSupplier) {
+  public static <T> RefreshingReference<T> from(long refreshPeriod, TimeUnit timeUnit, Clock clock, Function<? super Instant, ? extends T> newInstanceSupplier) {
     return new SuppliedRefreshingReference<>(refreshPeriod, timeUnit, clock, newInstanceSupplier);
   }
 
-  public RefreshingReference(WallClock clock) {
+  public RefreshingReference(Clock clock) {
     this.clock = clock;
   }
 
   protected RefreshingReference() {
-    this(WallClock.SYSTEM_CLOCK);
+    this(Clock.systemUTC());
   }
 
   public T get() {
@@ -46,9 +44,9 @@ public abstract class RefreshingReference<T> implements Source<T> {
       T newInstance = null;
       synchronized (lock) {
         container = currentContainer;
-        ReadableInstant now = currentTime();
+        Instant now = currentTime();
         if (container.isExpired(now)) {
-          ReadableInstant refreshTime = computeNextRefreshTime(now);
+          Instant refreshTime = computeNextRefreshTime(now);
           checkState(refreshTime.isAfter(now), "Computed refresh time was already expired", refreshTime, now);
           expiredInstance = container.getValue();
           newInstance = getNewInstance(refreshTime);
@@ -65,53 +63,53 @@ public abstract class RefreshingReference<T> implements Source<T> {
   protected void onInstanceExpired(T expiredInstance, T newInstance) {
   }
 
-  public ReadableInstant getNextRefreshTime() {
+  public Instant getNextRefreshTime() {
     return currentContainer.expireTime;
   }
 
-  protected abstract ReadableInstant computeNextRefreshTime(ReadableInstant now);
+  protected abstract Instant computeNextRefreshTime(Instant now);
 
-  protected abstract T getNewInstance(ReadableInstant expireTime);
+  protected abstract T getNewInstance(Instant expireTime);
 
-  protected ReadableInstant currentTime() {
-    return clock.now();
+  protected Instant currentTime() {
+    return clock.instant();
   }
 
   private static class SuppliedRefreshingReference<T> extends RefreshingReference<T> {
-    private final Function<? super ReadableInstant, ? extends T> newInstanceSupplier;
+    private final Function<? super Instant, ? extends T> newInstanceSupplier;
     private final long periodMillis;
 
-    public SuppliedRefreshingReference(long refreshPeriod, TimeUnit timeUnit, WallClock ticker, Function<? super ReadableInstant, ? extends T> newInstanceSupplier) {
+    public SuppliedRefreshingReference(long refreshPeriod, TimeUnit timeUnit, Clock ticker, Function<? super Instant, ? extends T> newInstanceSupplier) {
       super(ticker);
       this.newInstanceSupplier = newInstanceSupplier;
       this.periodMillis = timeUnit.toMillis(refreshPeriod);
     }
 
-    protected T getNewInstance(ReadableInstant expireTime) {
+    protected T getNewInstance(Instant expireTime) {
       return newInstanceSupplier.apply(expireTime);
     }
 
-    protected ReadableInstant computeNextRefreshTime(ReadableInstant now) {
+    protected Instant computeNextRefreshTime(Instant now) {
       return computeNextIntervalTime(now, periodMillis);
     }
   }
 
-  public static ReadableInstant computeNextIntervalTime(ReadableInstant now, long periodMillis) {
-    return new DateTime(((now.getMillis() / periodMillis) + 1) * periodMillis);
+  public static Instant computeNextIntervalTime(Instant now, long periodMillis) {
+    return Instant.ofEpochMilli(((now.toEpochMilli() / periodMillis) + 1) * periodMillis);
   }
 
   private static class ExpiringContainer<T> {
-    private static ExpiringContainer NULL = new ExpiringContainer<Object>(null, SystemTime.ZERO) {
+    private static ExpiringContainer NULL = new ExpiringContainer<Object>(null, Instant.EPOCH) {
     };
     private final T value;
-    private final ReadableInstant expireTime;
+    private final Instant expireTime;
 
-    private ExpiringContainer(T value, ReadableInstant expireTime) {
+    private ExpiringContainer(T value, Instant expireTime) {
       this.value = value;
       this.expireTime = expireTime;
     }
 
-    boolean isExpired(ReadableInstant now) {
+    boolean isExpired(Instant now) {
       return !now.isBefore(expireTime);
     }
 

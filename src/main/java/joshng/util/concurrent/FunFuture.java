@@ -19,6 +19,7 @@ import joshng.util.blocks.Source;
 import joshng.util.blocks.Tapper;
 import joshng.util.blocks.ThrowingConsumer;
 import joshng.util.blocks.ThrowingFunction;
+import joshng.util.blocks.ThrowingRunnable;
 import joshng.util.collect.Either;
 import joshng.util.collect.FunIterable;
 import joshng.util.collect.Maybe;
@@ -208,6 +209,15 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
       return FunFuture.immediateFuture(block.call());
     } catch (Throwable e) {
       return FunFuture.immediateFailedFuture(e);
+    }
+  }
+
+  public static FunFuture<Nothing> runSafely(ThrowingRunnable sideEffect) {
+    try {
+      sideEffect.run();
+      return Nothing.FUTURE;
+    } catch (Exception e) {
+      return immediateFailedFuture(e);
     }
   }
 
