@@ -10,8 +10,8 @@ import joshng.util.blocks.ThrowingFunction;
 import joshng.util.collect.Maybe;
 
 import javax.annotation.Nonnull;
+import java.util.concurrent.Callable;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -26,6 +26,13 @@ public interface FunFutureMaybe<T> extends FunFuture<Maybe<T>> {
   FunFutureMaybe EMPTY_FUTURE = new Not();
   F MAYBE_WRAPPER = FunFuture.maybeMapper(Maybe.of());
   F<Maybe<?>, Boolean> IS_DEFINED = Maybe.IS_DEFINED.asFunction();
+  static <T, U> ThrowingFunction<Maybe<T>, Maybe<U>> throwingMaybeMapper(ThrowingFunction<? super T, ? extends U> f) {
+    return maybe -> maybe.isDefined() ? Maybe.of(f.apply(maybe.getOrThrow())) : Maybe.not();
+  }
+
+  static <T, U> ThrowingFunction<Maybe<T>, Maybe<U>> throwingMaybeFlatMapper(ThrowingFunction<? super T, Maybe<U>> f) {
+    return maybe -> maybe.isDefined() ? f.apply(maybe.getOrThrow()) : Maybe.not();
+  }
 
 //  static <T> FunFutureMaybe<T> immediateFutureMaybeOf(@Nullable T value) {
 //    return value == null ? futureMaybeNot() : immediateFutureMaybe(value);
@@ -42,6 +49,18 @@ public interface FunFutureMaybe<T> extends FunFuture<Maybe<T>> {
   @SuppressWarnings("unchecked")
   static <T> FunFutureMaybe<T> futureMaybeNot() {
     return EMPTY_FUTURE;
+  }
+
+  static <T> FunFutureMaybe<T> failedFutureMaybe(Throwable t) {
+    return new ForwardingFunFutureMaybe<>(Futures.<Maybe<T>>immediateFailedFuture(t));
+  }
+
+  static <T> FunFutureMaybe<T> callSafelyMaybe(Callable<? extends FunFutureMaybe<T>> futureSupplier) {
+    try {
+      return futureSupplier.call();
+    } catch (Exception e) {
+      return failedFutureMaybe(e);
+    }
   }
 
   @SuppressWarnings("unchecked")
@@ -65,12 +84,12 @@ public interface FunFutureMaybe<T> extends FunFuture<Maybe<T>> {
     return map(Maybe::isEmpty);
   }
 
-  default <O> FunFutureMaybe<O> mapIfDefined(Function<? super T, ? extends O> f) {
-    return mapMaybe(Maybe.mapper(f));
+  default <O> FunFutureMaybe<O> mapIfDefined(ThrowingFunction<? super T, ? extends O> f) {
+    return mapMaybe(throwingMaybeMapper(f));
   }
 
-  default <O> FunFutureMaybe<O> mapMaybeIfDefined(Function<? super T, Maybe<O>> f) {
-    return mapMaybe(Maybe.flatMapper(f));
+  default <O> FunFutureMaybe<O> mapMaybeIfDefined(ThrowingFunction<? super T, Maybe<O>> f) {
+    return mapMaybe(throwingMaybeFlatMapper(f));
   }
 
   default <O> FunFutureMaybe<O> flatMapIfDefined(AsyncFunction<? super T, O> f) {
@@ -174,7 +193,7 @@ public interface FunFutureMaybe<T> extends FunFuture<Maybe<T>> {
     }
 
     @Override
-    public FunFutureMaybe mapIfDefined(Function f) {
+    public FunFutureMaybe mapIfDefined(ThrowingFunction f) {
       return this;
     }
 
@@ -184,7 +203,7 @@ public interface FunFutureMaybe<T> extends FunFuture<Maybe<T>> {
     }
 
     @Override
-    public FunFutureMaybe mapMaybeIfDefined(Function f) {
+    public FunFutureMaybe mapMaybeIfDefined(ThrowingFunction f) {
       return this;
     }
 

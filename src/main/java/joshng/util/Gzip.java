@@ -1,14 +1,18 @@
 package joshng.util;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.io.ByteStreams;
 import joshng.util.io.MoreFiles;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPInputStream;
@@ -35,8 +39,6 @@ public class Gzip {
     }
   }
 
-  private static Logger LOG = LoggerFactory.getLogger(Gzip.class);
-
   public static byte[] decompress(byte[] bytes) throws IOException {
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     ByteStreams.copy(getDecompressionStream(bytes), outputStream);
@@ -47,18 +49,8 @@ public class Gzip {
     return compress(bytes, Compression.Faster);
   }
 
-  public static Function<byte[], byte[]> COMPRESS = new Function<byte[], byte[]>() {
-    public byte[] apply(byte[] input) {
-      try {
-        return compress(input, Compression.Faster);
-      } catch (IOException e) {
-        throw Throwables.propagate(e);
-      }
-    }
-  };
-
   public static byte[] compress(byte[] bytes, Compression compression) throws IOException {
-    CompressionStream stream = getCompressionStream(compression);
+    CompressionStream stream = getMemoryCompressionStream(compression);
     ByteStreams.copy(new ByteArrayInputStream(bytes), stream);
     return stream.toByteArray();
   }
@@ -95,20 +87,24 @@ public class Gzip {
     return new GZIPInputStream(byteStream);
   }
 
-  public static CompressionStream getCompressionStream() throws IOException {
-    return getCompressionStream(Compression.Faster);
+  public static CompressionStream getMemoryCompressionStream() throws IOException {
+    return getMemoryCompressionStream(Compression.Faster);
   }
 
-  public static CompressionStream getCompressionStream(Compression compression) throws IOException {
+  public static CompressionStream getMemoryCompressionStream(Compression compression) throws IOException {
     return new CompressionStream(new ByteArrayOutputStream(), compression);
   }
 
-  public static GZIPOutputStream newCompressionStream(File file) throws IOException {
-    return new GZIPOutputStream(MoreFiles.newBufferedOutputStream(file));
+  public static GZIPOutputStream getCompressionStream(File file) throws IOException {
+    return getCompressionStream(MoreFiles.newBufferedOutputStream(file));
+  }
+
+  public static GZIPOutputStream getCompressionStream(OutputStream out) throws IOException {
+    return new GZIPOutputStream(out);
   }
 
   public static Writer newCompressedWriter(File file, Charset charset) throws IOException {
-    return new OutputStreamWriter(newCompressionStream(file), charset);
+    return new OutputStreamWriter(getCompressionStream(file), charset);
   }
 
   public static class CompressionStream extends GZIPOutputStream {
