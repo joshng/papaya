@@ -4,11 +4,12 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.Ordering;
+import com.google.common.io.BaseEncoding;
+import com.google.common.io.CrockfordBase32;
 import joshng.util.blocks.F;
 import joshng.util.collect.Pair;
 import joshng.util.exceptions.Exceptions;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -87,6 +88,10 @@ public class StringUtils {
     StringBuilder hex = appendHexString(bytes, offset, Math.min(bytes.length - offset, maxBytes), new StringBuilder(len));
     if (truncated) hex.append("...");
     return hex.toString();
+  }
+
+  public static BaseEncoding crockfordBase32Encoding() {
+    return CrockfordBase32.CROCKFORD_BASE_32_ENCODING;
   }
 
   public static F<String, String> trailingSubstringer(final int startOffset) {
@@ -327,8 +332,7 @@ public class StringUtils {
    *                 {@link String#valueOf(Object)}. Arguments can be null.
    */
   // [copied from com.google.common.base.Preconditions.format]
-  public static String format(String template,
-                              @Nullable Object... args) {
+  public static String format(String template, Object... args) {
     template = String.valueOf(template); // null -> "null"
 
     // start substituting the arguments into the '%s' placeholders
