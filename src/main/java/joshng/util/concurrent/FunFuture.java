@@ -323,6 +323,10 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     return map(Tapper.extendConsumer(sideEffect));
   }
 
+  default FunFuture<T> tapAsync(AsyncF<? super T, ?> sideEffect) {
+    return flatMap((T result) -> sideEffect.apply(result).thenReplace(() -> result));
+  }
+
   default <O> FunFuture<O> mapUnchecked(ThrowingFunction<? super T, ? extends O> throwingFunction) {
     return map(t -> {
       try {
@@ -332,6 +336,10 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
         throw new UncheckedExecutionException(e);
       }
     });
+  }
+
+  default <V> FunFuturePair<T,V> asKeyTo(ThrowingFunction<? super T, V> function) {
+    return mapPair(k -> Pair.of(k, function.apply(k)));
   }
 
   default <K,V> FunFuturePair<K,V> mapPair(ThrowingFunction<? super T, ? extends Map.Entry<K,V>> function) {

@@ -51,6 +51,22 @@ public class StringUtils {
     return appendHexString(bytes, offset, len, new StringBuilder(len * 2)).toString();
   }
 
+  public static byte[] bytesFromHexString(String hex) {
+    int len = hex.length();
+    byte[] data = new byte[len / 2];
+    for (int i = 0; i < len; i += 2) {
+      data[i / 2] = (byte) ((charAsHexDigit(hex, i) << 4) + charAsHexDigit(hex, i+1));
+    }
+    return data;
+  }
+
+  private static int charAsHexDigit(String hex, int i) {
+    char ch = hex.charAt(i);
+    int digit = Character.digit(ch, 16);
+    checkArgument(digit >= 0, "Invalid hex digit", ch);
+    return digit;
+  }
+
   public static StringBuilder appendHexString(byte[] bytes, int offset, int len, StringBuilder hex) {
     try {
       appendHexString(bytes, offset, len, (Appendable)hex);
