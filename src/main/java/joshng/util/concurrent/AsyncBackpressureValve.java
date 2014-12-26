@@ -42,7 +42,7 @@ public class AsyncBackpressureValve {
       return nextProductionFuture.thenAsync(jobStarter).uponCompletion(this::onJobCompleted);
     }
 
-    public void onJobCompleted() {
+    private void onJobCompleted() {
       Promise<Nothing> promiseToComplete = null;
       if (bufferCounter.decrementAndGet() <= lowWaterMark && isPaused()) {
         synchronized (bufferCounter) {

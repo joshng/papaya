@@ -1,8 +1,19 @@
 package joshng.util.io;
 
+import com.google.common.base.Throwables;
 import joshng.util.collect.Maybe;
 
-import java.io.*;
+import javax.annotation.Nullable;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.FileAttribute;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static joshng.util.collect.Maybe.definitely;
@@ -34,5 +45,17 @@ public class MoreFiles {
       if (file.isFile()) return definitely(file);
     }
     return Maybe.not();
+  }
+
+  public static Path createTempFile(
+          @Nullable String prefix,
+          @Nullable String suffix,
+          FileAttribute<?>... attributes
+  ) {
+    try {
+      return Files.createTempFile(prefix, suffix, attributes);
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
   }
 }
