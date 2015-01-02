@@ -10,7 +10,7 @@ public abstract class BaseEventObserver<E> implements EventDispatcher.EventObser
 
   public BaseEventObserver(Class<E> eventClass) {this.eventClass = eventClass;}
 
-  @Override public final Class getObservedEventType() {
+  @Override public final Class<E> getObservedEventType() {
     return eventClass;
   }
 }

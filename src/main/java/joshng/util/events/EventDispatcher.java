@@ -1,5 +1,6 @@
 package joshng.util.events;
 
+import com.google.common.base.Function;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -19,7 +20,6 @@ import joshng.util.concurrent.SameThreadTrampolineExecutor;
 import java.lang.reflect.Method;
 import java.lang.reflect.TypeVariable;
 import java.util.Set;
-import java.util.function.Function;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static joshng.util.collect.Functional.extend;
@@ -31,9 +31,13 @@ import static joshng.util.collect.Functional.extend;
  */
 public class EventDispatcher {
   private final Function<Class<?>, ? extends Iterable<? extends EventObserver<?>>> eventTypeObserverLocator;
-  private final SameThreadTrampolineExecutor trampolineExecutor = new SameThreadTrampolineExecutor();
+  private final SameThreadTrampolineExecutor trampolineExecutor;
 
   public static EventDispatcher build(Iterable<? extends EventObserver<?>> eventObservers) {
+    return build(eventObservers, new SameThreadTrampolineExecutor());
+  }
+
+  public static EventDispatcher build(Iterable<? extends EventObserver<?>> eventObservers, SameThreadTrampolineExecutor executor) {
     Multimap<Class, EventObserver<Object>> observersByEventType = extend(eventObservers).<EventObserver<Object>>cast().groupBy(
             EventObserver::getObservedEventType);
 
@@ -45,19 +49,26 @@ public class EventDispatcher {
       }
     });
 
-    return new EventDispatcher(cacheByEventType::getUnchecked);
+    return new EventDispatcher(cacheByEventType, executor);
   }
 
-  public static FunIterable<EventObserver<Object>> getAnnotatedEventObservers(Object obj) {
-    return Reflect.getAllDeclaredMethods(obj.getClass())
-            .filter(Pred.annotatedWith(Observer.class))
+  public static FunIterable<EventObserver<?>> getAnnotatedEventObservers(Object obj) {
+    return getObserverMethods(obj.getClass())
             .map(method -> new AnnotatedMethodEventObserver(obj, method));
   }
 
-  public EventDispatcher(Function<Class<?>, ? extends Iterable<? extends EventObserver<?>>> eventTypeObserverLocator) {
-    this.eventTypeObserverLocator = eventTypeObserverLocator;
+  public static FunIterable<Method> getObserverMethods(Class<?> observerClass) {
+    return Reflect.getAllDeclaredMethods(observerClass)
+            .filter(Pred.annotatedWith(Observer.class));
   }
 
+  public EventDispatcher(
+          Function<Class<?>, ? extends Iterable<? extends EventObserver<?>>> eventTypeObserverLocator,
+          SameThreadTrampolineExecutor trampolineExecutor
+  ) {
+    this.eventTypeObserverLocator = eventTypeObserverLocator;
+    this.trampolineExecutor = trampolineExecutor;
+  }
 
   public FunFuture<Nothing> dispatch(Object event) {
     return trampolineExecutor.submitAsync(() -> new ErrorCollectingCompletionTracker().trackAll(
@@ -69,15 +80,15 @@ public class EventDispatcher {
   }
 
   public interface EventObserver<E> {
-    Class getObservedEventType();
+    Class<E> getObservedEventType();
     FunFuture<Nothing> onEvent(E event) throws Exception;
   }
 
-  private static class AnnotatedMethodEventObserver implements EventObserver<Object> {
+  public static class AnnotatedMethodEventObserver<T> implements EventObserver<T> {
     public static final TypeVariable<Class<FunFuture>> FUTURE_TYPE_PARAMETER = FunFuture.class.getTypeParameters()[0];
     private final Object obj;
     private final Method method;
-    private final Class<?> observedEventType;
+    private final Class<T> observedEventType;
 
     public AnnotatedMethodEventObserver(Object obj, Method method) {
       this.obj = obj;
@@ -87,11 +98,12 @@ public class EventDispatcher {
       checkArgument(ListenableFuture.class.isAssignableFrom(returnType.getRawType())
               && returnType.resolveType(FUTURE_TYPE_PARAMETER).getRawType() == Nothing.class, "Observer methods must return FunFuture<Nothing>", method);
       method.setAccessible(true);
-      observedEventType = extend(method.getParameterTypes()).getOnlyElement();
+      //noinspection unchecked
+      observedEventType = (Class<T>) extend(method.getParameterTypes()).getOnlyElement();
     }
 
     @Override
-    public Class getObservedEventType() {
+    public Class<T> getObservedEventType() {
       return observedEventType;
     }
 

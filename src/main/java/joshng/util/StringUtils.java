@@ -384,4 +384,30 @@ public class StringUtils {
   public static boolean isPrintableAscii(byte b) {
     return b > 31 && b < 127;
   }
+
+  public static class SubstringSeparator {
+    private final String separator;
+
+    public static SubstringSeparator on(String separator) { return new SubstringSeparator(separator); }
+
+    public SubstringSeparator(String separator) {this.separator = separator;}
+
+    public String beforeFirstMatch(String from) { return from.substring(0, from.indexOf(separator)); }
+    public String beforeLastMatch(String from) { return from.substring(0, from.lastIndexOf(separator)); }
+    public String afterFirstMatch(String from) { return from.substring(from.indexOf(separator), from.length()); }
+    public String afterLastMatch(String from) { return from.substring(from.lastIndexOf(separator), from.length()); }
+  }
+
+  public static class CharSeparator {
+    private final char separator;
+
+    public static CharSeparator on(char separator) { return new CharSeparator(separator); }
+
+    public CharSeparator(char separator) {this.separator = separator;}
+
+    public String beforeFirstMatch(String from) { return from.substring(0, from.indexOf(separator)); }
+    public String beforeLastMatch(String from) { return from.substring(0, from.lastIndexOf(separator)); }
+    public String afterFirstMatch(String from) { return from.substring(from.indexOf(separator), from.length()); }
+    public String afterLastMatch(String from) { return from.substring(from.lastIndexOf(separator), from.length()); }
+  }
 }

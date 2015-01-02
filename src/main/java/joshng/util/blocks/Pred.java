@@ -7,6 +7,7 @@ import com.google.common.collect.Multimaps;
 import joshng.util.Comparison;
 import joshng.util.collect.FunIterable;
 import joshng.util.collect.Functional;
+import joshng.util.collect.Maybe;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
@@ -148,6 +149,10 @@ public interface Pred<T> extends Predicate<T>, com.google.common.base.Predicate<
 
   default <U extends T> FunIterable<U> filter(Iterable<U> items) {
     return FunIterable.filter(items, this);
+  }
+
+  default <U extends T> Maybe<U> find(Iterable<U> items) {
+    return FunIterable.find(items, this);
   }
 
   default Pred<T> and(final Predicate<? super T> pred2) {
