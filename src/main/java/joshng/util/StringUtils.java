@@ -394,8 +394,8 @@ public class StringUtils {
 
     public String beforeFirstMatch(String from) { return from.substring(0, from.indexOf(separator)); }
     public String beforeLastMatch(String from) { return from.substring(0, from.lastIndexOf(separator)); }
-    public String afterFirstMatch(String from) { return from.substring(from.indexOf(separator), from.length()); }
-    public String afterLastMatch(String from) { return from.substring(from.lastIndexOf(separator), from.length()); }
+    public String afterFirstMatch(String from) { return from.substring(from.indexOf(separator) + separator.length(), from.length()); }
+    public String afterLastMatch(String from) { return from.substring(from.lastIndexOf(separator) + separator.length(), from.length()); }
   }
 
   public static class CharSeparator {
@@ -407,7 +407,7 @@ public class StringUtils {
 
     public String beforeFirstMatch(String from) { return from.substring(0, from.indexOf(separator)); }
     public String beforeLastMatch(String from) { return from.substring(0, from.lastIndexOf(separator)); }
-    public String afterFirstMatch(String from) { return from.substring(from.indexOf(separator), from.length()); }
-    public String afterLastMatch(String from) { return from.substring(from.lastIndexOf(separator), from.length()); }
+    public String afterFirstMatch(String from) { return from.substring(from.indexOf(separator) + 1, from.length()); }
+    public String afterLastMatch(String from) { return from.substring(from.lastIndexOf(separator) + 1, from.length()); }
   }
 }
