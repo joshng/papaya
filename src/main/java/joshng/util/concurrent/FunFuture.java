@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -432,8 +433,8 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     return uponCompletion(() -> {
       try {
         callback.onSuccess(Uninterruptibles.getUninterruptibly(this));
-      } catch (ExecutionException e) {
-        callback.onFailure(e.getCause());
+      } catch (Throwable e) {
+        callback.onFailure(unwrapExecutionException(e));
       }
     });
   }
