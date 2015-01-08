@@ -452,7 +452,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     });
   }
 
-  default FunFuture<T> uponFailure(Consumer<? super Exception> failureObserver) {
+  default FunFuture<T> uponFailure(Consumer<? super Throwable> failureObserver) {
     return uponCompletion(new FutureCallback<T>() {
       @Override
       public void onSuccess(T result) {
@@ -460,7 +460,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
 
       @Override
       public void onFailure(Throwable t) {
-        failureObserver.accept((Exception) t);
+        failureObserver.accept(t);
       }
     });
   }
