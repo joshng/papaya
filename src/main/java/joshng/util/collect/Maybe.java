@@ -16,6 +16,7 @@ import joshng.util.concurrent.FunFutureMaybe;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
@@ -209,6 +210,17 @@ public abstract class Maybe<T> implements Iterable<T> {
   public static <T> FunIterable<T> flatten(Iterable<? extends Maybe<? extends T>> maybes) {
     // this way is a bit more efficient than using concat:
     return FunIterable.filter(maybes, IS_DEFINED).map(Maybe.<T>getter());
+  }
+
+  @SafeVarargs public static <T> Maybe<T> firstNonNull(T... values) {
+    return firstNonNull(Arrays.asList(values));
+  }
+
+  public static <T> Maybe<T> firstNonNull(Iterable<? extends T> values) {
+    for (T value : values) {
+      if (value != null) return definitely(value);
+    }
+    return not();
   }
 
   @SuppressWarnings("unchecked")

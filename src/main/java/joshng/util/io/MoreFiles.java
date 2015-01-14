@@ -37,6 +37,18 @@ public class MoreFiles {
     return new BufferedInputStream(new FileInputStream(file));
   }
 
+  public static File canonicalize(String path) {
+    return canonicalize(new File(path));
+  }
+
+  public static File canonicalize(File file) {
+    try {
+      return file.getCanonicalFile();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   public static Maybe<File> findExecutableOnPath(String executableName) {
     String path = System.getenv("PATH");
 

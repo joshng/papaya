@@ -17,8 +17,27 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class FatalErrorHandler {
   private static final Logger LOG = LoggerFactory.getLogger(FatalErrorHandler.class);
-  private static final ExecutorService TERMINATION_THREAD = Executors.newSingleThreadExecutor(new NamedThreadFactory("fatal-error-shutdown"));
+  private static final ExecutorService TERMINATION_THREAD = Executors.newSingleThreadExecutor(
+          new NamedThreadFactory(
+                  "fatal-error-shutdown"));
   private static final AtomicBoolean TERMINATED = new AtomicBoolean();
+
+  private static volatile Runnable s_shutdownTrigger = () -> System.exit(2);
+
+  private static final Runnable TERMINATION_TASK = () -> {
+            if (TERMINATED.compareAndSet(false, true)) {
+              //noinspection finally
+              try {
+                s_shutdownTrigger.run();
+              } finally {
+                System.exit(2);
+              }
+            }
+          };
+
+  public static void setShutdownTrigger(Runnable shutdownTrigger) {
+    s_shutdownTrigger = shutdownTrigger;
+  }
 
   public static Error terminateProcess(Throwable throwable) {
     return terminateProcess("", throwable);
@@ -31,9 +50,7 @@ public class FatalErrorHandler {
       LOG.error(fullMessage, error);
       throw error;
     } finally {
-      TERMINATION_THREAD.submit(() -> {
-        if (TERMINATED.compareAndSet(false, true)) System.exit(2);
-      });
+      TERMINATION_THREAD.execute(TERMINATION_TASK);
     }
   }
 
