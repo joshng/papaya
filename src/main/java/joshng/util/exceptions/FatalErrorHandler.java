@@ -18,8 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class FatalErrorHandler {
   private static final Logger LOG = LoggerFactory.getLogger(FatalErrorHandler.class);
   private static final ExecutorService TERMINATION_THREAD = Executors.newSingleThreadExecutor(
-          new NamedThreadFactory(
-                  "fatal-error-shutdown"));
+          new NamedThreadFactory("fatal-error-shutdown"));
   private static final AtomicBoolean TERMINATED = new AtomicBoolean();
 
   private static volatile Runnable s_shutdownTrigger = () -> System.exit(2);
@@ -78,7 +77,7 @@ public class FatalErrorHandler {
   }
 
   public static Exception castOrDie(Throwable throwable) {
-    if (throwable instanceof Exception) return (Exception) throwable;
+    if (throwable instanceof Exception && !(throwable instanceof ClassNotFoundException)) return (Exception) throwable;
     if (throwable instanceof StackOverflowError) return new StackOverflowException((StackOverflowError) throwable);
     throw terminateProcess(throwable);
   }
