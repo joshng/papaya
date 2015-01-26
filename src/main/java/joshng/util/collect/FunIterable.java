@@ -721,6 +721,14 @@ public interface FunIterable<T> extends Iterable<T>, Runnable {
   }
 
   /**
+   * @return {@link Joiner}.on(separator).join(this);
+   * @see Joiner
+   */
+  default String join(char separator) {
+    return Joiner.on(separator).join(delegate());
+  }
+
+  /**
    * @return a {@link LazyReference} that lazily calls and returns the result of #toList the first time it's requested
    */
   default LazyReference<FunList<T>> lazyListSupplier() {

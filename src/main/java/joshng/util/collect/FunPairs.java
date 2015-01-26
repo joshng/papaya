@@ -22,6 +22,7 @@ import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import static joshng.util.blocks.Pred.pred;
 import static joshng.util.blocks.Pred2.extendBiPredicate;
 import static joshng.util.collect.MoreCollections.immutableMapWithEntries;
 import static joshng.util.collect.MoreCollections.multimapWithEntries;
@@ -177,6 +178,10 @@ public interface FunPairs<K, V> extends FunIterable<Map.Entry<K, V>> {
 
   default Maybe.Pair<K,V> find2(BiPredicate<? super K, ? super V> predicate) {
     return find(Pred2.extendBiPredicate(predicate));
+  }
+
+  default boolean all2(BiPredicate<? super K, ? super V> predicate) {
+    return find2(predicate.negate()).isEmpty();
   }
 
   default <A> A accumulate2(BiAccumulator<? super K, ? super V, ? extends A> accumulator) {
