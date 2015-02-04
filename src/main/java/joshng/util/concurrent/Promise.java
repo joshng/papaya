@@ -71,13 +71,8 @@ public class Promise<T> extends AbstractFunFuture<T> {
         }
 
         @Override public void onFailure(Throwable t) {
-          //noinspection ThrowableResultOfMethodCallIgnored
-          Throwable cause = FunFuture.unwrapExecutionException(t);
-          if (cause instanceof Exception) {
-            completeWithResultOf(() -> exceptionHandler.apply((Exception) cause));
-          } else {
-            setFailure(t);
-          }
+          Exception cause = FunFuture.unwrapExecutionException(t);
+          completeWithResultOf(() -> exceptionHandler.apply(cause));
         }
       });
     }

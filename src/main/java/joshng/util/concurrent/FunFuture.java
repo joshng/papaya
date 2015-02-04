@@ -25,6 +25,7 @@ import joshng.util.collect.FunIterable;
 import joshng.util.collect.Maybe;
 import joshng.util.collect.Nothing;
 import joshng.util.collect.Pair;
+import joshng.util.exceptions.FatalErrorHandler;
 import joshng.util.exceptions.UncheckedInterruptedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -343,6 +344,10 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     return mapPair(k -> Pair.of(k, function.apply(k)));
   }
 
+  default <K> FunFuturePair<K,T> asValueFrom(ThrowingFunction<? super T, K> function) {
+    return mapPair(k -> Pair.of(function.apply(k), k));
+  }
+
   default <K,V> FunFuturePair<K,V> mapPair(ThrowingFunction<? super T, ? extends Map.Entry<K,V>> function) {
     return flatMapPair((AsyncF<? super T, ? extends Map.Entry<K, V>>) AsyncF.liftFunction(function));
   }
@@ -480,14 +485,14 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     return FunFuture.<T>getFromFuture().bind(this);
   }
 
-  public static Throwable unwrapExecutionException(Throwable e) {
+  public static Exception unwrapExecutionException(Throwable e) {
     Throwable cause;
     if (e instanceof ExecutionException || e instanceof UncheckedExecutionException) {
       cause = Objects.firstNonNull(e.getCause(), e);
     } else {
       cause = e;
     }
-    return cause;
+    return FatalErrorHandler.castOrDie(cause);
   }
 
   public static class ForwardingFunFuture<T> extends ForwardingListenableFuture<T> implements FunFuture<T> {
