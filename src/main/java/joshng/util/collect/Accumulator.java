@@ -67,6 +67,12 @@ public interface Accumulator<I, O> extends Sink<I>, Supplier<O> {
     return into(list::add, list);
   }
 
+  static <T, S extends Set<T>> Accumulator<T, S> toSet(S set) {
+    return into(set::add, set);
+
+  }
+
+
   static <T> Accumulator<T, ImmutableSet<T>> immutableSet() {
     ImmutableSet.Builder<T> builder = ImmutableSet.builder();
     return of(builder::add, builder::build);
