@@ -16,9 +16,9 @@ import java.util.concurrent.TimeUnit;
 public class Threads {
   private static final Logger LOG = LoggerFactory.getLogger(Threads.class);
 
-  public static void sleep(int time, TimeUnit timeUnit) {
+  public static void sleep(long time, TimeUnit timeUnit) {
     try {
-      Thread.sleep(timeUnit.toMillis(time));
+      timeUnit.sleep(time);
     } catch (InterruptedException e) {
       throw UncheckedInterruptedException.propagate(e);
     }
