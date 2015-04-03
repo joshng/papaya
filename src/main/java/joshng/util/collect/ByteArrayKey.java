@@ -19,6 +19,10 @@ public class ByteArrayKey implements ByteSerializable<byte[]> {
     this.bytes = bytes;
   }
 
+  public static ByteArrayKey valueOf(String hex) {
+    return new ByteArrayKey(StringUtils.bytesFromHexString(hex));
+  }
+
   public byte[] bytes() {
     return bytes;
   }
