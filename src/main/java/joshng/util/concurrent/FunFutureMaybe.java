@@ -1,6 +1,7 @@
 package joshng.util.concurrent;
 
 import com.google.common.util.concurrent.AsyncFunction;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import joshng.util.blocks.F;
@@ -172,6 +173,32 @@ public interface FunFutureMaybe<T> extends FunFuture<Maybe<T>> {
 
   default FunFutureMaybe<T> recoverAsUndefined(Predicate<? super Exception> exceptionFilter) {
     return recover(exceptionFilter, Source.maybeNot());
+  }
+
+  @Override default FunFutureMaybe<T> uponCompletion2(
+          Consumer<? super Maybe<T>> successObserver, Consumer<? super Exception> errorObserver
+  ) {
+    return (FunFutureMaybe<T>) FunFuture.super.uponCompletion2(successObserver, errorObserver);
+  }
+
+  @Override default FunFutureMaybe<T> uponCompletion(Runnable sideEffect) {
+    return (FunFutureMaybe<T>) FunFuture.super.uponCompletion(sideEffect);
+  }
+
+  @Override default FunFutureMaybe<T> uponCompletion(final FutureCallback<? super Maybe<T>> callback) {
+    return (FunFutureMaybe<T>) FunFuture.super.uponCompletion(callback);
+  }
+
+  @Override default FunFutureMaybe<T> uponSuccess(final Consumer<? super Maybe<T>> successObserver) {
+    return (FunFutureMaybe<T>) FunFuture.super.uponSuccess(successObserver);
+  }
+
+  @Override default FunFutureMaybe<T> uponFailure(Consumer<? super Throwable> failureObserver) {
+    return (FunFutureMaybe<T>) FunFuture.super.uponFailure(failureObserver);
+  }
+
+  @Override default MaybePromise<T> newCompletionPromise() {
+    return new MaybePromise<>();
   }
 
   static <I, O> AsyncF<Maybe<I>, Maybe<O>> flatMapper(AsyncFunction<? super I, O> f) {

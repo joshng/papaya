@@ -1,5 +1,6 @@
 package joshng.util.concurrent;
 
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import joshng.util.blocks.Sink2;
 import joshng.util.collect.Nothing;
@@ -8,6 +9,7 @@ import joshng.util.collect.Pair;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 
 /**
  * User: josh
@@ -38,6 +40,26 @@ public interface FunFuturePair<T,U> extends FunFuture<Map.Entry<T,U>>, Map.Entry
   @Override
   default FunFuture<U> setValue(FunFuture<U> value) {
     throw new UnsupportedOperationException();
+  }
+
+  @Override default PairPromise<T, U> newCompletionPromise() {
+    return new PairPromise<>();
+  }
+
+  @Override default FunFuturePair<T, U> uponCompletion(Runnable sideEffect) {
+    return (FunFuturePair<T, U>) FunFuture.super.uponCompletion(sideEffect);
+  }
+
+  @Override default FunFuturePair<T, U> uponCompletion(final FutureCallback<? super Map.Entry<T, U>> callback) {
+    return (FunFuturePair<T, U>) FunFuture.super.uponCompletion(callback);
+  }
+
+  @Override default FunFuturePair<T, U> uponSuccess(final Consumer<? super Map.Entry<T, U>> successObserver) {
+    return (FunFuturePair<T, U>) FunFuture.super.uponSuccess(successObserver);
+  }
+
+  @Override default FunFuturePair<T, U> uponFailure(Consumer<? super Throwable> failureObserver) {
+    return (FunFuturePair<T, U>) FunFuture.super.uponFailure(failureObserver);
   }
 
   class PairPromise<T,U> extends Promise<Map.Entry<T,U>> implements FunFuturePair<T,U> {}

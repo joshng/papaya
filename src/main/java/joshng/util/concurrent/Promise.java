@@ -1,6 +1,11 @@
 package joshng.util.concurrent;
 
-import com.google.common.util.concurrent.*;
+import com.google.common.util.concurrent.AsyncFunction;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.Uninterruptibles;
 import joshng.util.blocks.SideEffect;
 import joshng.util.exceptions.MultiException;
 
@@ -9,6 +14,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.function.Consumer;
 
 /**
  * User: josh
@@ -23,6 +29,12 @@ public class Promise<T> extends AbstractFunFuture<T> {
 
   public static <T> Promise<T> newPromise() {
     return new Promise<>();
+  }
+
+  public static <T> Promise<T> newPromise(Consumer<Promise<T>> initializer) {
+    Promise<T> promise = new Promise<>();
+    initializer.accept(promise);
+    return promise;
   }
 
   /**

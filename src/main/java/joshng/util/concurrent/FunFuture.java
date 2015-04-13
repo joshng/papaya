@@ -398,7 +398,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   }
 
   default FunFuture<T> recoverWith(final AsyncFunction<? super Exception, ? extends T> exceptionHandler) {
-    return Promise.<T>newPromise().completeOrRecoverWith(this, exceptionHandler);
+    return newCompletionPromise().completeOrRecoverWith(this, exceptionHandler);
   }
 
   default <E extends Exception> FunFuture<T> recoverWith(Class<E> exceptionType, AsyncFunction<? super E, ? extends T> alternateResultSource) {
@@ -409,6 +409,9 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     return recoverWith(throwable -> exceptionFilter.test(throwable) ? (ListenableFuture<T>)alternateResultSource.apply(throwable) : Futures.immediateFailedFuture(throwable));
   }
 
+  default void addSameThreadListener(Runnable runnable) {
+    addListener(runnable, MoreExecutors.sameThreadExecutor());
+  }
 
   default FunFuture<T> uponCompletion2(Consumer<? super T> successObserver, Consumer<? super Exception> errorObserver) {
     return uponCompletion(new FutureCallback<T>() {
@@ -424,15 +427,11 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     });
   }
 
-  default void addSameThreadListener(Runnable runnable) {
-    addListener(runnable, MoreExecutors.sameThreadExecutor());
+  default FunFuture<T> uponCompletion(Runnable sideEffect) {
+    return newCompletionPromise().completeWithSideEffect(this, sideEffect);
   }
 
-  default FunFuture<T> uponCompletion(Runnable sideEffect) {
-    final Promise<T> promise = Promise.newPromise();
-    promise.completeWithSideEffect(this, sideEffect);
-    return promise;
-  }
+  default Promise<T> newCompletionPromise() {return Promise.<T>newPromise();}
 
   default FunFuture<T> uponCompletion(final FutureCallback<? super T> callback) {
     return uponCompletion(() -> {
