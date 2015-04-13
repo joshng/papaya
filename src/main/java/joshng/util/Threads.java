@@ -4,9 +4,14 @@ import joshng.util.exceptions.UncheckedInterruptedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
 
 /**
  * User: josh
@@ -22,6 +27,15 @@ public class Threads {
     } catch (InterruptedException e) {
       throw UncheckedInterruptedException.propagate(e);
     }
+  }
+
+  public static boolean sleepUntil(Instant instant, Clock clock, Duration pollInterval, BooleanSupplier shouldContinue) {
+    long maxSleep = pollInterval.toNanos();
+    long sleepTime;
+    while ((sleepTime = clock.instant().until(instant, ChronoUnit.NANOS)) > 0 && shouldContinue.getAsBoolean()) {
+      sleep(Math.min(sleepTime, maxSleep), TimeUnit.NANOSECONDS);
+    }
+    return shouldContinue.getAsBoolean();
   }
 
   public static List<Thread> getAllThreads() {
