@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -321,23 +320,28 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     return thenReplace(Executors.callable(runnable, Nothing.NOTHING));
   }
 
-  default FunFuture<T> tap(Consumer<? super T> sideEffect) {
-    return map(Tapper.extendConsumer(sideEffect));
+  default FunFuture<T> tap(ThrowingConsumer<? super T> sideEffect) {
+    return tapAsync((AsyncF<T, Nothing>) result -> {
+              sideEffect.accept(result);
+              return Nothing.FUTURE;
+            });
   }
 
   default FunFuture<T> tapAsync(AsyncF<? super T, ?> sideEffect) {
-    return flatMap((T result) -> sideEffect.apply(result).thenReplace(() -> result));
+    AsyncFunction<T, T> f = (T result) -> sideEffect.apply(result).replace(result);
+    return flatMapToPromise(f, newCompletionPromise());
   }
 
   default <O> FunFuture<O> mapUnchecked(ThrowingFunction<? super T, ? extends O> throwingFunction) {
-    return map(t -> {
-      try {
-        return throwingFunction.apply(t);
-      } catch (Exception e) {
-        Throwables.propagateIfPossible(e);
-        throw new UncheckedExecutionException(e);
-      }
-    });
+    return map(
+            t -> {
+              try {
+                return throwingFunction.apply(t);
+              } catch (Exception e) {
+                Throwables.propagateIfPossible(e);
+                throw new UncheckedExecutionException(e);
+              }
+            });
   }
 
   default <V> FunFuturePair<T,V> asKeyTo(ThrowingFunction<? super T, V> function) {
@@ -380,8 +384,10 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   }
 
   default FunFutureMaybe<T> filter(final AsyncFunction<? super T, Boolean> filter) {
-    return flatMapMaybe(value -> extendFuture(filter.apply(value)).map(filterResult ->
-            Maybe.onlyIf(filterResult, value)));
+    return flatMapMaybe(
+            value -> extendFuture(filter.apply(value)).map(
+                    filterResult ->
+                            Maybe.onlyIf(filterResult, value)));
   }
 
   @SuppressWarnings("unchecked")
@@ -394,7 +400,10 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   }
 
   default FunFuture<T> recover(Predicate<? super Exception> exceptionFilter, ThrowingFunction<? super Exception, ? extends T> alternateResultSource) {
-    return recoverWith(throwable -> exceptionFilter.test(throwable) ? Futures.immediateFuture(alternateResultSource.apply(throwable)) : Futures.immediateFailedFuture(throwable));
+    return recoverWith(
+            throwable -> exceptionFilter.test(throwable)
+                    ? Futures.immediateFuture(alternateResultSource.apply(throwable))
+                    : Futures.immediateFailedFuture(throwable));
   }
 
   default FunFuture<T> recoverWith(final AsyncFunction<? super Exception, ? extends T> exceptionHandler) {
@@ -402,7 +411,9 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   }
 
   default <E extends Exception> FunFuture<T> recoverWith(Class<E> exceptionType, AsyncFunction<? super E, ? extends T> alternateResultSource) {
-    return recoverWith(Pred.instanceOf(exceptionType), (AsyncFunction<? super Exception, ? extends T>) alternateResultSource);
+    return recoverWith(
+            Pred.instanceOf(exceptionType),
+            (AsyncFunction<? super Exception, ? extends T>) alternateResultSource);
   }
 
   default FunFuture<T> recoverWith(Predicate<? super Exception> exceptionFilter, AsyncFunction<? super Exception, ? extends T> alternateResultSource) {

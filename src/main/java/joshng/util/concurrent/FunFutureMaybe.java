@@ -7,6 +7,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import joshng.util.blocks.F;
 import joshng.util.blocks.Source;
 import joshng.util.blocks.Tapper;
+import joshng.util.blocks.ThrowingConsumer;
 import joshng.util.blocks.ThrowingFunction;
 import joshng.util.collect.Maybe;
 
@@ -173,6 +174,14 @@ public interface FunFutureMaybe<T> extends FunFuture<Maybe<T>> {
 
   default FunFutureMaybe<T> recoverAsUndefined(Predicate<? super Exception> exceptionFilter) {
     return recover(exceptionFilter, Source.maybeNot());
+  }
+
+  @Override default FunFutureMaybe<T> tap(ThrowingConsumer<? super Maybe<T>> sideEffect) {
+    return (FunFutureMaybe<T>) FunFuture.super.tap(sideEffect);
+  }
+
+  @Override default FunFutureMaybe<T> tapAsync(AsyncF<? super Maybe<T>, ?> sideEffect) {
+    return (FunFutureMaybe<T>) FunFuture.super.tapAsync(sideEffect);
   }
 
   @Override default FunFutureMaybe<T> uponCompletion2(
