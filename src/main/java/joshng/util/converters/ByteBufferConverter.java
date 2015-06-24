@@ -10,10 +10,19 @@ import java.nio.ByteBuffer;
 public class ByteBufferConverter extends ByteConverter<ByteBuffer> {
   public static final ByteBufferConverter INSTANCE = new ByteBufferConverter();
 
+  public static byte[] unwrapByteBuffer(ByteBuffer buf) {
+    if (buf.hasArray() && buf.array().length == buf.remaining()) {
+      return buf.array();
+    }
+    byte[] copy = new byte[buf.remaining()];
+    buf.mark();
+    buf.get(copy);
+    buf.reset();
+    return copy;
+  }
+
   @Override protected byte[] doForward(ByteBuffer byteBuffer) {
-    byte[] bytes = new byte[byteBuffer.remaining()];
-    byteBuffer.get(bytes);
-    return bytes;
+    return unwrapByteBuffer(byteBuffer);
   }
 
   @Override protected ByteBuffer doBackward(byte[] bytes) {

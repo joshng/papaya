@@ -154,7 +154,7 @@ public class Reflect {
     }
   });
 
-  public static <T> T newInstance(Class<T> c) {
+  public static <T> T newInstance(Class<? extends T> c) {
     Constructor constructor = ACCESSIBLE_CONSTRUCTORS.getUnchecked(c);
     try {
       return c.cast(constructor.newInstance());

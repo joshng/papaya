@@ -47,9 +47,7 @@ public class Factory<T> implements Source<T> {
   public T get() {
     try {
       return instanceClass.newInstance();
-    } catch (InstantiationException e) {
-      throw Throwables.propagate(e);
-    } catch (IllegalAccessException e) {
+    } catch (InstantiationException | IllegalAccessException e) {
       throw Throwables.propagate(e);
     }
   }
