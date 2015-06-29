@@ -327,7 +327,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
             });
   }
 
-  default FunFuture<T> tapAsync(AsyncF<? super T, ?> sideEffect) {
+  default <O> FunFuture<T> tapAsync(AsyncF<? super T, O> sideEffect) {
     AsyncFunction<T, T> f = (T result) -> sideEffect.apply(result).replace(result);
     return flatMapToPromise(f, newCompletionPromise());
   }

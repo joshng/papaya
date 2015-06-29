@@ -180,7 +180,7 @@ public interface FunFutureMaybe<T> extends FunFuture<Maybe<T>> {
     return (FunFutureMaybe<T>) FunFuture.super.tap(sideEffect);
   }
 
-  @Override default FunFutureMaybe<T> tapAsync(AsyncF<? super Maybe<T>, ?> sideEffect) {
+  @Override default <O> FunFutureMaybe<T> tapAsync(AsyncF<? super Maybe<T>, O> sideEffect) {
     return (FunFutureMaybe<T>) FunFuture.super.tapAsync(sideEffect);
   }
 
