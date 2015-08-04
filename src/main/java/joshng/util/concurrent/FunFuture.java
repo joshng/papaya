@@ -16,7 +16,6 @@ import joshng.util.blocks.F;
 import joshng.util.blocks.Pred;
 import joshng.util.blocks.Sink;
 import joshng.util.blocks.Source;
-import joshng.util.blocks.Tapper;
 import joshng.util.blocks.ThrowingConsumer;
 import joshng.util.blocks.ThrowingFunction;
 import joshng.util.blocks.ThrowingRunnable;
@@ -360,8 +359,8 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     return flatMapToPromise(function, new FunFuturePair.PairPromise<>());
   }
 
-  default <K, V> FunFuturePair.ForwardingFunFuturePair<K, V> newFuturePair(ListenableFuture<? extends Map.Entry<K, V>> transformed) {
-    return new FunFuturePair.ForwardingFunFuturePair<>(transformed);
+  static <K, V> FunFuturePair.ForwardingFunFuturePair<K, V> newFuturePair(ListenableFuture<? extends Map.Entry<K, V>> future) {
+    return new FunFuturePair.ForwardingFunFuturePair<>(future);
   }
 
   default <O> FunFutureMaybe<O> flatMapMaybe(AsyncFunction<? super T, Maybe<O>> f) {

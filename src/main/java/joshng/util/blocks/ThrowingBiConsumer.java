@@ -1,5 +1,7 @@
 package joshng.util.blocks;
 
+import joshng.util.collect.Nothing;
+
 /**
  * User: josh
  * Date: 10/22/14
@@ -19,5 +21,12 @@ public interface ThrowingBiConsumer<A,B> {
 
   default ThrowingRunnable bind(A first, B second) {
     return () -> accept(first, second);
+  }
+
+  default ThrowingBiFunction<A, B, Nothing> returningNothing() {
+    return (a, b) -> {
+      accept(a, b);
+      return Nothing.NOTHING;
+    };
   }
 }

@@ -2,13 +2,12 @@ package joshng.util.concurrent;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
-import joshng.util.blocks.Sink2;
+import joshng.util.blocks.ThrowingBiConsumer;
+import joshng.util.blocks.ThrowingBiFunction;
 import joshng.util.collect.Nothing;
 import joshng.util.collect.Pair;
 
 import java.util.Map;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 /**
@@ -25,16 +24,16 @@ public interface FunFuturePair<T,U> extends FunFuture<Map.Entry<T,U>>, Map.Entry
     return map(Pair.getSecondFromPair());
   }
 
-  default <V> FunFuture<V> map2(BiFunction<? super T, ? super U, V> bifunction) {
+  default <V> FunFuture<V> map2(ThrowingBiFunction<? super T, ? super U, V> bifunction) {
     return map(pair -> bifunction.apply(pair.getKey(), pair.getValue()));
   }
 
-  default <V> FunFuture<V> flatMap2(BiFunction<? super T, ? super U, ? extends ListenableFuture<V>> bifunction) {
+  default <V> FunFuture<V> flatMap2(ThrowingBiFunction<? super T, ? super U, ? extends ListenableFuture<V>> bifunction) {
     return flatMap(pair -> bifunction.apply(pair.getKey(), pair.getValue()));
   }
 
-  default FunFuture<Nothing> foreach2(BiConsumer<? super T, ? super U> consumer) {
-    return map2(Sink2.extendBiConsumer(consumer));
+  default FunFuture<Nothing> foreach2(ThrowingBiConsumer<? super T, ? super U> consumer) {
+    return map2(consumer.returningNothing());
   }
 
   @Override
@@ -62,7 +61,15 @@ public interface FunFuturePair<T,U> extends FunFuture<Map.Entry<T,U>>, Map.Entry
     return (FunFuturePair<T, U>) FunFuture.super.uponFailure(failureObserver);
   }
 
-  class PairPromise<T,U> extends Promise<Map.Entry<T,U>> implements FunFuturePair<T,U> {}
+  class PairPromise<T,U> extends Promise<Map.Entry<T,U>> implements FunFuturePair<T,U> {
+    public boolean setSuccess(T result1, U result2) {
+      return setSuccess(Pair.of(result1, result2));
+    }
+
+    @Override public FunFuturePair<T, U> completeWith(ListenableFuture<? extends Map.Entry<T, U>> futureResult) {
+      return (FunFuturePair<T, U>) super.completeWith(futureResult);
+    }
+  }
 
   class ForwardingFunFuturePair<T, U> extends FunFuture.ForwardingFunFuture<Map.Entry<T,U>> implements FunFuturePair<T,U> {
     @SuppressWarnings("unchecked")

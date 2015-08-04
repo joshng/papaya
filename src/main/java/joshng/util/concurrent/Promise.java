@@ -7,6 +7,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Uninterruptibles;
 import joshng.util.blocks.SideEffect;
+import joshng.util.blocks.ThrowingRunnable;
 import joshng.util.exceptions.MultiException;
 
 import javax.annotation.Nullable;
@@ -112,6 +113,14 @@ public class Promise<T> extends AbstractFunFuture<T> {
       }
     }, MoreExecutors.sameThreadExecutor());
     return this;
+  }
+
+  public void catchFailure(ThrowingRunnable block) {
+    try {
+      block.run();
+    } catch (Throwable t) {
+      setFailure(t);
+    }
   }
 
   protected void chainResult(ListenableFuture<? extends T> futureResult) {
