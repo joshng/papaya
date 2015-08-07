@@ -66,6 +66,10 @@ public class FunctionalExecutorService extends ForwardingListeningExecutorServic
     };
   }
 
+  public <T> Callable<FunFuture<T>> wrapAsyncCallable(Callable<? extends ListenableFuture<T>> callable) {
+    return () -> submitAsync(callable);
+  }
+
   public <T> AsyncF<T, Nothing> wrapSink(Consumer<T> sink) {
     return wrapFunction(Sink.extendConsumer(sink));
   }
