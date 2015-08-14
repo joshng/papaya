@@ -16,6 +16,7 @@ import joshng.util.blocks.F;
 import joshng.util.blocks.Pred;
 import joshng.util.blocks.Sink;
 import joshng.util.blocks.Source;
+import joshng.util.blocks.ThrowingBiFunction;
 import joshng.util.blocks.ThrowingConsumer;
 import joshng.util.blocks.ThrowingFunction;
 import joshng.util.blocks.ThrowingRunnable;
@@ -42,7 +43,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -66,7 +66,8 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   ListenableFuture<T> delegate();
 
   public static <T> FunFuture<T> immediateFuture(T value) {
-    return newFuture(Futures.immediateFuture(value));
+//    return newFuture(Futures.immediateFuture(value));
+    return new ImmediateSuccess<>(value);
   }
 
   public static <T> FunFuture<T> immediateFailedFuture(Throwable e) {
@@ -480,12 +481,13 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   }
 
   default <V> FunFuturePair<T, V> zip(ListenableFuture<V> other) {
-    return FunFuture.allAsList(ImmutableList.<ListenableFuture<? extends Object>>of(this, extendFuture(other)))
-                    .mapPair((List<Object> input) ->
-                            Pair.of(get(), other.get()));
+    return FunFuture.allAsList(ImmutableList.<ListenableFuture<? extends Object>>of(this, other))
+                    .mapPair(
+                            (List<Object> input) ->
+                                    Pair.of(get(), other.get()));
   }
 
-  default <U, V> FunFuture<V> zipWith(ListenableFuture<U> other, BiFunction<? super T, ? super U, ? extends ListenableFuture<V>> zipper) {
+  default <U, V> FunFuture<V> zipWith(ListenableFuture<U> other, ThrowingBiFunction<? super T, ? super U, ? extends ListenableFuture<V>> zipper) {
     return FunFuture.allAsList(ImmutableList.of(this, other))
                     .thenAsync(() -> zipper.apply(get(), other.get()));
   }
@@ -519,6 +521,20 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     @Override
     public void addListener(Runnable listener, Executor exec) {
       super.addListener(AsyncTrace.getCurrentContext().wrapRunnable(listener), exec);
+    }
+  }
+
+  public static class ImmediateSuccess<T> extends ForwardingFunFuture<T> {
+    public ImmediateSuccess(T value) {
+      super(Futures.immediateFuture(value));
+    }
+
+    @Override public <O> FunFuture<O> map(ThrowingFunction<? super T, ? extends O> function) {
+      return FunFuture.callSafely(() -> new ImmediateSuccess<>(function.apply(get())));
+    }
+
+    @Override public <O> FunFuture<O> flatMap(AsyncFunction<? super T, ? extends O> f) {
+      return FunFuture.callSafely(() -> (ListenableFuture<O>) f.apply(get()));
     }
   }
 

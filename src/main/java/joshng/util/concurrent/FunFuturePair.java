@@ -15,50 +15,62 @@ import java.util.function.Consumer;
  * Date: 6/23/14
  * Time: 12:07 PM
  */
-public interface FunFuturePair<T,U> extends FunFuture<Map.Entry<T,U>>, Map.Entry<FunFuture<T>, FunFuture<U>> {
-  default FunFuture<T> getKey() {
+public interface FunFuturePair<K, V> extends FunFuture<Map.Entry<K, V>>, Map.Entry<FunFuture<K>, FunFuture<V>> {
+  public static <K, V> FunFuturePair<K, V> asFuturePairFromKey(Map.Entry<? extends ListenableFuture<? extends K>, V> entry) {
+    return FunFuture.extendFuture(entry.getKey()).mapPair((K key) -> Pair.of(key, entry.getValue()));
+  }
+
+  public static <K, V> FunFuturePair<K, V> asFuturePairFromValue(Map.Entry<K, ? extends ListenableFuture<? extends V>> entry) {
+    return FunFuture.extendFuture(entry.getValue()).mapPair((V value) -> Pair.of(entry.getKey(), value));
+  }
+
+  public static <K, V> FunFuturePair<K, V> asFuturePair(Map.Entry<? extends ListenableFuture<K>, ? extends ListenableFuture<V>> entry) {
+    return FunFuture.extendFuture(entry.getKey()).zip(entry.getValue());
+  }
+
+  default FunFuture<K> getKey() {
     return map(Pair.getFirstFromPair());
   }
 
-  default FunFuture<U> getValue() {
+  default FunFuture<V> getValue() {
     return map(Pair.getSecondFromPair());
   }
 
-  default <V> FunFuture<V> map2(ThrowingBiFunction<? super T, ? super U, V> bifunction) {
+  default <O> FunFuture<O> map2(ThrowingBiFunction<? super K, ? super V, O> bifunction) {
     return map(pair -> bifunction.apply(pair.getKey(), pair.getValue()));
   }
 
-  default <V> FunFuture<V> flatMap2(ThrowingBiFunction<? super T, ? super U, ? extends ListenableFuture<V>> bifunction) {
+  default <O> FunFuture<O> flatMap2(ThrowingBiFunction<? super K, ? super V, ? extends ListenableFuture<O>> bifunction) {
     return flatMap(pair -> bifunction.apply(pair.getKey(), pair.getValue()));
   }
 
-  default FunFuture<Nothing> foreach2(ThrowingBiConsumer<? super T, ? super U> consumer) {
+  default FunFuture<Nothing> foreach2(ThrowingBiConsumer<? super K, ? super V> consumer) {
     return map2(consumer.returningNothing());
   }
 
   @Override
-  default FunFuture<U> setValue(FunFuture<U> value) {
+  default FunFuture<V> setValue(FunFuture<V> value) {
     throw new UnsupportedOperationException();
   }
 
-  @Override default PairPromise<T, U> newCompletionPromise() {
+  @Override default PairPromise<K, V> newCompletionPromise() {
     return new PairPromise<>();
   }
 
-  @Override default FunFuturePair<T, U> uponCompletion(Runnable sideEffect) {
-    return (FunFuturePair<T, U>) FunFuture.super.uponCompletion(sideEffect);
+  @Override default FunFuturePair<K, V> uponCompletion(Runnable sideEffect) {
+    return (FunFuturePair<K, V>) FunFuture.super.uponCompletion(sideEffect);
   }
 
-  @Override default FunFuturePair<T, U> uponCompletion(final FutureCallback<? super Map.Entry<T, U>> callback) {
-    return (FunFuturePair<T, U>) FunFuture.super.uponCompletion(callback);
+  @Override default FunFuturePair<K, V> uponCompletion(final FutureCallback<? super Map.Entry<K, V>> callback) {
+    return (FunFuturePair<K, V>) FunFuture.super.uponCompletion(callback);
   }
 
-  @Override default FunFuturePair<T, U> uponSuccess(final Consumer<? super Map.Entry<T, U>> successObserver) {
-    return (FunFuturePair<T, U>) FunFuture.super.uponSuccess(successObserver);
+  @Override default FunFuturePair<K, V> uponSuccess(final Consumer<? super Map.Entry<K, V>> successObserver) {
+    return (FunFuturePair<K, V>) FunFuture.super.uponSuccess(successObserver);
   }
 
-  @Override default FunFuturePair<T, U> uponFailure(Consumer<? super Throwable> failureObserver) {
-    return (FunFuturePair<T, U>) FunFuture.super.uponFailure(failureObserver);
+  @Override default FunFuturePair<K, V> uponFailure(Consumer<? super Throwable> failureObserver) {
+    return (FunFuturePair<K, V>) FunFuture.super.uponFailure(failureObserver);
   }
 
   class PairPromise<T,U> extends Promise<Map.Entry<T,U>> implements FunFuturePair<T,U> {
