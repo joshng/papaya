@@ -13,7 +13,7 @@
   </developers>
 
   <properties>
-    <metrics.version>3.0.1</metrics.version>
+    <metrics.version>3.1.1</metrics.version>
   </properties>
 
   <groupId>joshng.papaya</groupId>
@@ -52,7 +52,7 @@
       <version>0.0.6</version>
     </dependency>
     <dependency>
-      <groupId>com.codahale.metrics</groupId> <!-- TODO: this will become io.dropwizard.metrics if upgrading to 3.1+. ugh. -->
+      <groupId>io.dropwizard.metrics</groupId> <!-- TODO: this will become io.dropwizard.metrics if upgrading to 3.1+. ugh. -->
       <artifactId>metrics-core</artifactId>
       <version>${metrics.version}</version>
     </dependency>
