@@ -14,6 +14,8 @@
 
   <properties>
     <metrics.version>3.1.1</metrics.version>
+      <!--<guava.version>18.0</guava.version>-->
+      <guava.version>16.0.1</guava.version>
   </properties>
 
   <groupId>joshng.papaya</groupId>
@@ -31,7 +33,7 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>16.0.1</version>
+      <version>${guava.version}</version>
     </dependency>
     <dependency>
       <groupId>net.sf.trove4j</groupId>

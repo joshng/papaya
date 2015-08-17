@@ -20,14 +20,12 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.IntUnaryOperator;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -52,10 +50,6 @@ public class MoreCollections {
       return new ArrayList();
     }
   };
-
-  public static <T> Set<T> newConcurrentSet() {
-    return Collections.newSetFromMap(new ConcurrentHashMap<T, Boolean>());
-  }
 
   public static <K extends Enum<K>, V> ListMultimap<K, V> newEnumListMultimap(Class<K> keyType) {
     return Multimaps.newListMultimap(Maps.<K, Collection<V>>newEnumMap(keyType), MoreCollections.<V>arrayListFactory());
