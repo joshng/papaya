@@ -1,8 +1,8 @@
 package joshng.util.concurrent;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
 
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -15,7 +15,7 @@ import static com.google.common.base.Preconditions.checkState;
 public abstract class AbstractIndependentCompletionTracker<I, O> extends AbstractCompletionTracker<I,O> {
   private final AtomicBoolean noMore = new AtomicBoolean();
 
-  public AbstractIndependentCompletionTracker(ListeningExecutorService jobCompletionExecutor) {
+  public AbstractIndependentCompletionTracker(Executor jobCompletionExecutor) {
     super(jobCompletionExecutor);
   }
 

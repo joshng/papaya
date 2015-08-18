@@ -98,7 +98,7 @@ public class Promise<T> extends AbstractFunFuture<T> {
   ) {
     if (attachFutureCompletion(input)) {
       input.addListener(() -> completeWithResultOf(() -> function.apply(Uninterruptibles.getUninterruptibly(input))),
-              MoreExecutors.sameThreadExecutor());
+              MoreExecutors.directExecutor());
     }
     return this;
   }
@@ -111,7 +111,7 @@ public class Promise<T> extends AbstractFunFuture<T> {
       } finally {
         completeWith(future);
       }
-    }, MoreExecutors.sameThreadExecutor());
+    }, MoreExecutors.directExecutor());
     return this;
   }
 

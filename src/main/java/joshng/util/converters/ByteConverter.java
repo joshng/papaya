@@ -3,17 +3,13 @@ package joshng.util.converters;
 import com.google.common.base.Converter;
 import joshng.util.blocks.F;
 
-import java.nio.ByteBuffer;
-import java.time.Instant;
-import java.util.UUID;
-
 /**
  * User: josh
  * Date: 5/27/14
  * Time: 5:06 PM
  */
 public abstract class ByteConverter<T> extends Converter<T, byte[]> implements F<T, byte[]> {
-  public static final ByteConverter<byte[]> IDENTITY = new Identity();
+  public static final Converter<byte[], byte[]> IDENTITY = new ForwardingByteConverter<>(Converter.identity());
 
 
   public <U> ByteConverter<U> compose(Converter<U, T> first) {
@@ -54,11 +50,6 @@ public abstract class ByteConverter<T> extends Converter<T, byte[]> implements F
     @Override
     public ByteConverter<byte[]> reverse() {
       return this;
-    }
-
-    @Override
-    public <C> Converter<byte[], C> andThen(Converter<byte[], C> secondConverter) {
-      return secondConverter;
     }
   }
 }

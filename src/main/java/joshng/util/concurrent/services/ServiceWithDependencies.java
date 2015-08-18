@@ -6,7 +6,6 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import joshng.util.blocks.F;
-import joshng.util.blocks.SideEffect;
 import joshng.util.collect.Maybe;
 import joshng.util.concurrent.AsyncF;
 import joshng.util.concurrent.FunFuture;
@@ -30,14 +29,14 @@ public class ServiceWithDependencies extends NotifyingService {
 
   private static final String REQUIRED_SERVICE_PREFIX = "\n  ->";
 
-  private final Service underlyingService;
+  private final BaseService<?> underlyingService;
   private final Set<ServiceWithDependencies> dependentServices = Sets.newHashSet();
   private final Set<ServiceWithDependencies> requiredServices = Sets.newHashSet();
   private final StoppingListener stoppingListener = new StoppingListener();
   private final Set<Service> excludedServiceDependencies = Sets.newHashSet();
 
-  ServiceWithDependencies(Service underlyingService, F<Service, ServiceWithDependencies> wrapperFunction) {
-    underlyingService.addListener(stoppingListener, MoreExecutors.sameThreadExecutor());
+  ServiceWithDependencies(BaseService<?> underlyingService, F<BaseService<?>, ServiceWithDependencies> wrapperFunction) {
+    underlyingService.addListener(stoppingListener, MoreExecutors.directExecutor());
     checkState(!underlyingService.isRunning(), "Underlying service was already running!", underlyingService);
     this.underlyingService = underlyingService;
     logger = LoggerFactory.getLogger(underlyingService.getClass());
@@ -56,7 +55,7 @@ public class ServiceWithDependencies extends NotifyingService {
       if (!excludedServiceDependencies.contains(requiredService.getUnderlyingService()) && requiredServices.add(
               requiredService)) {
         requiredService.addDependentService(this);
-        requiredService.addListener(stoppingListener, MoreExecutors.sameThreadExecutor());
+        requiredService.addListener(stoppingListener, MoreExecutors.directExecutor());
       }
     }
   }
@@ -92,17 +91,16 @@ public class ServiceWithDependencies extends NotifyingService {
   @Override
   protected void doStop() {
     logger.debug("Wrapper stopping... {}", underlyingService);
-    cascadeStateChange(STOP, dependentServices).map(new SideEffect() {
-      public void run() {
-        logger.info("STOPPED: {}", underlyingService);
-        notifyStopped();
-      }
-    });
+    cascadeStateChange(STOP, dependentServices).thenRun(
+            () -> {
+              logger.info("STOPPED: {}", underlyingService);
+              notifyStopped();
+            });
   }
 
   private FunFuture<State> cascadeStateChange(
-          AsyncF<Service, State> stateChange,
-          Set<? extends Service> prerequisites
+          AsyncF<? super BaseService<?>, State> stateChange,
+          Set<? extends BaseService<?>> prerequisites
   ) {
     return FunFuture.allAsList(stateChange.transform(prerequisites)).flatMap(stateChange.bindAsync(underlyingService));
   }

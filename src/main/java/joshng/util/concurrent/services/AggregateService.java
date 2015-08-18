@@ -18,15 +18,15 @@ import static joshng.util.collect.Functional.funList;
  */
 public abstract class AggregateService extends NotifyingService {
 
-  private volatile FunList<? extends Service> componentServices;
+  private volatile FunList<? extends BaseService<?>> componentServices;
 
-  protected abstract Iterable<? extends Service> getComponentServices();
+  protected abstract Iterable<? extends BaseService<?>> getComponentServices();
 
   @Override
   protected final void doStart() {
     componentServices = funList(getComponentServices());
     for (Service service : componentServices) {
-      service.addListener(new ComponentServiceListener(service), MoreExecutors.sameThreadExecutor());
+      service.addListener(new ComponentServiceListener(service), MoreExecutors.directExecutor());
       checkState(!service.isRunning(), "Service was already running", service);
     }
 
@@ -39,7 +39,7 @@ public abstract class AggregateService extends NotifyingService {
     perform(STOP);
   }
 
-  private void perform(AsyncF<Service, State> action) {
+  private void perform(AsyncF<BaseService<?>, State> action) {
     FunFuture.successfulAsList(componentServices.map(action)).map((SideEffect) this::checkHealthy);
   }
 

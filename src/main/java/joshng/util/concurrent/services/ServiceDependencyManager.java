@@ -56,22 +56,22 @@ public class ServiceDependencyManager extends AggregateService {
   }
 
   public static ServiceDependencyManager buildServicesWithDependencies(
-          Iterable<? extends Service> rootServices,
-          Iterable<? extends Map.Entry<? extends Service, ? extends Service>> dependencies
+          Iterable<? extends BaseService<?>> rootServices,
+          Iterable<? extends Map.Entry<? extends BaseService<?>, ? extends BaseService<?>>> dependencies
   ) {
-    Map<Service, ServiceWithDependencies> wrappers = new HashMap<>();
-    F<Service, ServiceWithDependencies> wrapperFunction = F.forMap(wrappers);
+    Map<BaseService<?>, ServiceWithDependencies> wrappers = new HashMap<>();
+    F<BaseService<?>, ServiceWithDependencies> wrapperFunction = F.forMap(wrappers);
 
-    Function<Service, ServiceWithDependencies> factory = service -> new ServiceWithDependencies(service,
+    Function<BaseService<?>, ServiceWithDependencies> factory = service -> new ServiceWithDependencies(service,
             wrapperFunction);
 
-    for (Service service : rootServices) {
+    for (BaseService<?> service : rootServices) {
       wrappers.computeIfAbsent(service, factory); // ensure the root services are wrapped
     }
 
-    for (Map.Entry<? extends Service, ? extends Service> dependency : dependencies) {
-      Service dependent = dependency.getKey();
-      Service required = dependency.getValue();
+    for (Map.Entry<? extends BaseService<?>, ? extends BaseService<?>> dependency : dependencies) {
+      BaseService<?> dependent = dependency.getKey();
+      BaseService<?> required = dependency.getValue();
 
       wrappers.computeIfAbsent(dependent, factory)
               .addRequiredServices(ImmutableList.of(wrappers.get(required)));
@@ -80,7 +80,7 @@ public class ServiceDependencyManager extends AggregateService {
     return new ServiceDependencyManager(ImmutableMap.copyOf(wrappers));
   }
 
-  @Override protected Iterable<? extends Service> getComponentServices() {
+  @Override protected Iterable<? extends BaseService<?>> getComponentServices() {
     return dependencies.values();
   }
 

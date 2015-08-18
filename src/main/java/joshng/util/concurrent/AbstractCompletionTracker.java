@@ -1,8 +1,8 @@
 package joshng.util.concurrent;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
 
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -12,13 +12,13 @@ import java.util.concurrent.atomic.AtomicLong;
  * Time: 11:52 AM
  */
 public abstract class AbstractCompletionTracker<I, O> {
-  private final ListeningExecutorService jobCompletionExecutor;
+  private final Executor jobCompletionExecutor;
   private final Promise<O> completionPromise = Promise.newPromise();
   private final AtomicLong startedCount = new AtomicLong();
   private final AtomicLong completedCount = new AtomicLong();
   private final AtomicBoolean markedComplete = new AtomicBoolean();
 
-  public AbstractCompletionTracker(ListeningExecutorService jobCompletionExecutor) {
+  public AbstractCompletionTracker(Executor jobCompletionExecutor) {
     this.jobCompletionExecutor = jobCompletionExecutor;
   }
 

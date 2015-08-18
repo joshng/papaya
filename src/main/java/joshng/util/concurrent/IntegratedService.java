@@ -1,6 +1,7 @@
 package joshng.util.concurrent;
 
 import com.google.common.util.concurrent.Service;
+import joshng.util.concurrent.services.BaseService;
 
 import java.util.Collection;
 
@@ -10,7 +11,7 @@ import java.util.Collection;
  * Time: 11:19 AM
  */
 public interface IntegratedService extends Service {
-  Collection<? extends Service> getRequiredServices();
+  Collection<? extends BaseService<?>> getRequiredServices();
 
-  Collection<? extends Service> getExcludedServiceDependencies();
+  Collection<? extends BaseService<?>> getExcludedServiceDependencies();
 }

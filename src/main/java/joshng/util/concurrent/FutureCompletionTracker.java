@@ -36,7 +36,7 @@ import joshng.util.collect.Nothing;
  */
 public class FutureCompletionTracker extends AbstractIndependentCompletionTracker<Object, Nothing> {
   public FutureCompletionTracker() {
-    super(MoreExecutors.sameThreadExecutor());
+    super(MoreExecutors.directExecutor());
   }
 
   @Override

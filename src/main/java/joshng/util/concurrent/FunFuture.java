@@ -421,7 +421,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   }
 
   default void addSameThreadListener(Runnable runnable) {
-    addListener(runnable, MoreExecutors.sameThreadExecutor());
+    addListener(runnable, MoreExecutors.directExecutor());
   }
 
   default FunFuture<T> uponCompletion2(Consumer<? super T> successObserver, Consumer<? super Exception> errorObserver) {

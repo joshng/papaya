@@ -1,16 +1,17 @@
 package joshng.util.concurrent.services;
 
 import com.google.common.util.concurrent.AbstractService;
-import com.google.common.util.concurrent.Service;
 
 /**
  * User: josh
  * Date: 7/16/13
  * Time: 8:39 PM
  */
-public abstract class NotifyingService extends BaseService {
-  private final InnerAbstractService delegate = new InnerAbstractService();
-  @Override protected final Service delegate() { return delegate; }
+public abstract class NotifyingService extends BaseService<NotifyingService.InnerAbstractService> {
+  protected NotifyingService() {
+    super(new InnerAbstractService());
+    delegate().wrapper = this;
+  }
 
   /**
    * This method is called by {@link #start} to initiate service startup. The invocation of this
@@ -43,7 +44,7 @@ public abstract class NotifyingService extends BaseService {
    * @throws IllegalStateException if the service is not {@link com.google.common.util.concurrent.Service.State#STARTING}.
    */
   protected final void notifyStarted() {
-    delegate.doNotifyStarted();
+    delegate().doNotifyStarted();
   }
 
   /**
@@ -54,7 +55,7 @@ public abstract class NotifyingService extends BaseService {
    *                               {@link com.google.common.util.concurrent.Service.State#RUNNING}.
    */
   protected final void notifyStopped() {
-    delegate.doNotifyStopped();
+    delegate().doNotifyStopped();
   }
 
   /**
@@ -63,18 +64,20 @@ public abstract class NotifyingService extends BaseService {
    * or otherwise cannot be started nor stopped.
    */
   protected final void notifyFailed(Throwable cause) {
-    delegate.doNotifyFailed(cause);
+    delegate().doNotifyFailed(cause);
   }
 
-  private class InnerAbstractService extends AbstractService {
+  static class InnerAbstractService extends AbstractService {
+    private NotifyingService wrapper;
+
     @Override
     protected void doStart() {
-      NotifyingService.this.doStart();
+      wrapper.doStart();
     }
 
     @Override
     protected void doStop() {
-      NotifyingService.this.doStop();
+      wrapper.doStop();
     }
 
     private void doNotifyStarted() {
@@ -90,7 +93,7 @@ public abstract class NotifyingService extends BaseService {
     }
 
     @Override public String toString() {
-      return serviceName() + " [" + state() + "]";
+      return wrapper.serviceName() + " [" + state() + "]";
     }
   }
 }

@@ -2,7 +2,6 @@ package joshng.util.concurrent.services;
 
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.Service;
 
 import java.util.concurrent.Executor;
 
@@ -11,11 +10,13 @@ import java.util.concurrent.Executor;
  * Date: 7/16/13
  * Time: 10:17 PM
  */
-public abstract class IdleService extends BaseService {
-  private final InnerIdleService delegate = new InnerIdleService();
+public abstract class IdleService extends BaseService<IdleService.InnerIdleService> {
 
-  @Override protected final Service delegate() { return delegate; }
 
+  protected IdleService() {
+    super(new InnerIdleService());
+    delegate().wrapper = this;
+  }
 
   /**
    * Start the service.
@@ -35,34 +36,35 @@ public abstract class IdleService extends BaseService {
     return true;
   }
 
-  private class InnerIdleService extends AbstractIdleService {
+  static class InnerIdleService extends AbstractIdleService {
+    private IdleService wrapper;
     @Override
     protected void startUp() throws Exception {
-      Thread.currentThread().setName(serviceStateString(state()));
-      IdleService.this.startUp();
+      Thread.currentThread().setName(wrapper.serviceStateString(state()));
+      wrapper.startUp();
       // superclass takes care of cleaning up the thread-name later
     }
 
     @Override
     protected void shutDown() throws Exception {
-      Thread.currentThread().setName(serviceStateString(state()));
-      IdleService.this.shutDown();
+      Thread.currentThread().setName(wrapper.serviceStateString(state()));
+      wrapper.shutDown();
       // superclass takes care of cleaning up the thread-name later
     }
 
     @Override
     protected Executor executor() {
       State state = state();
-      if (state == State.STARTING && startUpOnSeparateThread() || shutDownOnSeparateThread()) {
+      if (state == State.STARTING && wrapper.startUpOnSeparateThread() || wrapper.shutDownOnSeparateThread()) {
         return super.executor();
       } else {
-        return MoreExecutors.sameThreadExecutor();
+        return MoreExecutors.directExecutor();
       }
     }
 
     @Override
     protected String serviceName() {
-      return IdleService.this.serviceName();
+      return wrapper.serviceName();
     }
   }
 }

@@ -1,11 +1,12 @@
 package joshng.util.concurrent.services;
 
-import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import joshng.util.blocks.Pred;
 import joshng.util.blocks.Source;
 import joshng.util.concurrent.AsyncF;
 import joshng.util.concurrent.FunFuture;
+import joshng.util.concurrent.Promise;
 import joshng.util.exceptions.FatalErrorHandler;
 import joshng.util.proxy.ProxyUtil;
 
@@ -13,6 +14,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 /**
@@ -20,13 +22,47 @@ import java.util.concurrent.TimeoutException;
  * Date: 7/16/13
  * Time: 10:16 PM
  */
-public abstract class BaseService implements Service {
-  static final AsyncF<Service, State> START = input -> FunFuture.extendFuture(input.start());
+public abstract class BaseService<S extends Service> implements Service {
+  static final AsyncF<BaseService<?>, State> START = input -> FunFuture.extendFuture(input.start());
   private static final Source<State> FAILED_SHUTDOWN_RECOVERY = Source.ofInstance(State.FAILED);
-  static final AsyncF<Service, State> STOP = input -> FunFuture.extendFuture(input.stop())
+  static final AsyncF<BaseService<?>, State> STOP = input -> FunFuture.extendFuture(input.stop())
                                                                .recover(Pred.alwaysTrue(), FAILED_SHUTDOWN_RECOVERY);
 
-  protected abstract Service delegate();
+  private final S delegate;
+  private final AtomicBoolean started = new AtomicBoolean();
+  private final Promise<State> startedPromise = Promise.newPromise();
+  private final Promise<State> stoppedPromise = Promise.newPromise();
+
+  protected BaseService(S delegate) {
+    this.delegate = delegate;
+    delegate.addListener(new Listener() {
+                           @Override public void running() {
+                             startedPromise.setSuccess(state());
+                           }
+
+                           @Override public void terminated(State from) {
+                             startedPromise.setSuccess(from);
+                             stoppedPromise.setSuccess(state());
+                           }
+
+                           @Override public void failed(State from, Throwable failure) {
+                             startedPromise.setFailure(failure);
+                             stoppedPromise.setFailure(failure);
+                           }
+                         }, MoreExecutors.directExecutor());
+  }
+
+  public FunFuture<State> getStartedFuture() {
+    return startedPromise;
+  }
+
+  public FunFuture<State> getStoppedFuture() {
+    return stoppedPromise;
+  }
+
+  protected final S delegate() {
+    return delegate;
+  }
 
   public boolean isRunning() {
     return delegate().isRunning();
@@ -40,20 +76,22 @@ public abstract class BaseService implements Service {
     return delegate().failureCause();
   }
 
-  public ListenableFuture<Service.State> start() {
-    return delegate().start();
+  public FunFuture<Service.State> start() {
+    if (started.compareAndSet(false, true)) delegate().startAsync();
+    return startedPromise;
   }
 
-  public ListenableFuture<Service.State> stop() {
-    return delegate().stop();
+  public FunFuture<Service.State> stop() {
+    delegate.stopAsync();
+    return stoppedPromise;
   }
 
   public Service.State startAndWait() {
-    return delegate().startAndWait();
+    return start().getUnchecked();
   }
 
   public Service.State stopAndWait() {
-    return delegate().stopAndWait();
+    return stop().getUnchecked();
   }
 
   public Service.State state() {

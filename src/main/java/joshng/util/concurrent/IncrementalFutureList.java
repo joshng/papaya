@@ -15,7 +15,7 @@ public class IncrementalFutureList<T> extends AbstractIndependentCompletionTrack
   private final Queue<ListenableFuture<? extends T>> futures = Queues.newLinkedBlockingQueue();
 
   public IncrementalFutureList() {
-    super(MoreExecutors.sameThreadExecutor());
+    super(MoreExecutors.directExecutor());
     getCompletionFuture().uponFailure(new Sink<Throwable>() {
       @Override
       public void accept(Throwable value) {

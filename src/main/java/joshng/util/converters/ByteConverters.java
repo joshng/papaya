@@ -31,9 +31,9 @@ import static joshng.util.collect.Functional.extend;
  */
 public class ByteConverters {
   public static final String DESERIALIZER_ANNOTATION_NAME = "@" + ByteSerializable.Deserializer.class.getSimpleName();
-  private static final LoadingCache<Class<?>, ByteConverter<?>> BY_TYPE = CacheBuilder.newBuilder().build(new CacheLoader<Class<?>, ByteConverter<?>>() {
+  private static final LoadingCache<Class<?>, Converter<?, byte[]>> BY_TYPE = CacheBuilder.newBuilder().build(new CacheLoader<Class<?>, Converter<?, byte[]>>() {
     @Override
-    public ByteConverter<?> load(Class<?> key) throws Exception {
+    public Converter<?, byte[]> load(Class<?> key) throws Exception {
       Class<? extends ByteSerializable> byteSerializableClass = Maybe.asSubclass(key, ByteSerializable.class).getOrThrow("No ByteConverter registered for non-ByteSerializable type", key);
       return getByteSerializableConverter(byteSerializableClass);
     }
@@ -50,18 +50,18 @@ public class ByteConverters {
     ByteConverters.register(byte[].class, ByteConverter.IDENTITY);
   }
 
-  public static <T> void register(Class<T> convertibleType, ByteConverter<? super T> converter) {
+  public static <T> void register(Class<T> convertibleType, Converter<? super T, byte[]> converter) {
     BY_TYPE.put(convertibleType, converter);
   }
 
   @SuppressWarnings("unchecked")
-  public static <T> ByteConverter<T> forType(Class<T> conversionType) {
-    return (ByteConverter<T>) BY_TYPE.getUnchecked(conversionType);
+  public static <T> Converter<T, byte[]> forType(Class<T> conversionType) {
+    return (Converter<T, byte[]>) BY_TYPE.getUnchecked(conversionType);
   }
 
-  private static <I, T extends ByteSerializable<I>> ByteConverter<T> getByteSerializableConverter(Class<T> serializableType) {
+  private static <I, T extends ByteSerializable<I>> Converter<T, byte[]> getByteSerializableConverter(Class<T> serializableType) {
     Class<I> identifierType = ByteSerializable.getRepresentativeType(serializableType);
-    ByteConverter<I> byteConverter = forType(identifierType);
+    Converter<I, byte[]> byteConverter = forType(identifierType);
 
     FunIterable<Method> deserializerMethods = extend(serializableType.getDeclaredMethods()).filter(
             Pred.annotatedWith(
@@ -81,7 +81,7 @@ public class ByteConverters {
       deserializer = repr -> serializableType.cast(method.invoke(null, repr));
     }
 
-    return byteConverter.compose(new Converter<T, I>() {
+    return new Converter<T, I>() {
       @Override
       protected I doForward(T k) {
         return k.getSerializableValue();
@@ -97,6 +97,6 @@ public class ByteConverters {
           throw Throwables.propagate(e);
         }
       }
-    });
+    }.andThen(byteConverter);
   }
 }

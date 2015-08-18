@@ -1,19 +1,17 @@
 package joshng.util.concurrent.services;
 
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
-import com.google.common.util.concurrent.Service;
 
 /**
  * User: josh
  * Date: 7/16/13
  * Time: 10:31 PM
  */
-public abstract class ExecutionThreadService extends BaseService {
-  private final InnerExecutionThreadService delegate = new InnerExecutionThreadService();
+public abstract class ExecutionThreadService extends BaseService<ExecutionThreadService.InnerExecutionThreadService> {
 
-  @Override
-  protected final Service delegate() {
-    return delegate;
+  protected ExecutionThreadService() {
+    super(new InnerExecutionThreadService());
+
   }
 
   /**
@@ -53,30 +51,32 @@ public abstract class ExecutionThreadService extends BaseService {
    */
   protected void shutDown() throws Exception {}
 
-  private class InnerExecutionThreadService extends AbstractExecutionThreadService {
+  static class InnerExecutionThreadService extends AbstractExecutionThreadService {
+    private ExecutionThreadService wrapper;
+
     @Override
     protected void run() throws Exception {
-      ExecutionThreadService.this.run();
+      wrapper.run();
     }
 
     @Override
     protected void startUp() throws Exception {
-      ExecutionThreadService.this.startUp();
+      wrapper.startUp();
     }
 
     @Override
     protected void triggerShutdown() {
-      ExecutionThreadService.this.triggerShutdown();
+      wrapper.triggerShutdown();
     }
 
     @Override
     protected void shutDown() throws Exception {
-      ExecutionThreadService.this.shutDown();
+      wrapper.shutDown();
     }
 
     @Override
     protected String serviceName() {
-      return ExecutionThreadService.this.serviceName();
+      return wrapper.serviceName();
     }
   }
 }

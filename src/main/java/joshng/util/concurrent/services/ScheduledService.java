@@ -10,9 +10,13 @@ import java.util.concurrent.TimeUnit;
  * Date: 8/15/14
  * Time: 11:24 PM
  */
-public abstract class ScheduledService extends BaseService {
-  private final AbstractScheduledService delegate = new InnerScheduledService();
-  @Override protected Service delegate() { return delegate; }
+public abstract class ScheduledService extends BaseService<ScheduledService.InnerScheduledService> {
+
+
+  protected ScheduledService() {
+    super(new InnerScheduledService());
+    delegate().wrapper = this;
+  }
 
   /**
    * Run one iteration of the scheduled task. If any invocation of this method throws an exception,
@@ -60,21 +64,23 @@ public abstract class ScheduledService extends BaseService {
     private Schedule(AbstractScheduledService.Scheduler scheduler) {this.scheduler = scheduler;}
   }
 
-  private class InnerScheduledService extends AbstractScheduledService {
+  static class InnerScheduledService extends AbstractScheduledService {
+    private ScheduledService wrapper;
+
     @Override protected void runOneIteration() throws Exception {
-      ScheduledService.this.runOneIteration();
+     wrapper.runOneIteration();
     }
 
     @Override protected Scheduler scheduler() {
-      return schedule(ScheduledService.Scheduler.INSTANCE).scheduler;
+      return wrapper.schedule(ScheduledService.Scheduler.INSTANCE).scheduler;
     }
 
     @Override protected void startUp() throws Exception {
-      ScheduledService.this.startUp();
+      wrapper.startUp();
     }
 
     @Override protected void shutDown() throws Exception {
-      ScheduledService.this.shutDown();
+      wrapper.shutDown();
     }
   }
 }
