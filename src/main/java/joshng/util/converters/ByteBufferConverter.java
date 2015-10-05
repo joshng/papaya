@@ -14,10 +14,13 @@ public class ByteBufferConverter extends ByteConverter<ByteBuffer> {
     if (buf.hasArray() && buf.array().length == buf.remaining()) {
       return buf.array();
     }
+    return copyBytes(buf);
+  }
+
+  public static byte[] copyBytes(ByteBuffer buf) {
     byte[] copy = new byte[buf.remaining()];
-    buf.mark();
-    buf.get(copy);
-    buf.reset();
+    // use a duplicate to avoid mutating the given buf's position
+    buf.duplicate().get(copy);
     return copy;
   }
 

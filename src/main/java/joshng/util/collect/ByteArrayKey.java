@@ -2,6 +2,7 @@ package joshng.util.collect;
 
 import joshng.util.ByteSerializable;
 import joshng.util.StringUtils;
+import joshng.util.converters.ByteBufferConverter;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -21,9 +22,7 @@ public class ByteArrayKey implements ByteSerializable<byte[]> {
   }
 
   public static ByteArrayKey copyOf(ByteBuffer buffer) {
-    byte[] bytes = new byte[buffer.remaining()];
-    buffer.get(bytes);
-    return new ByteArrayKey(bytes);
+    return new ByteArrayKey(ByteBufferConverter.copyBytes(buffer));
   }
 
   public static ByteArrayKey valueOf(String hex) {
