@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public abstract class BaseService<S extends Service> implements Service {
   static final AsyncF<BaseService<?>, State> START = input -> FunFuture.extendFuture(input.start());
   private static final Source<State> FAILED_SHUTDOWN_RECOVERY = Source.ofInstance(State.FAILED);
-  static final AsyncF<BaseService<?>, State> STOP = input -> FunFuture.extendFuture(input.stop())
+  static final AsyncF<BaseService<?>, State> STOP = input -> input.stop()
                                                                .recover(Pred.alwaysTrue(), FAILED_SHUTDOWN_RECOVERY);
 
   private final S delegate;

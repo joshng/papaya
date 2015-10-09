@@ -11,6 +11,7 @@ import joshng.util.collect.Nothing;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -26,7 +27,7 @@ public class FunctionalExecutorService extends ForwardingListeningExecutorServic
   private final AsyncF submitter = new AsyncF<Callable<Object>, Object>() {
     @Override
     public FunFuture<Object> applyAsync(Callable<Object> input) {
-      return extendFuture(getDelegate().submit(input));
+      return extendFuture(delegate.submit(input));
     }
   };
 
@@ -78,27 +79,36 @@ public class FunctionalExecutorService extends ForwardingListeningExecutorServic
     return FunFuture.<T>dereference(submit(asyncCallable));
   }
 
+  public boolean shutdownWithTimeout(long timeout, TimeUnit unit) throws InterruptedException {
+    shutdown();
+    boolean clean = awaitTermination(timeout, unit);
+    if (!clean) {
+      shutdownNow().forEach(ThreadPoolSaturationPolicy::cancel);
+    }
+    return clean;
+  }
+
   @Override
   public <T> FunFuture<T> submit(Callable<T> task) {
-    return FunFuture.newFuture(super.submit(task));
+    return enhanceFuture(super.submit(task));
   }
 
   @Override
   public FunFuture<?> submit(Runnable task) {
-    return FunFuture.newFuture(super.submit(task));
+    return enhanceFuture(super.submit(task));
   }
 
   @Override
   public <T> FunFuture<T> submit(Runnable task, T result) {
-    return FunFuture.newFuture(super.submit(task, result));
+    return enhanceFuture(super.submit(task, result));
+  }
+
+  protected <T> FunFuture<T> enhanceFuture(ListenableFuture<T> future) {
+    return FunFuture.newFuture(future);
   }
 
   @Override
   protected ListeningExecutorService delegate() {
-    return getDelegate();
-  }
-
-  protected ListeningExecutorService getDelegate() {
     return delegate;
   }
 }

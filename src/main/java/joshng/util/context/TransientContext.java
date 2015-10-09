@@ -22,7 +22,7 @@ import java.util.function.Supplier;
  * Time: 12:14 AM
  */
 public interface TransientContext {
-  static CompositeTransientContext of(TransientContext first, TransientContext second, TransientContext... rest) {
+  static CompositeTransientContext sequence(TransientContext first, TransientContext second, TransientContext... rest) {
     return new CompositeTransientContext(Lists.asList(first, second, rest));
   }
 
@@ -43,7 +43,7 @@ public interface TransientContext {
   State enter();
 
   default TransientContext andThen(TransientContext innerContext) {
-    return of(this, innerContext);
+    return innerContext != NullContext.INSTANCE ? sequence(this, innerContext) : this;
   }
 
   default void runInContext(Runnable r) {

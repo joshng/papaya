@@ -78,7 +78,7 @@ public enum ThreadPoolSaturationPolicy implements RejectedExecutionHandler {
     }
   };
 
-  private static void cancel(Runnable task) {
+  public static void cancel(Runnable task) {
     if (task instanceof Future) ((Future) task).cancel(false);
   }
 
