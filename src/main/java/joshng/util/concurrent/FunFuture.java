@@ -14,6 +14,7 @@ import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.common.util.concurrent.Uninterruptibles;
 import joshng.util.blocks.F;
 import joshng.util.blocks.Pred;
+import joshng.util.blocks.SideEffect;
 import joshng.util.blocks.Sink;
 import joshng.util.blocks.Source;
 import joshng.util.blocks.ThrowingBiFunction;
@@ -446,12 +447,19 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
 
   default FunFuture<T> uponCompletion(final FutureCallback<? super T> callback) {
     return uponCompletion(() -> {
-      try {
-        callback.onSuccess(Uninterruptibles.getUninterruptibly(this));
-      } catch (Throwable e) {
-        callback.onFailure(unwrapExecutionException(e));
-      }
-    });
+              try {
+                T value;
+                try {
+                  value = Uninterruptibles.getUninterruptibly(this);
+                } catch (Throwable e) {
+                  callback.onFailure(unwrapExecutionException(e));
+                  return;
+                }
+                callback.onSuccess(value);
+              } catch (Throwable e) {
+                SideEffect.handleUncaughtException(e);
+              }
+            });
   }
 
   default FunFuture<T> uponSuccess(final Consumer<? super T> successObserver) {
