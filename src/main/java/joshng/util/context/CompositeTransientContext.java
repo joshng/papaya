@@ -5,6 +5,7 @@ import joshng.util.exceptions.MultiException;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.concurrent.Callable;
 
 /**
  * User: josh
@@ -20,6 +21,18 @@ public class CompositeTransientContext implements TransientContext {
 
   public CompositeState enter() {
     return new CompositeState();
+  }
+
+  @Override public <T> T callInContext(Callable<T> callable) throws Exception {
+    return wrapCallable(callable).call();
+  }
+
+  public <T> Callable<T> wrapCallable(Callable<T> callable) {
+    Callable<T> wrapped = callable;
+    for (TransientContext context : contexts) {
+      wrapped = context.wrapCallable(wrapped);
+    }
+    return wrapped;
   }
 
   private class CompositeState implements State {

@@ -22,6 +22,19 @@ public class AsyncContext<T> implements ForwardingMaybe<T>, MutableReference<T> 
   private static final AtomicLong IDENTITY = new AtomicLong();
 
   private final long key = IDENTITY.getAndIncrement();
+  private final T initialValue;
+
+  public static <T> AsyncContext<T> newAsyncContext() {
+    return new AsyncContext<>();
+  }
+
+  public AsyncContext() {
+    this(null);
+  }
+
+  public AsyncContext(T initialValue) {
+    this.initialValue = initialValue;
+  }
 
   public static TransientContext snapshot() {
     TLongObjectMap<Object> values = CURRENT_VALUES.get();
@@ -43,7 +56,15 @@ public class AsyncContext<T> implements ForwardingMaybe<T>, MutableReference<T> 
 
   @SuppressWarnings("unchecked") @Override public T get() {
     TLongObjectMap<Object> values = CURRENT_VALUES.get();
-    return values != null ? (T) values.get(key) : null;
+    if (values != null) {
+      T value = (T) values.get(key);
+      if (value != null) return value;
+    }
+    return initialValue();
+  }
+
+  protected T initialValue() {
+    return initialValue;
   }
 
   public void remove() {

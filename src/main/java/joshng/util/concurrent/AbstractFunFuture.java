@@ -1,7 +1,6 @@
 package joshng.util.concurrent;
 
 import com.google.common.util.concurrent.AbstractFuture;
-import com.google.common.util.concurrent.ListenableFuture;
 
 import java.util.concurrent.Executor;
 
@@ -12,12 +11,7 @@ import java.util.concurrent.Executor;
  */
 public abstract class AbstractFunFuture<T> extends AbstractFuture<T> implements FunFuture<T> {
   @Override
-  public ListenableFuture<T> delegate() {
-    return this;
-  }
-
-  @Override
   public void addListener(Runnable listener, Executor exec) {
-    super.addListener(AsyncTrace.getCurrentContext().wrapRunnable(listener), exec);
+    super.addListener(AsyncContext.snapshot().wrapRunnable(listener), exec);
   }
 }

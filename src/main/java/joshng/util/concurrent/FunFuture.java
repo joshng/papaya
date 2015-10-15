@@ -64,8 +64,6 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   FunFuture<Nothing> NOTHING = Nothing.FUTURE;
   AsyncF<Object, Nothing> REPLACE_WITH_NOTHING = (Object discarded) -> NOTHING;
 
-  ListenableFuture<T> delegate();
-
   public static <T> FunFuture<T> immediateFuture(T value) {
 //    return newFuture(Futures.immediateFuture(value));
     return new ImmediateSuccess<>(value);
@@ -528,7 +526,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
 
     @Override
     public void addListener(Runnable listener, Executor exec) {
-      super.addListener(AsyncTrace.getCurrentContext().wrapRunnable(listener), exec);
+      super.addListener(AsyncContext.snapshot().wrapRunnable(listener), exec);
     }
   }
 

@@ -1,12 +1,13 @@
 package joshng.util.concurrent;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.util.concurrent.ListenableFuture;
 import joshng.util.Reflect;
-import joshng.util.ThreadLocalRef;
 import joshng.util.collect.PersistentSet;
 import joshng.util.context.TransientContext;
 import joshng.util.proxy.ProxyUtil;
@@ -21,7 +22,7 @@ import java.util.concurrent.Callable;
  * Time: 1:53 PM
  */
 public abstract class AsyncTrace implements TransientContext {
-  private static final ThreadLocalRef<PersistentSet<Object>> REF = new ThreadLocalRef<>(PersistentSet.nil());
+  private static final AsyncContext<PersistentSet<Object>> REF = new AsyncContext<>(PersistentSet.nil());
 
   public static PersistentSet<Object> get() {
     return REF.get();
@@ -39,7 +40,7 @@ public abstract class AsyncTrace implements TransientContext {
     return value.isEmpty() ? TransientContext.NULL : new SnapshotAsyncContext(value);
   }
 
-  public static TransientContext getNestedContext(Object additionalState) {
+  public static AsyncTrace getNestedContext(Object additionalState) {
     return new NestedAsyncContext(additionalState);
   }
 
@@ -47,30 +48,33 @@ public abstract class AsyncTrace implements TransientContext {
   private static <E extends Throwable> E annotateThrowable(E error, PersistentSet<Object> value) {
     if (value.isEmpty()) return error;
     //noinspection ThrowableResultOfMethodCallIgnored
-    return (E) ProxyUtil.createProxy(new UniversalInvocationHandler() {
-                                       private String message;
+    return MoreObjects.firstNonNull(
+            (E) ProxyUtil.createProxy(
+                    new UniversalInvocationHandler() {
+                      private String message;
 
-                                       @Override
-                                       protected Object handle(Object proxy, Method method, Object[] args) throws Throwable {
-                                         if (method.getName().equals("fillInStackTrace") && args.length == 0) return proxy;
-                                         if (method.getName().equals("getMessage") && args.length == 0) return getMessage();
-                                         if (method.equals(GET_CONTEXT)) return value;
-                                         return ACCESSIBLE_THROWABLE_METHODS.getUnchecked(method).invoke(error, args);
-                                       }
+                      @Override
+                      protected Object handle(Object proxy, Method method, Object[] args) throws Throwable {
+                        if (method.getName().equals("fillInStackTrace") && args.length == 0) return proxy;
+                        if (method.getName().equals("getMessage") && args.length == 0) return getMessage();
+                        if (method.equals(GET_CONTEXT)) return value;
+                        return ACCESSIBLE_THROWABLE_METHODS.getUnchecked(method).invoke(error, args);
+                      }
 
-                                       private String getMessage() {
-                                         if (message == null) {
-                                           String rawMessage = Strings.nullToEmpty(error.getMessage());
-                                           message = Joiner.on("\n  ").appendTo(
-                                                   new StringBuilder(rawMessage)
-                                                           .append("\nAsyncContext:\n  "),
-                                                   value
-                                           ).toString();
-                                         }
-                                         return message;
-                                       }
-                                     },
-            error.getClass(), false, Annotated.class);
+                      private String getMessage() {
+                        if (message == null) {
+                          String rawMessage = Strings.nullToEmpty(error.getMessage());
+                          message = Joiner.on("\n  ").appendTo(
+                                  new StringBuilder(rawMessage)
+                                          .append("\nAsyncContext:\n  "),
+                                  value
+                          ).toString();
+                        }
+                        return message;
+                      }
+                    },
+                    error.getClass(), true, Annotated.class
+            ), error);
   }
 
   public interface Annotated {
@@ -104,6 +108,13 @@ public abstract class AsyncTrace implements TransientContext {
     } finally {
       REF.set(parent);
     }
+  }
+
+  @Override public <T> FunFuture<T> callInContextAsync(Callable<? extends ListenableFuture<T>> futureBlock) {
+    PersistentSet<Object> newContext = getNewContext(get());
+    return FunFuture.<T>callSafely(() -> callInContext(futureBlock)).recover(e -> !(e instanceof Annotated), e -> {
+              throw annotateThrowable(e, newContext);
+            });
   }
 
   abstract PersistentSet<Object> getNewContext(PersistentSet<Object> existingContext);
