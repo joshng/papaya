@@ -164,6 +164,10 @@ public interface FunPairs<K, V> extends FunIterable<Map.Entry<K, V>> {
     return map(transformer.tupled());
   }
 
+  default <O> FunIterable<O> flatMap2(F2<? super K, ? super V, ? extends Iterable<O>> transformer) {
+    return flatMap(transformer.tupled());
+  }
+
   default void foreach2(BiConsumer<? super K, ? super V> visitor) {
     foreach(e -> visitor.accept(e.getKey(), e.getValue()));
   }
