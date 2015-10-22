@@ -11,7 +11,7 @@ public abstract class ExecutionThreadService extends BaseService<ExecutionThread
 
   protected ExecutionThreadService() {
     super(new InnerExecutionThreadService());
-
+    delegate().wrapper = this;
   }
 
   /**
