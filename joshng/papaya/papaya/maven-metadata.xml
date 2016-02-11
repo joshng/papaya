@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <groupId>joshng.papaya</groupId>
+  <artifactId>papaya</artifactId>
+  <versioning>
+    <versions>
+      <version>0-SNAPSHOT</version>
+    </versions>
+    <lastUpdated>20160211065829</lastUpdated>
+  </versioning>
+</metadata>
