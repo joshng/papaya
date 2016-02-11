@@ -2,8 +2,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <name>papaya</name>
-  <description>Various enhancements to google's guava utility library.</description>
+  <name>papaya-guice</name>
+  <description>Utilities for lifecycle-managed services using papaya and guice</description>
   <url>https://github.com/joshng/papaya</url>
   <developers>
     <developer>
@@ -13,13 +13,12 @@
   </developers>
 
   <properties>
-    <metrics.version>3.1.2</metrics.version>
-    <guava.version>19.0</guava.version>
+    <guice.version>4.0</guice.version>
     <github.global.server>github</github.global.server>
   </properties>
 
   <groupId>joshng.papaya</groupId>
-  <artifactId>papaya</artifactId>
+  <artifactId>papaya-guice</artifactId>
   <version>0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
@@ -30,76 +29,29 @@
   </scm>
 
   <distributionManagement>
-      <repository>
-          <id>internal.repo</id>
-          <name>Temporary Staging Repository</name>
-          <url>file://${project.build.directory}/mvn-repo</url>
-      </repository>
+    <repository>
+      <id>internal.repo</id>
+      <name>Temporary Staging Repository</name>
+      <url>file://${project.build.directory}/mvn-repo</url>
+    </repository>
   </distributionManagement>
 
   <dependencies>
     <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-      <version>${guava.version}</version>
+      <groupId>joshng.papaya</groupId>
+      <artifactId>papaya</artifactId>
+      <version>0-SNAPSHOT</version>
     </dependency>
     <dependency>
-      <groupId>net.sf.trove4j</groupId>
-      <artifactId>trove4j</artifactId>
-      <version>3.0.3</version>
+      <groupId>com.google.inject</groupId>
+      <artifactId>guice</artifactId>
+      <version>${guice.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.pcollections</groupId>
-      <artifactId>pcollections</artifactId>
-      <version>2.1.2</version>
+      <groupId>com.google.inject.extensions</groupId>
+      <artifactId>guice-multibindings</artifactId>
+      <version>${guice.version}</version>
     </dependency>
-
-
-
-    <dependency>
-      <groupId>com.github.mdr</groupId>
-      <artifactId>ascii-graphs_2.10</artifactId>
-      <version>0.0.6</version>
-    </dependency>
-    <dependency>
-      <groupId>io.dropwizard.metrics</groupId> <!-- TODO: this will become io.dropwizard.metrics if upgrading to 3.1+. ugh. -->
-      <artifactId>metrics-core</artifactId>
-      <version>${metrics.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.google.code.findbugs</groupId>
-      <artifactId>jsr305</artifactId>
-      <version>2.0.3</version>
-    </dependency>
-    <dependency>
-      <groupId>cglib</groupId>
-      <artifactId>cglib-nodep</artifactId>
-      <version>3.1</version>
-      <exclusions>
-        <exclusion>
-          <groupId>asm</groupId>
-          <artifactId>asm</artifactId>
-        </exclusion>
-      </exclusions>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>org.ow2.asm</groupId>
-      <artifactId>asm</artifactId>
-      <version>5.0.1</version>
-      <!--<optional>true</optional>-->
-    </dependency>
-    <dependency>
-      <groupId>org.objenesis</groupId>
-      <artifactId>objenesis</artifactId>
-      <version>2.1</version>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>1.7.6</version>
-    </dependency>
-
 
     <dependency>
       <groupId>junit</groupId>
@@ -185,13 +137,6 @@
       </plugins>
     </pluginManagement>
     <plugins>
-      <plugin>
-        <artifactId>maven-deploy-plugin</artifactId>
-        <version>2.8.1</version>
-        <configuration>
-          <altDeploymentRepository>internal.repo::default::file://${project.build.directory}/mvn-repo</altDeploymentRepository>
-        </configuration>
-      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-scm-plugin</artifactId>
