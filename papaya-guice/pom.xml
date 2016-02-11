@@ -4,7 +4,7 @@
 
   <name>papaya-guice</name>
   <description>Utilities for lifecycle-managed services using papaya and guice</description>
-  <url>https://github.com/joshng/papaya-guice</url>
+  <url>https://github.com/joshng/papaya</url>
   <developers>
     <developer>
       <organization>joshng.com</organization>
@@ -13,7 +13,9 @@
   </developers>
 
   <properties>
-    <guice.version>4.0-beta5</guice.version>
+    <guice.version>4.0</guice.version>
+    <github.global.server>github</github.global.server>
+    <local.maven.repository.path>${project.build.directory}/mvn-repo</local.maven.repository.path>
   </properties>
 
   <groupId>joshng.papaya</groupId>
@@ -22,10 +24,18 @@
   <packaging>jar</packaging>
 
   <scm>
-    <url>https://github.com/joshng/papaya-guice</url>
-    <developerConnection>scm:git:git@github.com:joshng/papaya-guice.git</developerConnection>
+    <url>https://github.com/joshng/papaya</url>
+    <developerConnection>scm:git:git@github.com:joshng/papaya.git</developerConnection>
     <tag>HEAD</tag>
   </scm>
+
+  <distributionManagement>
+    <repository>
+      <id>internal.repo</id>
+      <name>Temporary Staging Repository</name>
+      <url>file://${local.maven.repository.path}</url>
+    </repository>
+  </distributionManagement>
 
   <dependencies>
     <dependency>
@@ -92,38 +102,9 @@
           <version>2.8</version>
         </plugin>
         <plugin>
-          <artifactId>maven-release-plugin</artifactId>
-          <version>2.4.2</version>
-          <configuration>
-            <arguments>-Dgpg.passphrase=${gpg.passphrase}</arguments>
-            <providerImplementations>
-              <git>jgit</git>
-            </providerImplementations>
-          </configuration>
-          <dependencies>
-            <dependency>
-              <groupId>org.apache.maven.scm</groupId>
-              <artifactId>maven-scm-provider-jgit</artifactId>
-              <version>1.9</version>
-            </dependency>
-          </dependencies>
-        </plugin>
-        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-scm-plugin</artifactId>
           <version>1.9</version>
-          <configuration>
-            <connectionType>developerConnection</connectionType>
-            <providerImplementations>
-              <git>jgit</git>
-            </providerImplementations>
-          </configuration>
-          <dependencies>
-            <dependency>
-              <groupId>org.apache.maven.scm</groupId>
-              <artifactId>maven-scm-provider-jgit</artifactId>
-              <version>1.9</version>
-            </dependency>
-          </dependencies>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -133,8 +114,64 @@
         <artifactId>maven-scm-plugin</artifactId>
         <version>1.9</version>
         <configuration>
-
+          <connectionType>developerConnection</connectionType>
+          <providerImplementations>
+            <git>jgit</git>
+          </providerImplementations>
         </configuration>
+        <executions>
+          <execution>
+            <id>check out current state of repository</id>
+            <phase>deploy</phase>
+            <goals>
+              <goal>checkout</goal>
+            </goals>
+            <configuration>
+              <checkoutDirectory>${local.maven.repository.path}</checkoutDirectory>
+              <connectionType>developerConnection</connectionType>
+              <developerConnectionUrl>scm:git:https://github.com/joshng/papaya.git</developerConnectionUrl>
+              <scmVersion>mvn-repo</scmVersion>
+              <scmVersionType>branch</scmVersionType>
+              <providerImplementations>
+                <git>jgit</git>
+              </providerImplementations>
+            </configuration>
+          </execution>
+        </executions>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.maven.scm</groupId>
+            <artifactId>maven-scm-provider-jgit</artifactId>
+            <version>1.9</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <version>2.8.1</version>
+        <configuration>
+          <altDeploymentRepository>internal.repo::default::file://${local.maven.repository.path}</altDeploymentRepository>
+        </configuration>
+        <executions>
+          <execution>
+            <id>default-deploy</id>
+            <configuration>
+              <skip>true</skip>
+              <!-- need to disable default-deploy otherwise it'll run before our git clone above -->
+            </configuration>
+          </execution>
+          <execution>
+            <id>deploy artifacts to checked out repository</id>
+            <phase>deploy</phase>
+            <goals>
+              <goal>deploy</goal>
+            </goals>
+            <configuration>
+              <altDeploymentRepository>build.repo::default::file://${local.maven.repository.path}</altDeploymentRepository>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -154,6 +191,31 @@
             <goals>
               <goal>jar-no-fork</goal>
             </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>com.github.github</groupId>
+        <artifactId>site-maven-plugin</artifactId>
+        <version>0.11</version>
+        <configuration>
+          <message>Maven artifacts for ${project.version}</message>  <!-- git commit message -->
+          <noJekyll>true</noJekyll>                                  <!-- disable webpage processing -->
+          <outputDirectory>${local.maven.repository.path}</outputDirectory> <!-- matches distribution management repository url above -->
+          <branch>refs/heads/mvn-repo</branch>                       <!-- remote branch name -->
+          <includes><include>**/*</include></includes>
+          <excludes>.git/**/*</excludes>
+          <repositoryName>papaya</repositoryName>      <!-- github repo name -->
+          <repositoryOwner>joshng</repositoryOwner>    <!-- github username  -->
+          <merge>true</merge>
+        </configuration>
+        <executions>
+          <!-- run site-maven-plugin's 'site' target as part of the build's normal 'deploy' phase -->
+          <execution>
+            <goals>
+              <goal>site</goal>
+            </goals>
+            <phase>deploy</phase>
           </execution>
         </executions>
       </plugin>
