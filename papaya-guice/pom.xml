@@ -39,7 +39,7 @@
 
   <dependencies>
     <dependency>
-      <groupId>joshng.papaya</groupId>
+      <groupId>com.joshng.util</groupId>
       <artifactId>papaya</artifactId>
       <version>0-SNAPSHOT</version>
     </dependency>
