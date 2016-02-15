@@ -1,7 +1,7 @@
 package com.joshng.util.collect;
 
-import com.joshng.util.ByteSerializable;
-import com.joshng.util.StringUtils;
+import com.joshng.util.io.ByteSerializable;
+import com.joshng.util.string.StringUtils;
 import com.joshng.util.converters.ByteBufferConverter;
 
 import java.nio.ByteBuffer;

@@ -1,16 +1,15 @@
 package com.joshng.util.exceptions;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.ObjectArrays;
+import com.joshng.util.blocks.Pred;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Predicate;
+
+import static com.joshng.util.collect.Functional.extend;
 
 /**
  * User: josh
@@ -37,7 +36,7 @@ public class StackTraceCleaner {
   }
 
   public void addClassNameFilter(Predicate<String> orFilter) {
-    classNameFilter = Predicates.or(classNameFilter, orFilter);
+    classNameFilter = classNameFilter.or(orFilter);
   }
 
   /**
@@ -50,16 +49,10 @@ public class StackTraceCleaner {
   /**
    * builds a predicate that will match the provided classes, as well as any named inner classes declared inside them
    */
-  public static Predicate<String> buildClassNameFilter(Iterable<Class<?>> classesToFilter) {
-    return Predicates.in(ImmutableSet.copyOf(Iterables.concat(Iterables.transform(classesToFilter, new Function<Class<?>, Iterable<String>>() {
-      public Iterable<String> apply(Class<?> from) {
-        return Iterables.transform(Arrays.asList(ObjectArrays.concat(from, from.getDeclaredClasses())), new Function<Class<?>, String>() {
-          public String apply(Class<?> from) {
-            return from.getName();
-          }
-        });
-      }
-    }))));
+  public static Pred<String> buildClassNameFilter(Iterable<Class<?>> classesToFilter) {
+    return extend(classesToFilter)
+            .flatMap(cls -> extend(cls.getDeclaredClasses()).prepend(cls).map(Class::getName))
+            .toSet()::contains;
   }
 
   /**
@@ -75,7 +68,7 @@ public class StackTraceCleaner {
    * as well as any "Enhanced" classes (ie, those whose names contain '$$'
    */
   public static Predicate<String> buildEnhancedClassNameFilter(Iterable<Class<?>> classesToFilter) {
-    return Predicates.or(buildClassNameFilter(classesToFilter), Predicates.containsPattern("\\$\\$"));
+    return buildClassNameFilter(classesToFilter).or(Predicates.containsPattern("\\$\\$")::apply);
   }
 
 
@@ -95,6 +88,6 @@ public class StackTraceCleaner {
   }
 
   public boolean isFiltered(String className) {
-    return classNameFilter.apply(className) || className.contains("$$");
+    return classNameFilter.test(className) || className.contains("$$");
   }
 }

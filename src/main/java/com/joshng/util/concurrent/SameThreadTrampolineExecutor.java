@@ -3,7 +3,6 @@ package com.joshng.util.concurrent;
 import com.google.common.collect.Queues;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import com.joshng.util.ThreadLocalRef;
 
 import java.util.List;
 import java.util.Queue;

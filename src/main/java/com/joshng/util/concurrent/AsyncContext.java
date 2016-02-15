@@ -3,7 +3,6 @@ package com.joshng.util.concurrent;
 import com.google.common.base.Objects;
 import gnu.trove.map.TLongObjectMap;
 import gnu.trove.map.hash.TLongObjectHashMap;
-import com.joshng.util.ThreadLocalRef;
 import com.joshng.util.collect.ForwardingMaybe;
 import com.joshng.util.collect.Maybe;
 import com.joshng.util.collect.MutableReference;

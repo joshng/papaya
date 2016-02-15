@@ -1,6 +1,6 @@
 package com.joshng.util.concurrent;
 
-import com.joshng.util.StringIdentifier;
+import com.joshng.util.identity.StringIdentifier;
 import com.joshng.util.collect.Maybe;
 import com.joshng.util.exceptions.UncheckedInterruptedException;
 import com.joshng.util.context.TransientContext;

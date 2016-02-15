@@ -7,7 +7,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.joshng.util.Reflect;
+import com.joshng.util.reflect.Reflect;
 import com.joshng.util.collect.PersistentSet;
 import com.joshng.util.context.TransientContext;
 import com.joshng.util.proxy.ProxyUtil;

@@ -4,7 +4,6 @@ import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimaps;
-import com.joshng.util.Comparison;
 import com.joshng.util.collect.FunIterable;
 import com.joshng.util.collect.Functional;
 import com.joshng.util.collect.Maybe;
@@ -24,7 +23,7 @@ import java.util.function.Predicate;
  */
 @FunctionalInterface
 public interface Pred<T> extends Predicate<T>, com.google.common.base.Predicate<T> {
-  public static final Pred<Boolean> IDENTITY = extendFunction(F.<Boolean>identity());
+  public static final Pred<Boolean> IDENTITY = extendFunction(F.<Boolean>identityF());
 
   default boolean apply(T value) {
     return test(value);

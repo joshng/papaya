@@ -4,28 +4,20 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Ordering;
 import com.google.common.reflect.TypeToken;
-import com.joshng.util.blocks.Pred;
-import com.joshng.util.Reflect;
-import com.joshng.util.StringUtils;
 import com.joshng.util.blocks.F;
 import com.joshng.util.blocks.F2;
+import com.joshng.util.blocks.Pred;
 import com.joshng.util.blocks.Sink;
 import com.joshng.util.concurrent.AsyncF;
 import com.joshng.util.concurrent.AsyncMaybeF;
 import com.joshng.util.concurrent.FunFutureMaybe;
+import com.joshng.util.reflect.Reflect;
+import com.joshng.util.string.StringUtils;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
+import java.util.*;
+import java.util.function.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -43,32 +35,6 @@ public abstract class Maybe<T> implements Iterable<T> {
       return from.getOrThrow();
     }
   };
-  private static final F FLATTENER = new F<Iterable<Maybe<Object>>, FunIterable<Object>>() {
-    public FunIterable<Object> apply(Iterable<Maybe<Object>> input) {
-      return Maybe.<Object>flatten(input);
-    }
-  };
-
-  public static <T> F<T, Maybe<T>> of() {
-    return new F<T, Maybe<T>>() {
-      public Maybe<T> apply(T t) {
-        return Maybe.of(t);
-      }
-    };
-  }
-
-  public static <T> F<T, Maybe<T>> definitely() {
-    return new F<T, Maybe<T>>() {
-      @Override
-      public Maybe<T> apply(T input) {
-        return definitely(input);
-      }
-    };
-  }
-
-//    public static <I, O> Maybe<O> apply(Maybe<? extends Function<? super I, ? extends O>> f, final I input) {
-//        return apply(f, Maybe.definitely(input));
-//    }
 
   public static <I, O> Maybe<O> apply(Maybe<? extends Function<? super I, ? extends O>> f, final Maybe<? extends I> input) {
     return f.flatMap(new Function<Function<? super I, ? extends O>, Maybe<O>>() {
@@ -204,6 +170,8 @@ public abstract class Maybe<T> implements Iterable<T> {
     return valueMatches(predicate.negate());
   }
 
+  public abstract Optional<T> toOptional();
+
   private Maybe() {
   }
 
@@ -221,11 +189,6 @@ public abstract class Maybe<T> implements Iterable<T> {
       if (value != null) return definitely(value);
     }
     return not();
-  }
-
-  @SuppressWarnings("unchecked")
-  public static <T> F<Iterable<? extends Maybe<T>>, FunIterable<T>> flattener() {
-    return FLATTENER;
   }
 
   @SuppressWarnings({"unchecked"})
@@ -298,6 +261,10 @@ public abstract class Maybe<T> implements Iterable<T> {
   public static <K, V> Pair<K, V> of(@Nullable Map.Entry<? extends K, ? extends V> entry) {
     if (entry == null) return noPair();
     return new Pair.DefinitePair<K, V>(entry);
+  }
+
+  public static <T> Maybe<T> ofOptional(Optional<T> opt) {
+    return of(opt.orElse(null));
   }
 
   public static <T> Maybe<T> asInstance(@Nullable Object value, Class<T> castClass) {
@@ -497,6 +464,11 @@ public abstract class Maybe<T> implements Iterable<T> {
     @Override
     public boolean valueMatches(Predicate<? super T> predicate) {
       return predicate.test(value);
+    }
+
+    @Override
+    public Optional<T> toOptional() {
+      return Optional.of(value);
     }
 
     @SuppressWarnings({"unchecked"})
@@ -763,6 +735,11 @@ public abstract class Maybe<T> implements Iterable<T> {
       }
 
       @Override
+      public Optional<Map.Entry<K, V>> toOptional() {
+        return Optional.of(entry);
+      }
+
+      @Override
       public Iterator<Map.Entry<K, V>> iterator() {
         return Iterators.singletonIterator(entry);
       }
@@ -792,7 +769,7 @@ public abstract class Maybe<T> implements Iterable<T> {
 
     @Override
     public Object getOrThrow(String format, Object... args) throws NoSuchElementException {
-      throw new NoSuchElementException(StringUtils.format(format, args));
+      throw new NoSuchElementException(StringUtils.sformat(format, args));
     }
 
     @Override
@@ -941,6 +918,11 @@ public abstract class Maybe<T> implements Iterable<T> {
     }
 
     @Override
+    public Optional toOptional() {
+      return Optional.empty();
+    }
+
+    @Override
     public Maybe cast(Class castClass) {
       return this;
     }
@@ -952,7 +934,7 @@ public abstract class Maybe<T> implements Iterable<T> {
 
     @Override
     public Iterator iterator() {
-      return Iterators.emptyIterator();
+      return Collections.emptyIterator();
     }
 
     @SuppressWarnings({"EqualsWhichDoesntCheckParameterClass"})

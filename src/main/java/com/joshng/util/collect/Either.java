@@ -1,11 +1,9 @@
 package com.joshng.util.collect;
 
 import com.joshng.util.blocks.F;
-import com.joshng.util.Reflect;
+import com.joshng.util.reflect.Reflect;
 
 import java.util.function.Function;
-
-import static com.joshng.util.collect.Maybe.definitely;
 
 /**
  * User: josh

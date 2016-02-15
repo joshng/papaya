@@ -6,7 +6,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.joshng.util.blocks.ThrowingFunction;
 import com.joshng.util.collect.Either;
-import com.joshng.util.Reflect;
+import com.joshng.util.reflect.Reflect;
 
 import java.util.function.Consumer;
 import java.util.function.Function;

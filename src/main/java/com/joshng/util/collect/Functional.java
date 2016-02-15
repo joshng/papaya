@@ -5,10 +5,10 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.*;
 import com.joshng.util.blocks.F;
 import com.joshng.util.blocks.F2;
-import com.joshng.util.Reflect;
-import com.joshng.util.ThreadLocalRef;
-import com.joshng.util.ThreadLocals;
 import com.joshng.util.concurrent.LazyReference;
+import com.joshng.util.concurrent.ThreadLocalRef;
+import com.joshng.util.concurrent.ThreadLocals;
+import com.joshng.util.reflect.Reflect;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -17,8 +17,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 import java.util.function.ToIntFunction;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.joshng.util.Reflect.blindCast;
+import static com.joshng.util.reflect.Reflect.blindCast;
 
 /**
  * User: josh
@@ -29,14 +28,14 @@ import static com.joshng.util.Reflect.blindCast;
 /**
  * <p>
  * The entry-point for {@link FunIterable}, {@link FunList}, {@link FunSet}, and {@link FunPairs}:
- * wrappers around Iterables that offer higher-order functions (eg, {@link #map}(..), {@link #filter}(..))
+ * wrappers around Iterables that offer higher-order functions (eg, {@link FunIterable#map}(..), {@link FunIterable#filter}(..))
  * and other functional-style utilities.
  *
  * @see FunList
  * @see FunSet
  * @see FunPairs
  */
-public interface Functional<T> extends FunIterable<T> {
+public class Functional {
   /**
    * Wraps an existing Iterable with a FunIterable.  Note that this method does not make a copy or invoke the provided
    * Iterable in any way (besides checking {@link Collection#isEmpty} if it is a {@link Collection}):
@@ -46,6 +45,7 @@ public interface Functional<T> extends FunIterable<T> {
    * @param delegate the iterable to extend
    * @return a FunIterable wrapping the underlying iterable.
    */
+  @SuppressWarnings("unchecked")
   public static <T> FunIterable<T> extend(final Iterable<? extends T> delegate) {
     if (delegate instanceof FunIterable) return (FunIterable<T>) delegate;
     if (MoreCollections.isCollectionThatIsEmpty(delegate)) return Functional.<T>empty();
@@ -61,7 +61,7 @@ public interface Functional<T> extends FunIterable<T> {
    */
   public static <T> FunIterable<T> extend(T[] items) {
     if (items.length == 0) return Functional.<T>empty();
-    return new FunctionalIterable<T>(Arrays.asList(items));
+    return new FunctionalIterable<>(Arrays.asList(items));
   }
 
   public static <T> FunIterable<T> extend(Iterator<T> iterator) {
@@ -79,11 +79,7 @@ public interface Functional<T> extends FunIterable<T> {
     return Reflect.blindCast(EXTENDER);
   }
 
-  static final F EXTENDER = new F<Iterable<Object>, FunIterable<Object>>() {
-    public FunIterable<Object> apply(Iterable<Object> input) {
-      return extend(input);
-    }
-  };
+  static final F EXTENDER = (F<Iterable<Object>, FunIterable<Object>>) Functional::extend;
 
   static final ThreadLocalRef<ExecutorService> activeParallelThreadPool = ThreadLocals.newThreadLocalRef();
 
@@ -100,8 +96,8 @@ public interface Functional<T> extends FunIterable<T> {
    * incurs a copy of the collection prior to performing operations on it.<br/><br/>
    * <p>
    * Typically, functional traversals should instead begin with {@link #extend(Iterable)},
-   * invoking {@link #toList()} or {@link #toSet()} (or simply iterating with a <em>{@code for}</em> loop) only after all
-   * desired {@link #map}s and {@link #filter}s are expressed.
+   * invoking {@link FunIterable#toList()} or {@link FunIterable#toSet()} (or simply iterating with a <em>{@code for}</em> loop) only after all
+   * desired {@link FunIterable#map}s and {@link FunIterable#filter}s are expressed.
    *
    * @return a new FunList containing the items from the provided Iterable. Subsequent changes to the Iterable
    * will <b>not</b> be reflected in the FunList.
@@ -112,7 +108,7 @@ public interface Functional<T> extends FunIterable<T> {
   }
 
   public static <T> FunList<T> funListOf(T singleton) {
-    return new FunctionalList<T>(ImmutableList.of(singleton));
+    return new FunctionalList<>(ImmutableList.of(singleton));
   }
 
   @SafeVarargs
@@ -135,8 +131,8 @@ public interface Functional<T> extends FunIterable<T> {
    * operations on it.<br/><br/>
    * <p>
    * Typically, functional traversals should instead begin with {@link #extend(Iterable)},
-   * invoking {@link #toList()} or {@link #toSet()} (or simply iterating with a <em>{@code for}</em> loop) only after all
-   * desired {@link #map}s and {@link #filter}s are expressed.
+   * invoking {@link FunIterable#toList()} or {@link FunIterable#toSet()} (or simply iterating with a <em>{@code for}</em> loop) only after all
+   * desired {@link FunIterable#map}s and {@link FunIterable#filter}s are expressed.
    *
    * @return a new FunSet containing the items from the provided Iterable. Subsequent changes to the Iterable
    * will <b>not</b> be reflected in the FunSet.
@@ -146,7 +142,7 @@ public interface Functional<T> extends FunIterable<T> {
   }
   
   public static <T> FunSet<T> funSetOf(T singleton) {
-    return new FunctionalSet<T>(ImmutableSet.of(singleton));
+    return new FunctionalSet<>(ImmutableSet.of(singleton));
   }
 
   @SafeVarargs
@@ -451,7 +447,7 @@ public interface Functional<T> extends FunIterable<T> {
     }
 
     public Iterator iterator() {
-      return Iterators.emptyIterator();
+      return Collections.emptyIterator();
     }
 
     public LazyReference lazyListSupplier() {
@@ -497,26 +493,3 @@ public interface Functional<T> extends FunIterable<T> {
   }
 }
 
-class FunctionalIterable<T> implements Functional<T> {
-  private final Iterable<T> delegate;
-
-  public FunctionalIterable(Iterable<T> delegate) {
-    this.delegate = checkNotNull(delegate, "iterable");
-  }
-
-  @Override
-  public Iterable<T> delegate() {
-    return delegate;
-  }
-
-  @SuppressWarnings({"EqualsWhichDoesntCheckParameterClass"})
-  @Override
-  public boolean equals(@Nullable Object object) {
-    return object == this || delegate().equals(object);
-  }
-
-  @Override
-  public int hashCode() {
-    return delegate().hashCode();
-  }
-}

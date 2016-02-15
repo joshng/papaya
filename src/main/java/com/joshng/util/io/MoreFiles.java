@@ -16,7 +16,6 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.joshng.util.collect.Maybe.definitely;
 
 /**
  * User: josh

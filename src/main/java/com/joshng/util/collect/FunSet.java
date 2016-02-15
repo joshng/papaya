@@ -7,7 +7,7 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import static com.joshng.util.Reflect.blindCast;
+import static com.joshng.util.reflect.Reflect.blindCast;
 
 /**
  * User: josh

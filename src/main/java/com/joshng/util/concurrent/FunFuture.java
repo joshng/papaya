@@ -32,7 +32,6 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   AsyncF<Object, Nothing> REPLACE_WITH_NOTHING = (Object discarded) -> NOTHING;
 
   public static <T> FunFuture<T> immediateFuture(T value) {
-//    return newFuture(Futures.immediateFuture(value));
     return new ImmediateSuccess<>(value);
   }
 

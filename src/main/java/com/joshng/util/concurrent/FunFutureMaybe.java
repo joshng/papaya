@@ -20,8 +20,7 @@ import java.util.function.Supplier;
  */
 public interface FunFutureMaybe<T> extends FunFuture<Maybe<T>> {
   FunFutureMaybe EMPTY_FUTURE = new Not();
-  F MAYBE_WRAPPER = FunFuture.maybeMapper(Maybe.of());
-  F<Maybe<?>, Boolean> IS_DEFINED = Maybe.IS_DEFINED.asFunction();
+  F MAYBE_WRAPPER = FunFuture.maybeMapper(Maybe::of);
   static <T, U> ThrowingFunction<Maybe<T>, Maybe<U>> throwingMaybeMapper(ThrowingFunction<? super T, ? extends U> f) {
     return maybe -> maybe.isDefined() ? Maybe.of(f.apply(maybe.getOrThrow())) : Maybe.not();
   }
@@ -29,10 +28,6 @@ public interface FunFutureMaybe<T> extends FunFuture<Maybe<T>> {
   static <T, U> ThrowingFunction<Maybe<T>, Maybe<U>> throwingMaybeFlatMapper(ThrowingFunction<? super T, Maybe<U>> f) {
     return maybe -> maybe.isDefined() ? f.apply(maybe.getOrThrow()) : Maybe.not();
   }
-
-//  static <T> FunFutureMaybe<T> immediateFutureMaybeOf(@Nullable T value) {
-//    return value == null ? futureMaybeNot() : immediateFutureMaybe(value);
-//  }
 
   static <T> FunFutureMaybe<T> immediateFutureOfMaybe(Maybe<T> maybe) {
     return maybe.isDefined() ? new ForwardingFunFutureMaybe<>(Futures.immediateFuture(maybe)) : futureMaybeNot();

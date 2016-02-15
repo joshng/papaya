@@ -2,7 +2,7 @@ package com.joshng.util.concurrent;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.joshng.util.collect.Maybe;
-import com.joshng.util.Reflect;
+import com.joshng.util.reflect.Reflect;
 
 import javax.annotation.Nonnull;
 import java.util.function.Function;

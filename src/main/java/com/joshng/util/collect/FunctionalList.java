@@ -8,9 +8,7 @@ import java.util.*;
 import java.util.function.Consumer;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.joshng.util.Reflect.blindCast;
-import static com.joshng.util.collect.FunCollection.*;
-import static com.joshng.util.collect.Functional.*;
+import static com.joshng.util.reflect.Reflect.blindCast;
 
 /**
  * User: josh
@@ -28,28 +26,29 @@ public class FunctionalList<E> extends FunctionalIterable<E> implements FunList<
   }
 
   public static <T> FunList<T> extendList(ImmutableList<T> list) {
-    if (list.isEmpty()) return emptyList();
-    return new FunctionalList<T>(list);
+    if (list.isEmpty()) return Functional.emptyList();
+    return new FunctionalList<>(list);
   }
 
   public static <T> FunList<T> copyOf(T[] items) {
-    if (items.length == 0) return emptyList();
-    return new FunctionalList<T>(ImmutableList.copyOf(items));
+    if (items.length == 0) return Functional.emptyList();
+    return new FunctionalList<>(ImmutableList.copyOf(items));
   }
 
   public static <T> FunList<T> copyOf(Iterator<? extends T> items) {
     checkNotNull(items);
-    if (!items.hasNext()) return emptyList();
-    return new FunctionalList<T>(ImmutableList.copyOf(items));
+    if (!items.hasNext()) return Functional.emptyList();
+    return new FunctionalList<>(ImmutableList.copyOf(items));
   }
 
   public static <T> Builder<T> builder() {
-    return new Builder<T>();
+    return new Builder<>();
   }
 
+  @SuppressWarnings("Convert2Lambda")
   @Override
   public FunIterable<FunList<E>> partition(final int size) {
-    return new FunctionalIterable<FunList<E>>(new Iterable<FunList<E>>() {
+    return new FunctionalIterable<>(new Iterable<FunList<E>>() {
       public Iterator<FunList<E>> iterator() {
         return new AbstractIterator<FunList<E>>() {
           private final int end = size();
@@ -105,15 +104,15 @@ public class FunctionalList<E> extends FunctionalIterable<E> implements FunList<
   }
 
   public FunList<E> reverse() {
-    return new FunctionalList<E>(delegate().reverse());
+    return new FunctionalList<>(delegate().reverse());
   }
 
   public void add(int index, E element) {
-    throw rejectMutation();
+    throw FunCollection.rejectMutation();
   }
 
   public boolean addAll(int index, Collection<? extends E> elements) {
-    throw rejectMutation();
+    throw FunCollection.rejectMutation();
   }
 
   public E get(int index) {
@@ -137,11 +136,11 @@ public class FunctionalList<E> extends FunctionalIterable<E> implements FunList<
   }
 
   public E remove(int index) {
-    throw rejectMutation();
+    throw FunCollection.rejectMutation();
   }
 
   public E set(int index, E element) {
-    throw rejectMutation();
+    throw FunCollection.rejectMutation();
   }
 
   @SuppressWarnings({"unchecked"})
@@ -207,7 +206,7 @@ public class FunctionalList<E> extends FunctionalIterable<E> implements FunList<
     }
 
     public boolean addAll(int index, Collection c) {
-      throw rejectMutation();
+      throw FunCollection.rejectMutation();
     }
 
     public Object get(int index) {
@@ -215,11 +214,11 @@ public class FunctionalList<E> extends FunctionalIterable<E> implements FunList<
     }
 
     public Object set(int index, Object element) {
-      throw rejectMutation();
+      throw FunCollection.rejectMutation();
     }
 
     public void add(int index, Object element) {
-      throw rejectMutation();
+      throw FunCollection.rejectMutation();
     }
 
     public int indexOf(java.lang.Object o) {

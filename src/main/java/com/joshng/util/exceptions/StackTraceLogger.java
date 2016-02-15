@@ -1,6 +1,6 @@
 package com.joshng.util.exceptions;
 
-import com.joshng.util.StringUtils;
+import com.joshng.util.string.StringUtils;
 import org.slf4j.Logger;
 
 /**
@@ -10,7 +10,7 @@ import org.slf4j.Logger;
  */
 public final class StackTraceLogger extends RuntimeException {
   public static void log(Logger logger, String format, Object... formatArgs) {
-    String message = StringUtils.format(format, formatArgs);
+    String message = StringUtils.sformat(format, formatArgs);
     logger.warn(message, new StackTraceLogger(message));
   }
 

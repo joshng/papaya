@@ -1,19 +1,14 @@
 package com.joshng.util.blocks;
 
 import com.google.common.base.Functions;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.joshng.util.Modifiers;
 import com.joshng.util.collect.*;
 import com.joshng.util.concurrent.AsyncF;
 import com.joshng.util.concurrent.FunFuture;
 import com.joshng.util.exceptions.ExceptionPolicy;
 
 import javax.annotation.Nullable;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -41,6 +36,14 @@ public interface F<I, O> extends Function<I, O>, com.google.common.base.Function
   public static <I, O> F<I, O> extendFunction(final Function<I, O> f) {
     if (f instanceof F) return (F<I, O>) f;
     return f::apply;
+  }
+
+  /**
+   * @deprecated intended to help identify and optimize spots where extendFunction is not needed
+   */
+  @Deprecated
+  public static <I, O> F<I, O> extendFunction(F<I, O> f) {
+    return f;
   }
 
   public static <I, O> F<I, O> extendGuavaFunction(com.google.common.base.Function<I, O> f) {
@@ -150,7 +153,7 @@ public interface F<I, O> extends Function<I, O>, com.google.common.base.Function
   }
 
   @SuppressWarnings({"unchecked"})
-  public static <T> F<T, T> identity() {
+  public static <T> F<T, T> identityF() {
     return IDENTITY;
   }
 
@@ -164,27 +167,6 @@ public interface F<I, O> extends Function<I, O>, com.google.common.base.Function
 
   public static <T> F<Integer, T> forList(final List<T> list) {
     return list::get;
-  }
-
-  public static <T> F<String, T> stringToValueOf(final Class<T> conversionClass) {
-    final Method valueOfMethod;
-    try {
-      valueOfMethod = conversionClass.getMethod("valueOf", String.class);
-      Preconditions.checkArgument(Modifiers.Static.matches(valueOfMethod), "valueOf(String) method is not static", valueOfMethod);
-    } catch (NoSuchMethodException e) {
-      throw Throwables.propagate(e);
-    }
-
-    valueOfMethod.setAccessible(true);
-    return input -> {
-      try {
-        return conversionClass.cast(valueOfMethod.invoke(null, input));
-      } catch (IllegalAccessException e) {
-        throw Throwables.propagate(e);
-      } catch (InvocationTargetException e) {
-        throw Throwables.propagate(e.getCause());
-      }
-    };
   }
 
   default public ImmutableListMultimap<O, I> group(Iterable<I> inputs) {

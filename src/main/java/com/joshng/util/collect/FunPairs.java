@@ -381,8 +381,8 @@ public interface FunPairs<K, V> extends FunIterable<Map.Entry<K, V>> {
     return accumulate2(Accumulator.biMap());
   }
 
-  default ComparingMap<K, V> toComparingMap(Comparator<? super V> ordering) {
-    return ComparingMap.build(ordering, delegate());
+  default MinimumMap<K, V> toMinimums(Comparator<? super V> ordering) {
+    return MinimumMap.build(ordering, delegate());
   }
 
   default HashMap<K, V> toMutableMap() {

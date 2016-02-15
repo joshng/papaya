@@ -8,9 +8,9 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.primitives.Primitives;
 import com.joshng.util.blocks.Pred;
 import com.joshng.util.blocks.ThrowingFunction;
-import com.joshng.util.ByteSerializable;
-import com.joshng.util.Modifiers;
-import com.joshng.util.Reflect;
+import com.joshng.util.io.ByteSerializable;
+import com.joshng.util.reflect.Modifiers;
+import com.joshng.util.reflect.Reflect;
 import com.joshng.util.collect.FunIterable;
 import com.joshng.util.collect.Maybe;
 

@@ -1,6 +1,6 @@
 package com.joshng.test.nested;
 
-import com.joshng.util.Reflect;
+import com.joshng.util.reflect.Reflect;
 import com.joshng.util.blocks.ThrowingFunction;
 import com.joshng.util.collect.FunIterable;
 import org.junit.After;

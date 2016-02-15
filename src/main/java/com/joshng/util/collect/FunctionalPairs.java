@@ -14,8 +14,7 @@ import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import static com.joshng.util.Reflect.blindCast;
-import static com.joshng.util.collect.Functional.*;
+import static com.joshng.util.reflect.Reflect.blindCast;
 
 /**
  * User: josh
@@ -27,12 +26,12 @@ public class FunctionalPairs<K, V> extends FunctionalIterable<Entry<K, V>> imple
 
   public static <K, V> FunPairs<K, V> extendPairs(Iterable<? extends Entry<? extends K, ? extends V>> delegate) {
     if (delegate instanceof FunPairs) return blindCast(delegate);
-    if (MoreCollections.isCollectionThatIsEmpty(delegate)) return emptyPairs();
+    if (MoreCollections.isCollectionThatIsEmpty(delegate)) return Functional.emptyPairs();
     return new FunctionalPairs<>(delegate);
   }
 
   public static <K, V> FunPairs<K, V> extendMap(Map<K, V> map) {
-    if (map.isEmpty()) return emptyPairs();
+    if (map.isEmpty()) return Functional.emptyPairs();
     return new FunMapEntries<>(map);
   }
 
@@ -277,8 +276,8 @@ public class FunctionalPairs<K, V> extends FunctionalIterable<Entry<K, V>> imple
       return this;
     }
 
-    public ComparingMap toComparingMap(Comparator ordering) {
-      return new ComparingMap(Maps.newHashMap(), ordering);
+    public MinimumMap toMinimums(Comparator ordering) {
+      return new MinimumMap(Maps.newHashMap(), ordering);
     }
 
     public FunPairs mapPairs2(F2 transformer) {
@@ -325,12 +324,12 @@ public class FunctionalPairs<K, V> extends FunctionalIterable<Entry<K, V>> imple
 
     @Override
     public <K2> FunPairs<K2, V> mapKeys(Function<? super K, ? extends K2> keyTransformer) {
-      return new TransformedFunPairs<K, V, K2, V>(this, F.extendFunction(keyTransformer), F.<V>identity());
+      return new TransformedFunPairs<>(this, F.extendFunction(keyTransformer), F.<V>identityF());
     }
 
     @Override
     public <V2> FunPairs<K, V2> mapValues(Function<? super V, ? extends V2> valueTransformer) {
-      return new TransformedFunPairs<K, V, K, V2>(this, F.<K>identity(), F.extendFunction(valueTransformer));
+      return new TransformedFunPairs<>(this, F.<K>identityF(), F.extendFunction(valueTransformer));
     }
 
     @Override

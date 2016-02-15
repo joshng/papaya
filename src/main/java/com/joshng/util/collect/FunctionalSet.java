@@ -1,7 +1,6 @@
 package com.joshng.util.collect;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 
 import javax.annotation.Nullable;
 import java.util.Set;
@@ -31,16 +30,6 @@ public class FunctionalSet<T> extends FunctionalIterable<T> implements FunSet<T>
     if (delegate.isEmpty()) return Functional.emptySet();
     return new FunctionalSet<>(delegate);
   }
-
-  public static <T> FunSet<T> of(T singleton) {
-    return new FunctionalSet<>(ImmutableSet.of(singleton));
-  }
-
-  @SafeVarargs
-  public static <T> FunSet<T> of(T item1, T... items) {
-    return new FunctionalSet<>(ImmutableSet.copyOf(Lists.asList(item1, items)));
-  }
-
 
   static final EmptySet EMPTY = new EmptySet();
 

@@ -10,7 +10,7 @@ import com.google.common.collect.Multimaps;
 import com.google.common.collect.Ordering;
 import com.joshng.util.blocks.Pred;
 import com.joshng.util.blocks.Pred2;
-import com.joshng.util.Reflect;
+import com.joshng.util.reflect.Reflect;
 import com.joshng.util.blocks.F;
 import com.joshng.util.blocks.F2;
 import com.joshng.util.blocks.Unzipper;

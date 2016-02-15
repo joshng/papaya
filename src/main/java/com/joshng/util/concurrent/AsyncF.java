@@ -2,7 +2,7 @@ package com.joshng.util.concurrent;
 
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.joshng.util.Reflect;
+import com.joshng.util.reflect.Reflect;
 import com.joshng.util.blocks.F;
 import com.joshng.util.blocks.ThrowingFunction;
 import com.joshng.util.collect.Nothing;

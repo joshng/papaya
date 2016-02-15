@@ -9,7 +9,7 @@ import com.google.inject.Singleton;
 import com.google.inject.spi.BindingScopingVisitor;
 import com.joshng.util.blocks.Pred;
 import com.joshng.util.collect.FunSet;
-import com.joshng.util.Reflect;
+import com.joshng.util.reflect.Reflect;
 import com.joshng.util.blocks.F;
 import com.joshng.util.collect.Functional;
 import com.joshng.util.concurrent.services.BaseService;

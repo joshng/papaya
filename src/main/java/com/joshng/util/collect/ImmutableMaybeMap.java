@@ -26,7 +26,7 @@ public class ImmutableMaybeMap<K, V> {
   }
 
   public ImmutableMaybeMap(FunPairs<K, V> entries) {
-    map = entries.mapValues(Maybe.<V>definitely()).toMap();
+    map = entries.mapValues(Maybe::definitely).toMap();
   }
 
   @Nonnull

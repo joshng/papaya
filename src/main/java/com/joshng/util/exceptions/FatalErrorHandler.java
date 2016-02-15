@@ -1,7 +1,7 @@
 package com.joshng.util.exceptions;
 
 import com.google.common.base.Throwables;
-import com.joshng.util.Localhost;
+import com.joshng.util.system.Localhost;
 import com.joshng.util.concurrent.NamedThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
