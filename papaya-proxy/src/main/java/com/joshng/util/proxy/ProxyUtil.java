@@ -5,7 +5,6 @@
 package com.joshng.util.proxy;
 
 
-import net.sf.cglib.core.CodeGenerationException;
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.MethodInterceptor;
 
@@ -52,10 +51,8 @@ public final class ProxyUtil {
     RuntimeException e;
     try {
       return (T) createEnhancer(interceptor, clazz, implementedInterface).create();
-    } catch (IllegalArgumentException iae) {
-      e = iae;
-    } catch (CodeGenerationException cge) {
-      e = cge;
+    } catch (RuntimeException ex) {
+      e = ex;
     }
 
     if (Proxy.isProxyClass(clazz))

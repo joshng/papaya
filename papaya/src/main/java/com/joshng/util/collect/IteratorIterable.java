@@ -2,6 +2,7 @@ package com.joshng.util.collect;
 
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -23,7 +24,12 @@ public class IteratorIterable<T> implements Iterable<T> {
     return iterator;
   }
 
-  public static <T> Iterable<T> of(Iterator<T> iterator) {
+  public static <T> Iterable<T> iterate(Iterator<T> iterator) {
     return new IteratorIterable<T>(iterator);
   }
+
+  public static <T> Iterable<T> iterate(Stream<T> stream) {
+    return iterate(stream.iterator());
+  }
+
 }

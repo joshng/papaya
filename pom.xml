@@ -20,6 +20,7 @@
   <modules>
     <module>papaya</module>
     <module>papaya-guice</module>
+    <module>papaya-proxy</module>
     <module>papaya-test</module>
   </modules>
 

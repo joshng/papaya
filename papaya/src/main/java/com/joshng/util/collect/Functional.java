@@ -65,7 +65,7 @@ public class Functional {
   }
 
   public static <T> FunIterable<T> extend(Iterator<T> iterator) {
-    return extend(IteratorIterable.of(iterator));
+    return extend(IteratorIterable.iterate(iterator));
   }
 
   public static <T> FunIterable<T> extend(Enumeration<T> enumeration) {

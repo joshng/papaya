@@ -144,12 +144,12 @@ public interface FunIterable<T> extends Iterable<T>, Runnable {
   }
 
   public static <I, O> FunIterable<O> map(Iterable<I> iterable, Function<? super I, ? extends O> transformer) {
-    return new FunctionalIterable<O>(Iterables.transform(iterable, F.<I, O>extendFunction(transformer::apply)));
+    return new FunctionalIterable<O>(Iterables.transform(iterable, F.<I, O>function(transformer::apply)));
   }
 
 
   default <K, V> FunPairs<K, V> mapPairs(Function<? super T, ? extends Map.Entry<? extends K, ? extends V>> transformer) {
-    return new FunctionalPairs<>(Iterables.transform(delegate(), F.<T, Map.Entry<? extends K, ? extends V>>extendFunction(transformer::apply)));
+    return new FunctionalPairs<>(Iterables.transform(delegate(), F.<T, Map.Entry<? extends K, ? extends V>>function(transformer::apply)));
   }
 
   default <K, V> FunPairs<K, V> unzip(Unzipper<? super T, K, V> unzipper) {

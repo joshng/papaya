@@ -3,12 +3,11 @@ package com.joshng.util.concurrent.services;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import com.joshng.util.blocks.Pred;
-import com.joshng.util.concurrent.Promise;
-import com.joshng.util.exceptions.FatalErrorHandler;
-import com.joshng.util.proxy.ProxyUtil;
 import com.joshng.util.blocks.Source;
 import com.joshng.util.concurrent.AsyncF;
 import com.joshng.util.concurrent.FunFuture;
+import com.joshng.util.concurrent.Promise;
+import com.joshng.util.exceptions.FatalErrorHandler;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -123,7 +122,7 @@ public abstract class BaseService<S extends Service> implements Service {
   }
 
   public String serviceName() {
-    return ProxyUtil.getUnenhancedClass(this).getSimpleName();
+    return getClass().getSimpleName();
   }
 
   public void terminateProcessOnFailure() {

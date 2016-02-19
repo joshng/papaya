@@ -36,7 +36,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   }
 
   public static <T> FunFuture<T> immediateFailedFuture(Throwable e) {
-    return newFuture(Futures.<T>immediateFailedFuture(AsyncTrace.annotateWithCurrentContext(unwrapExecutionException(e))));
+    return newFuture(Futures.<T>immediateFailedFuture(unwrapExecutionException(e)));
   }
 
   public static <T> FunFuture<T> immediateCancelledFuture() {
