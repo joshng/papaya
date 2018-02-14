@@ -1,6 +1,9 @@
 package com.joshng.util.concurrent.services;
 
+
 import com.google.common.util.concurrent.AbstractService;
+
+import java.util.concurrent.CompletionStage;
 
 /**
  * User: josh
@@ -11,6 +14,26 @@ public abstract class NotifyingService extends BaseService<NotifyingService.Inne
   protected NotifyingService() {
     super(new InnerAbstractService());
     delegate().wrapper = this;
+  }
+
+  protected void startWith(CompletionStage<?> startedFuture) {
+    startedFuture.whenComplete((__, e) -> {
+      if (e == null) {
+        notifyStarted();
+      } else {
+        notifyFailed(e);
+      }
+    });
+  }
+
+  protected void stopWith(CompletionStage<?> stoppedFuture) {
+    stoppedFuture.whenComplete((__, e) -> {
+      if (e == null) {
+        notifyStopped();
+      } else {
+        notifyFailed(e);
+      }
+    });
   }
 
   /**
@@ -89,7 +112,18 @@ public abstract class NotifyingService extends BaseService<NotifyingService.Inne
     }
 
     private void doNotifyFailed(Throwable cause) {
-      notifyFailed(cause);
+        // wish we could use State.isTerminal() here
+      if (!stateIsTerminal()) {
+          try {
+            notifyFailed(cause);
+          } catch (IllegalStateException e) {
+            // ignore; lost a race
+          }
+      }
+    }
+
+    private boolean stateIsTerminal() {
+      return state().compareTo(State.STOPPING) > 0;
     }
 
     @Override public String toString() {

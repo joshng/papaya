@@ -1,7 +1,8 @@
 package com.joshng.util.concurrent.services;
 
-import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.joshng.util.blocks.ThrowingRunnable;
 
 import java.util.concurrent.Executor;
 
@@ -10,14 +11,17 @@ import java.util.concurrent.Executor;
  * Date: 7/16/13
  * Time: 10:17 PM
  */
-public abstract class IdleService extends BaseService<IdleService.InnerIdleService> {
+public abstract class IdleService extends BaseService<IdleService.DelegateService> {
 
 
   protected IdleService() {
-    super(new InnerIdleService());
+    super(new DelegateService());
     delegate().wrapper = this;
   }
 
+  protected void notifyFailed(Throwable cause) {
+      delegate().doNotifyFailed(cause);
+  }
   /**
    * Start the service.
    */
@@ -36,35 +40,56 @@ public abstract class IdleService extends BaseService<IdleService.InnerIdleServi
     return true;
   }
 
-  static class InnerIdleService extends AbstractIdleService {
-    private IdleService wrapper;
-    @Override
-    protected void startUp() throws Exception {
-      Thread.currentThread().setName(wrapper.serviceStateString(state()));
-      wrapper.startUp();
-      // superclass takes care of cleaning up the thread-name later
-    }
+  static class DelegateService extends AbstractService {
+      private IdleService wrapper;
 
-    @Override
-    protected void shutDown() throws Exception {
-      Thread.currentThread().setName(wrapper.serviceStateString(state()));
-      wrapper.shutDown();
-      // superclass takes care of cleaning up the thread-name later
-    }
-
-    @Override
-    protected Executor executor() {
-      State state = state();
-      if (state == State.STARTING && wrapper.startUpOnSeparateThread() || wrapper.shutDownOnSeparateThread()) {
-        return super.executor();
-      } else {
-        return MoreExecutors.directExecutor();
+      @Override
+      protected final void doStart() {
+          stateTransition(() -> {
+              wrapper.startUp();
+              notifyStarted();
+          });
       }
-    }
 
-    @Override
-    protected String serviceName() {
-      return wrapper.serviceName();
-    }
+      @Override
+      protected final void doStop() {
+          stateTransition(() ->{
+              wrapper.shutDown();
+              notifyStopped();
+          });
+      }
+
+      final void doNotifyFailed(Throwable cause) {
+          notifyFailed(cause);
+      }
+
+      private void stateTransition(ThrowingRunnable transition) {
+          State state = state();
+          executor(state).execute(() -> {
+              Thread currentThread = Thread.currentThread();
+              String prevName = currentThread.getName();
+              try {
+                  currentThread.setName(wrapper.serviceStateString(state));
+                  transition.run();
+              } catch (Throwable t) {
+                  notifyFailed(t);
+              } finally {
+                  currentThread.setName(prevName);
+              }
+          });
+      }
+
+      private Executor executor(State state) {
+          if ((state == State.STARTING && wrapper.startUpOnSeparateThread()) || wrapper.shutDownOnSeparateThread()) {
+              return task -> new Thread(task).start();
+          } else {
+              return MoreExecutors.directExecutor();
+          }
+      }
+
+      @Override
+      public String toString() {
+        return wrapper.toString();
+      }
   }
 }
