@@ -1,7 +1,7 @@
 package com.joshng.util.reflect;
 
 import com.google.common.base.Function;
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -19,7 +19,13 @@ import com.joshng.util.collect.Maybe;
 
 import javax.annotation.Nullable;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.*;
+import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Queue;
@@ -324,7 +330,7 @@ public class Reflect {
   }
 
   public static <T, R> R ifInstance(Object obj, Class<T> castClass, R elseValue, Function<? super T, ? extends R> func) {
-    return Objects.firstNonNull(ifInstance(obj, castClass, func), elseValue);
+    return MoreObjects.firstNonNull(ifInstance(obj, castClass, func), elseValue);
   }
 
   public static <T> boolean ifInstance(Object obj, Class<T> castClass, Consumer<? super T> handler) {

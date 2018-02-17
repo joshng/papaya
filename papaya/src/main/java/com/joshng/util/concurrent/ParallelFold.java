@@ -1,6 +1,6 @@
 package com.joshng.util.concurrent;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -45,7 +45,7 @@ public class ParallelFold<I, O> extends AbstractIndependentCompletionTracker<I, 
       try {
         errorAccumulators.get(cause.getClass(), () -> new ErrorAccumulator(cause)).occurrenceCount.incrementAndGet();
       } catch (ExecutionException unlikely) {
-        throw new RuntimeException(Objects.firstNonNull(unlikely.getCause(), unlikely));
+        throw new RuntimeException(MoreObjects.firstNonNull(unlikely.getCause(), unlikely));
       }
     }
   }
