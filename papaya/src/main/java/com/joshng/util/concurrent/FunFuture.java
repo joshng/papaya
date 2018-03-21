@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -53,7 +54,6 @@ import java.util.function.Predicate;
  * Time: 11:22 PM
  */
 public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
-  final Logger LOG = LoggerFactory.getLogger(FunFuture.class);
   final FunFuture NULL_FUTURE = FunFuture.<Object>immediateFuture(null);
 
   F GET_UNCHECKED = (F<Future<Object>, Object>) FunFuture::getUnchecked;

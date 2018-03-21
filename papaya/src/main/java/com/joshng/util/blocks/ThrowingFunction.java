@@ -12,9 +12,9 @@ import com.google.common.util.concurrent.UncheckedExecutionException;
 public interface ThrowingFunction<I, O> {
   static <I, O> ThrowingFunction<I, O> throwingFunction(ThrowingFunction<I, O> block) { return block; }
 
-  public O apply(I input) throws Exception;
+  O apply(I input) throws Exception;
 
-  public static <I,O> F<I, O> unchecked(ThrowingFunction<I,O> throwingFunction) {
+  static <I,O> F<I, O> unchecked(ThrowingFunction<I,O> throwingFunction) {
     return input -> {
       try {
         return throwingFunction.apply(input);

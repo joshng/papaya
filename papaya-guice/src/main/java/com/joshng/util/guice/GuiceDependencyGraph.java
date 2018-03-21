@@ -32,7 +32,7 @@ public class GuiceDependencyGraph {
 
     return bindings.asKeysToFlattened(binding -> {
       Set<ResolvedBinding<?>> transitiveDependencies = binding.findTransitiveDependencies(Pred.<ResolvedBinding<?>>notEqualTo(
-              binding).and(Pred.<ResolvedBinding<?>>in(bindings)));
+              binding).and(bindings::contains));
       return Reflect.<Set<ResolvedBinding<? extends T>>>blindCast(transitiveDependencies);
     }).toMultimap();
   }

@@ -21,10 +21,10 @@ import com.google.inject.spi.LinkedKeyBinding;
 import com.google.inject.spi.ProviderBinding;
 import com.google.inject.spi.ProviderInstanceBinding;
 import com.google.inject.spi.ProviderKeyBinding;
-import com.joshng.util.blocks.Pred;
-import com.joshng.util.collect.FunSet;
 import com.joshng.util.blocks.F;
+import com.joshng.util.blocks.Pred;
 import com.joshng.util.blocks.Source;
+import com.joshng.util.collect.FunSet;
 import com.joshng.util.collect.Functional;
 import com.joshng.util.collect.PersistentList;
 

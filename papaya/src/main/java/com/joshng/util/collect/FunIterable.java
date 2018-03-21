@@ -782,11 +782,11 @@ public interface FunIterable<T> extends Iterable<T>, Runnable {
    * @return a new FunIterable that, when iterated, yields all elements of this sequence for which
    * <pre>{@code excluded.contains(element) == false}</pre>
    */
-  default FunIterable<T> minus(Collection<?> excluded) {
+  default FunIterable<T> minus(Collection<? super T> excluded) {
     return difference(delegate(), excluded);
   }
 
-  public static <T> FunIterable<T> difference(Iterable<T> items, Collection<?> excluded) {
+  public static <T> FunIterable<T> difference(Iterable<T> items, Collection<? super T> excluded) {
     return filter(items, Pred.in(excluded).negate());
   }
 

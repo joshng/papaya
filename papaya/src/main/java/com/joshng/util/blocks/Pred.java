@@ -1,6 +1,5 @@
 package com.joshng.util.blocks;
 
-import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimaps;
@@ -66,8 +65,8 @@ public interface Pred<T> extends Predicate<T>, com.google.common.base.Predicate<
     return value == null ? Pred.isNull() : input -> value == input;
   }
 
-  public static <T> Pred<T> in(Collection<? extends T> collection) {
-    return Predicates.in(collection)::apply;
+  public static <T> Pred<T> in(Collection<? super T> collection) {
+    return collection::contains;
   }
 
   public static Pred<Object> instanceOf(final Class<?> instanceClass) {
