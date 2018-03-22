@@ -1,7 +1,10 @@
-package com.joshng.util.concurrent;
+package com.joshng.util.concurrent.trackers;
 
-import com.google.common.util.concurrent.ListenableFuture;
 
+import com.joshng.util.concurrent.FunFuture;
+import com.joshng.util.concurrent.Promise;
+
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -22,7 +25,7 @@ public abstract class AbstractCompletionTracker<I, O> {
     this.jobCompletionExecutor = jobCompletionExecutor;
   }
 
-  protected abstract void handleCompletedJob(ListenableFuture<? extends I> job) throws Exception;
+  protected abstract void handleCompletedJob(CompletionStage<? extends I> job) throws Exception;
 
   protected abstract O computeResult() throws Exception;
 
@@ -38,17 +41,17 @@ public abstract class AbstractCompletionTracker<I, O> {
     return completionPromise.isDone();
   }
 
-  public AbstractCompletionTracker<I, O> trackAll(Iterable<? extends ListenableFuture<? extends I>> futures) {
-    for (ListenableFuture<? extends I> future : futures) {
+  public AbstractCompletionTracker<I, O> trackAll(Iterable<? extends CompletionStage<? extends I>> futures) {
+    for (CompletionStage<? extends I> future : futures) {
       track(future);
     }
     return this;
   }
 
-  public <F extends ListenableFuture<? extends I>> F track(final F job) {
+  public <F extends CompletionStage<? extends I>> F track(final F job) {
     startedCount.incrementAndGet();
-    if (!isAcceptingNewJobs()) job.cancel(completionPromise.wasCancelledWithInterruption());
-    job.addListener(() -> {
+    if (!isAcceptingNewJobs()) job.toCompletableFuture().cancel(completionPromise.wasCancelledWithInterruption());
+    job.whenCompleteAsync((r, x) -> {
       try {
         handleCompletedJob(job);
       } catch (Exception e) {

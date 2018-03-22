@@ -1,8 +1,9 @@
-package com.joshng.util.concurrent;
+package com.joshng.util.concurrent.trackers;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.joshng.util.collect.Nothing;
+
+import java.util.concurrent.CompletionStage;
 
 /**
  * User: josh
@@ -21,7 +22,7 @@ public class DependentFutureCompletionTracker extends AbstractCompletionTracker<
   }
 
   @Override
-  protected void handleCompletedJob(ListenableFuture<?> job) throws Exception {
+  protected void handleCompletedJob(CompletionStage<?> job) throws Exception {
   }
 
   @Override

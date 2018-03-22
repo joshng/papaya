@@ -24,20 +24,12 @@ import java.util.function.Predicate;
 public interface Pred<T> extends Predicate<T>, com.google.common.base.Predicate<T> {
   public static final Pred<Boolean> IDENTITY = extendFunction(F.<Boolean>identityF());
 
-  default boolean apply(T value) {
-    return test(value);
-  }
-
   public static <T> Pred<T> pred(final Pred<T> fn) {
     return fn;
   }
 
   public static <T> Pred<T> extendFunction(final Function<T, Boolean> fn) {
-    return new Pred<T>() {
-      public boolean test(T input) {
-        return fn.apply(input);
-      }
-    };
+    return fn::apply;
   }
 
   public static <T> Pred<T> extendPredicate(final Predicate<T> fn) {
@@ -46,19 +38,11 @@ public interface Pred<T> extends Predicate<T>, com.google.common.base.Predicate<
   }
 
   public static Pred<Object> equalTo(final Object value) {
-    return value == null ? Pred.isNull() : new Pred<Object>() {
-      public boolean test(Object input) {
-        return value.equals(input);
-      }
-    };
+    return value == null ? Pred.isNull() : value::equals;
   }
 
   public static <T> Pred<T> notEqualTo(final T value) {
-    return value == null ? Pred.<T>notNull() : new Pred<T>() {
-      public boolean test(T input) {
-        return !value.equals(input);
-      }
-    };
+    return value == null ? Pred.<T>notNull() : input -> !value.equals(input);
   }
 
   public static Pred<Object> identicalTo(Object value) {
@@ -107,7 +91,7 @@ public interface Pred<T> extends Predicate<T>, com.google.common.base.Predicate<
 
   default Pred<Iterable<? extends T>> any() {
     return new Pred<Iterable<? extends T>>() {
-      public boolean test(Iterable<? extends T> input) {
+      public boolean apply(Iterable<? extends T> input) {
         return Iterables.any(input, Pred.this);
       }
     };
@@ -115,7 +99,7 @@ public interface Pred<T> extends Predicate<T>, com.google.common.base.Predicate<
 
   default Pred<Iterable<? extends T>> all() {
     return new Pred<Iterable<? extends T>>() {
-      public boolean test(Iterable<? extends T> input) {
+      public boolean apply(Iterable<? extends T> input) {
         return Iterables.all(input, Pred.this);
       }
     };
@@ -155,18 +139,18 @@ public interface Pred<T> extends Predicate<T>, com.google.common.base.Predicate<
 
   default Pred<T> and(final Predicate<? super T> pred2) {
     return new Pred<T>() {
-      public boolean test(T input) {
-        return Pred.this.test(input) && pred2.test(input);
+      public boolean apply(T input) {
+        return Pred.this.apply(input) && pred2.test(input);
       }
     };
   }
 
   default Pred<T> or(final Predicate<? super T> pred2) {
-    return input -> Pred.this.test(input) || pred2.test(input);
+    return input -> Pred.this.apply(input) || pred2.test(input);
   }
 
   default <I0> Pred<I0> compose(final Function<? super I0, ? extends T> first) {
-    return input -> test(first.apply(input));
+    return input -> apply(first.apply(input));
   }
 
   default Pred<T> negate() {
@@ -175,18 +159,18 @@ public interface Pred<T> extends Predicate<T>, com.google.common.base.Predicate<
 
   public static <T> Pred<T> not(final Pred<T> opposite) {
     return new Pred<T>() {
-      public boolean test(T input) {
-        return !opposite.test(input);
+      public boolean apply(T input) {
+        return !opposite.apply(input);
       }
     };
   }
 
   default F<T, Boolean> asFunction() {
-    return Pred.this::test;
+    return Pred.this::apply;
   }
 
   static final Pred NOT_NULL = new Pred() {
-    public boolean test(Object input) {
+    public boolean apply(Object input) {
       return input != null;
     }
 
@@ -197,7 +181,7 @@ public interface Pred<T> extends Predicate<T>, com.google.common.base.Predicate<
   };
 
   static final Pred IS_NULL = new Pred() {
-    public boolean test(Object input) {
+    public boolean apply(Object input) {
       return input == null;
     }
 
@@ -209,7 +193,7 @@ public interface Pred<T> extends Predicate<T>, com.google.common.base.Predicate<
 
   @SuppressWarnings({"unchecked"})
   static final Pred ALWAYS_TRUE = new Pred() {
-    public boolean test(Object input) {
+    public boolean apply(Object input) {
       return true;
     }
 
@@ -246,7 +230,7 @@ public interface Pred<T> extends Predicate<T>, com.google.common.base.Predicate<
 
   @SuppressWarnings({"unchecked"})
   static final Pred ALWAYS_FALSE = new Pred() {
-    public boolean test(Object input) {
+    public boolean apply(Object input) {
       return false;
     }
 
@@ -285,7 +269,7 @@ public interface Pred<T> extends Predicate<T>, com.google.common.base.Predicate<
   public static class HashSetDeduplicatingPredicate implements Pred<Object> {
     private final Set<Object> seenValues = new HashSet<>();
 
-    public boolean test(Object input) {
+    public boolean apply(Object input) {
       return seenValues.add(input);
     }
   }

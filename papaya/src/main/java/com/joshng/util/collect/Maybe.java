@@ -76,6 +76,9 @@ public abstract class Maybe<T> implements Iterable<T> {
     return condition ? definitely(value.get()) : Maybe.<T>not();
   }
 
+  public static <T, U> Maybe.Pair<T, U> onlyPairIfFrom(boolean condition, Supplier<? extends Map.Entry<? extends T, ? extends U>> value) {
+    return condition ? definitely(value.get()) : Maybe.noPair();
+  }
   public abstract boolean isDefined();
 
   public abstract boolean isEmpty();

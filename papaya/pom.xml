@@ -14,7 +14,7 @@
 
   <properties>
     <metrics.version>3.1.2</metrics.version>
-    <guava.version>19.0</guava.version>
+    <guava.version>24.1-jre</guava.version>
     <github.global.server>github</github.global.server>
     <local.maven.repository.path>${project.build.directory}/mvn-repo</local.maven.repository.path>
   </properties>
@@ -84,6 +84,12 @@
       <artifactId>junit</artifactId>
       <version>4.11</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.immutables</groupId>
+      <artifactId>value</artifactId>
+      <version>2.5.5</version>
+      <scope>provided</scope>
     </dependency>
   </dependencies>
 

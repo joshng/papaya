@@ -85,7 +85,7 @@ public enum Comparison {
       this.value = value;
     }
 
-    public boolean test(T input) {
+    public boolean apply(T input) {
       return compare(input, value, comparator);
     }
 

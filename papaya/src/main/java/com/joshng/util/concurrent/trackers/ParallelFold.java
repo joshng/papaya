@@ -1,15 +1,17 @@
-package com.joshng.util.concurrent;
+package com.joshng.util.concurrent.trackers;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.joshng.util.blocks.F;
 import com.joshng.util.blocks.F2;
 import com.joshng.util.collect.MutableReference;
+import com.joshng.util.concurrent.AtomicMutableReference;
+import com.joshng.util.concurrent.FunFuture;
 import com.joshng.util.exceptions.MultiException;
 
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -36,9 +38,9 @@ public class ParallelFold<I, O> extends AbstractIndependentCompletionTracker<I, 
   }
 
   @Override
-  protected void handleCompletedJob(ListenableFuture<? extends I> job) throws Exception {
+  protected void handleCompletedJob(CompletionStage<? extends I> job) throws Exception {
     try {
-      resultFolder.apply(job.get());
+      resultFolder.apply(job.toCompletableFuture().join());
     } catch (final Exception e) {
       if (abortOnFailure) throw e;
       Throwable cause = FunFuture.unwrapExecutionException(e);

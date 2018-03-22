@@ -58,7 +58,7 @@ public class ResolvedBinding<T> implements Source<T> {
 
     PersistentList<ResolvedBinding<?>> context = PersistentList.<ResolvedBinding<?>>of(this);
     traverseDependencies(this, context, Predicates.and(Pred.newDeduplicator(), new Pred<ResolvedBinding<?>>() {
-      public boolean test(ResolvedBinding<?> input) {
+      public boolean apply(ResolvedBinding<?> input) {
         boolean matches = filter.apply(input);
         if (matches) result.add(input);
         return !matches;

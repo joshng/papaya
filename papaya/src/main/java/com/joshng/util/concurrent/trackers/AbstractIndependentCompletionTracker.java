@@ -1,7 +1,9 @@
-package com.joshng.util.concurrent;
+package com.joshng.util.concurrent.trackers;
 
-import com.google.common.util.concurrent.ListenableFuture;
 
+import com.joshng.util.concurrent.FunFuture;
+
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -31,8 +33,8 @@ public abstract class AbstractIndependentCompletionTracker<I, O> extends Abstrac
   }
 
   @Override
-  public AbstractIndependentCompletionTracker<I, O> trackAll(Iterable<? extends ListenableFuture<? extends I>> listenableFutures) {
-    super.trackAll(listenableFutures);
+  public AbstractIndependentCompletionTracker<I, O> trackAll(Iterable<? extends CompletionStage<? extends I>> completionStages) {
+    super.trackAll(completionStages);
     return this;
   }
 

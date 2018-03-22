@@ -13,7 +13,7 @@ import com.joshng.util.reflect.Reflect;
 import com.joshng.util.blocks.F;
 import com.joshng.util.collect.FunIterable;
 import com.joshng.util.collect.Nothing;
-import com.joshng.util.concurrent.ErrorCollectingCompletionTracker;
+import com.joshng.util.concurrent.trackers.ErrorCollectingCompletionTracker;
 import com.joshng.util.concurrent.FunFuture;
 import com.joshng.util.concurrent.SameThreadTrampolineExecutor;
 
@@ -74,7 +74,7 @@ public class EventDispatcher {
     return trampolineExecutor.submitAsync(() -> new ErrorCollectingCompletionTracker().trackAll(
                     extend(eventTypeObserverLocator.apply(event.getClass()))
                             .<EventObserver<Object>>cast()
-                            .map(observer -> FunFuture.callSafely(() -> observer.onEvent(event)))
+                            .map(observer -> FunFuture.callSafely(() -> observer.onEvent(event)).toCompletableFuture())
             ).setNoMoreJobs()
     );
   }

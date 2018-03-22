@@ -35,7 +35,7 @@ public enum Modifiers implements Pred<Class<?>> {
   }
 
   @Override
-  public boolean test(Class<?> c) {
+  public boolean apply(Class<?> c) {
     return matches(c.getModifiers());
   }
 

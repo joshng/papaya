@@ -86,7 +86,7 @@ public interface F<I, O> extends Function<I, O>, com.google.common.base.Function
 
   default Pred<I> resultMatches(final Predicate<? super O> predicate) {
     return new Pred<I>() {
-      public boolean test(I input) {
+      public boolean apply(I input) {
         return predicate.test(F.this.apply(input));
       }
 

@@ -3,6 +3,7 @@ package com.joshng.util.concurrent;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.ForwardingListenableFuture;
 import com.google.common.util.concurrent.FutureCallback;
@@ -26,10 +27,9 @@ import com.joshng.util.collect.FunIterable;
 import com.joshng.util.collect.Maybe;
 import com.joshng.util.collect.Nothing;
 import com.joshng.util.collect.Pair;
+import com.joshng.util.concurrent.trackers.FutureSuccessTracker;
 import com.joshng.util.exceptions.FatalErrorHandler;
 import com.joshng.util.exceptions.UncheckedInterruptedException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CompletionStage;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -87,7 +87,7 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
   }
 
   public static FunFuture<Nothing> trackSuccess(Iterable<? extends ListenableFuture<?>> futureList) {
-    return new FutureSuccessTracker().trackAll(futureList).setNoMoreJobs();
+    return new FutureSuccessTracker().trackAll(Iterables.transform(futureList, FunFuture::toCompletable)).setNoMoreJobs();
   }
 
   public static <T> FunFuture<List<T>> successfulAsList(Iterable<? extends ListenableFuture<? extends T>> input) {
@@ -109,6 +109,12 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     return promise;
   }
 
+  static <T> CompletableFuture<T> toCompletable(ListenableFuture<T> listenable) {
+    CompletablePromise<T> promise = new CompletablePromise<>();
+    listenable.addListener(() -> promise.tryComplete(listenable::get), MoreExecutors.directExecutor());
+    return promise;
+
+  }
   @SuppressWarnings("unchecked")
   static <T> Iterable<? extends ListenableFuture<? extends T>> unwrapFutureIterable(Iterable<? extends ListenableFuture<? extends T>> input) {
     // Guava copies to an immutable list; we may already have one wrapped in a FunList, so extract it here
@@ -132,6 +138,10 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
       if (cause instanceof UncheckedExecutionException) throw (UncheckedExecutionException) cause;
       throw new UncheckedExecutionException(cause);
     }
+  }
+
+  default CompletableFuture<T> toCompletableFuture() {
+    return FunFuture.toCompletable(this);
   }
 
   default T getUnchecked() {
@@ -267,11 +277,6 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
 
   public static <T> FunFuture<T> dereference(ListenableFuture<? extends ListenableFuture<T>> futureOfFuture) {
     return Promise.<T>newPromise().completeWithFlatMap(futureOfFuture, AsyncF.asyncIdentity());
-  }
-
-  @SuppressWarnings("unchecked")
-  public static <T> F<ListenableFuture<T>, FunFuture<T>> extender() {
-    return EXTENDER;
   }
 
   default <O> ForwardingFunFuture<O> wrapFuture(ListenableFuture<O> future) {

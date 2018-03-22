@@ -34,11 +34,9 @@ public interface Pred2<K, V> extends Pred<Entry<? extends K, ? extends V>>, BiPr
     return (k, v) -> firstPredicate.test(v);
   }
 
-  default boolean test(Entry<? extends K, ? extends V> input) {
+  default boolean apply(Entry<? extends K, ? extends V> input) {
     return test(input.getKey(), input.getValue());
   }
-
-  boolean test(K key, V value);
 
   default Pred2<V, K> flip() {
     return new Pred2<V, K>() {
@@ -50,7 +48,7 @@ public interface Pred2<K, V> extends Pred<Entry<? extends K, ? extends V>>, BiPr
 
   default Pred<V> bindFirst(final K key) {
     return new Pred<V>() {
-      public boolean test(V input) {
+      public boolean apply(V input) {
         return Pred2.this.test(key, input);
       }
     };
@@ -58,7 +56,7 @@ public interface Pred2<K, V> extends Pred<Entry<? extends K, ? extends V>>, BiPr
 
   default Pred<K> bindSecond(final V value) {
     return new Pred<K>() {
-      public boolean test(K input) {
+      public boolean apply(K input) {
         return Pred2.this.test(input, value);
       }
     };

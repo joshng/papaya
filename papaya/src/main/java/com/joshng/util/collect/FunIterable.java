@@ -507,7 +507,7 @@ public interface FunIterable<T> extends Iterable<T>, Runnable {
     return filter(source, new Pred<T>() {
       boolean stillDropping = true;
 
-      public boolean test(T input) {
+      public boolean apply(T input) {
         if (stillDropping) stillDropping = predicate.test(input);
         return !stillDropping;
       }

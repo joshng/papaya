@@ -1,14 +1,14 @@
-package com.joshng.util.concurrent;
+package com.joshng.util.concurrent.trackers;
 
 /**
  * Created by: josh 10/11/13 6:05 PM
  */
 
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.Uninterruptibles;
 import com.joshng.util.blocks.Tapper;
 import com.joshng.util.collect.Nothing;
+import com.joshng.util.concurrent.FunFuture;
 
+import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
 
 /**
@@ -26,7 +26,7 @@ public class FutureSuccessTracker extends FutureCompletionTracker {
   }
 
   @Override
-  protected void handleCompletedJob(ListenableFuture<?> job) throws Exception {
-    Uninterruptibles.getUninterruptibly(job);
+  protected void handleCompletedJob(CompletionStage<?> job) throws Exception {
+    job.toCompletableFuture().join();
   }
 }
