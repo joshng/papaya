@@ -13,7 +13,7 @@
   </developers>
 
   <properties>
-    <guice.version>4.0</guice.version>
+    <guice.version>4.1.0</guice.version>
     <github.global.server>github</github.global.server>
     <local.maven.repository.path>${project.build.directory}/mvn-repo</local.maven.repository.path>
   </properties>

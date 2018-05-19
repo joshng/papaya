@@ -25,7 +25,7 @@
   </modules>
 
   <properties>
-    <metrics.version>3.1.2</metrics.version>
+    <metrics.version>3.2.5</metrics.version>
     <guava.version>19.0</guava.version>
     <github.global.server>github</github.global.server>
     <local.maven.repository.path>${project.build.directory}/mvn-repo</local.maven.repository.path>

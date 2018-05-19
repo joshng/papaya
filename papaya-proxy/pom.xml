@@ -15,6 +15,7 @@
   <properties>
     <metrics.version>3.1.2</metrics.version>
     <guava.version>19.0</guava.version>
+    <slf4j.version>1.7.25</slf4j.version>
     <github.global.server>github</github.global.server>
     <local.maven.repository.path>${project.build.directory}/mvn-repo</local.maven.repository.path>
   </properties>
@@ -71,7 +72,7 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
-      <version>1.7.6</version>
+      <version>${slf4j.version}</version>
     </dependency>
 
     <dependency>

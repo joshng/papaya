@@ -105,6 +105,10 @@ public abstract class Maybe<T> implements Iterable<T> {
 
   public abstract <U> Maybe<U> map(Function<? super T, ? extends U> transformer);
 
+  public double toDoubleOrElse(double defaultValue, ToDoubleFunction<? super T> computer) {
+    return isDefined() ? computer.applyAsDouble(getOrThrow()) : defaultValue;
+  }
+
   public abstract <U> Maybe<U> flatMap(Function<? super T, Maybe<U>> transformer);
 
   public abstract <O> O map(MaybeFunction<? super T, O> transformer);

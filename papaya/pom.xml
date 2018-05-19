@@ -13,8 +13,9 @@
   </developers>
 
   <properties>
-    <metrics.version>3.1.2</metrics.version>
+    <metrics.version>4.0.2</metrics.version>
     <guava.version>24.1-jre</guava.version>
+    <slf4j.version>1.7.25</slf4j.version>
     <github.global.server>github</github.global.server>
     <local.maven.repository.path>${project.build.directory}/mvn-repo</local.maven.repository.path>
   </properties>
@@ -63,19 +64,19 @@
       <version>0.0.6</version>
     </dependency>
     <dependency>
-      <groupId>io.dropwizard.metrics</groupId> <!-- TODO: this will become io.dropwizard.metrics if upgrading to 3.1+. ugh. -->
+      <groupId>io.dropwizard.metrics</groupId>
       <artifactId>metrics-core</artifactId>
       <version>${metrics.version}</version>
     </dependency>
     <dependency>
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>jsr305</artifactId>
-      <version>2.0.3</version>
+      <version>3.0.2</version>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
-      <version>1.7.6</version>
+      <version>${slf4j.version}</version>
     </dependency>
 
 
