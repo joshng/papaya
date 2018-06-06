@@ -607,7 +607,6 @@ public interface FunIterable<T> extends Iterable<T>, Runnable {
     return FunctionalList.extendList(ImmutableList.copyOf(delegate()));
   }
 
-
   /**
    * <em>Reifies</em> this FunIterable by applying all previously chained transformations, and places the result in a new
    * {*link FunSet}.

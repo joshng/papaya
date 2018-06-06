@@ -8,6 +8,7 @@ import com.joshng.util.concurrent.AsyncF;
 import com.joshng.util.concurrent.FunFuture;
 import com.joshng.util.concurrent.Promise;
 import com.joshng.util.exceptions.FatalErrorHandler;
+import com.joshng.util.reflect.Reflect;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -121,8 +122,12 @@ public abstract class BaseService<S extends Service> implements Service {
     return this;
   }
 
+  private String serviceName;
+
   public String serviceName() {
-    return getClass().getSimpleName();
+    String name = serviceName;
+    if (name == null) serviceName = name = Reflect.getUnenhancedClass(this).getSimpleName();
+    return name;
   }
 
   public void terminateProcessOnFailure() {

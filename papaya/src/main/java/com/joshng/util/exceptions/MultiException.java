@@ -10,6 +10,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.joshng.util.blocks.F2;
+import com.joshng.util.blocks.ThrowingRunnable;
 import com.joshng.util.collect.Maybe;
 
 import java.util.Collections;
@@ -33,23 +34,23 @@ public interface MultiException {
 
   void throwRuntimeIfAny();
 
-  default MultiException collectExceptions(Iterable<? extends Runnable> runnables) {
+  default MultiException collectExceptions(Iterable<? extends ThrowingRunnable> runnables) {
     MultiException result = this;
-    for (Runnable runnable : runnables) {
+    for (ThrowingRunnable runnable : runnables) {
       result = result.consumeException(runnable);
     }
     return result;
   }
 
-  default MultiException collectThrowables(Iterable<? extends Runnable> runnables) {
+  default MultiException collectThrowables(Iterable<? extends ThrowingRunnable> runnables) {
     MultiException result = this;
-    for (Runnable runnable : runnables) {
+    for (ThrowingRunnable runnable : runnables) {
       result = result.consumeThrowable(runnable);
     }
     return result;
   }
 
-  default MultiException consumeException(Runnable runnable) {
+  default MultiException consumeException(ThrowingRunnable runnable) {
     try {
       runnable.run();
       return this;
@@ -58,7 +59,7 @@ public interface MultiException {
     }
   }
 
-  default MultiException consumeThrowable(Runnable runnable) {
+  default MultiException consumeThrowable(ThrowingRunnable runnable) {
     try {
       runnable.run();
       return this;
@@ -67,7 +68,7 @@ public interface MultiException {
     }
   }
 
-  public static final MultiException Empty = new EmptyImpl();
+  MultiException Empty = new EmptyImpl();
 
   class EmptyImpl implements MultiException {
     private EmptyImpl() {

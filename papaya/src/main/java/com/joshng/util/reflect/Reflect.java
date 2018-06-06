@@ -127,6 +127,20 @@ public class Reflect {
     return result;
   }
 
+  @SuppressWarnings({"unchecked"})
+  public static <T> Class<T> getUnenhancedClass(T object) {
+    return (Class<T>) getUnenhancedClass(object.getClass());
+  }
+
+  @SuppressWarnings({"unchecked"})
+  public static <T> Class<T> getUnenhancedClass(Class<? extends T> entityClass) {
+    Class c = entityClass;
+    while (c.getName().contains("$$")) {
+      c = c.getSuperclass();
+    }
+    return (Class<T>) c;
+  }
+
   public interface AnnotatedMethodHandler<A extends Annotation> {
     void handle(Method method, A annotation);
   }
