@@ -5,6 +5,7 @@ import com.google.common.collect.ObjectArrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 /**
  * User: josh
@@ -19,6 +20,11 @@ public interface FunCollection<T> extends FunIterable<T>, Collection<T> {
 
   @Override
   Collection<T> delegate();
+
+  @Override
+  default Stream<T> stream() {
+    return delegate().stream();
+  }
 
   default FunCollection<T> foreach(Consumer<? super T> visitor) {
     FunIterable.super.foreach(visitor);
@@ -77,6 +83,11 @@ public interface FunCollection<T> extends FunIterable<T>, Collection<T> {
 
   abstract static class EmptyCollection extends Functional.EmptyIterable implements Collection {
     public abstract Collection delegate();
+
+    @Override
+    public Stream stream() {
+      return Stream.empty();
+    }
 
     public Object[] toArray() {
       return new Object[]{};

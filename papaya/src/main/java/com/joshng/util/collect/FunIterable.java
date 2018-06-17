@@ -6,15 +6,17 @@ import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.Ordering;
-import com.joshng.util.blocks.Pred;
-import com.joshng.util.blocks.Pred2;
-import com.joshng.util.reflect.Reflect;
+import com.google.common.collect.PeekingIterator;
 import com.joshng.util.blocks.F;
 import com.joshng.util.blocks.F2;
+import com.joshng.util.blocks.Pred;
+import com.joshng.util.blocks.Pred2;
 import com.joshng.util.blocks.Unzipper;
 import com.joshng.util.concurrent.LazyReference;
+import com.joshng.util.reflect.Reflect;
 
 import javax.annotation.Nonnull;
 import java.util.Collection;
@@ -465,7 +467,31 @@ public interface FunIterable<T> extends Iterable<T>, Runnable {
     return Maybe.definitely(reduced);
   }
 
+  default <U> FunIterable<U> scanLeft(U zero, F2<? super T, ? super U, ? extends U> scan) {
+    return map(new F<T, U>() {
+      U memo = zero;
+      @Override
+      public U apply(T input) {
+        memo = scan.apply(input, memo);
+        return memo;
+      }
+    });
+  }
 
+  default <U, V, P extends Map.Entry<? extends U, ? extends V>> FunPairs<U, V> scanLeftPairs(P zero, F2<? super T, ? super P, ? extends P> scan) {
+    return mapPairs(new F<T, Map.Entry<? extends U, ? extends V>>() {
+      P memo = zero;
+      @Override
+      public Map.Entry<? extends U, ? extends V> apply(T input) {
+        memo = scan.apply(input, memo);
+        return memo;
+      }
+    });
+  }
+
+  default <U> FunPairs<T, U> asScannedKeys(U zero, F2<? super T, ? super U, ? extends U> scan) {
+    return zip(scanLeft(zero, scan));
+  }
   /**
    * Produces a new FunIterable sequence that yields all initial elements from this sequence that match the given
    * {@code predicate}.  The resulting sequence ends just before the first element from this sequence that does not
@@ -476,20 +502,7 @@ public interface FunIterable<T> extends Iterable<T>, Runnable {
   }
 
   public static <T> FunIterable<T> takeWhile(final Iterable<T> source, final Predicate<? super T> predicate) {
-    return new FunctionalIterable<T>(new Iterable<T>() {
-      public Iterator<T> iterator() {
-        return new AbstractIterator<T>() {
-          private final Iterator<T> unfiltered = source.iterator();
-
-          @Override
-          protected T computeNext() {
-            if (!unfiltered.hasNext()) return endOfData();
-            T next = unfiltered.next();
-            return predicate.test(next) ? next : endOfData();
-          }
-        };
-      }
-    });
+    return new FunctionalIterable<>(() -> new TakeWhileIterator<>(source.iterator(), predicate));
   }
 
   /**
@@ -504,14 +517,7 @@ public interface FunIterable<T> extends Iterable<T>, Runnable {
   }
 
   public static <T> FunIterable<T> dropWhile(final Iterable<T> source, final Predicate<? super T> predicate) {
-    return filter(source, new Pred<T>() {
-      boolean stillDropping = true;
-
-      public boolean apply(T input) {
-        if (stillDropping) stillDropping = predicate.test(input);
-        return !stillDropping;
-      }
-    });
+    return new FunctionalIterable<>(new DropWhileIterable<>(source, predicate));
   }
 
   /**
@@ -617,7 +623,11 @@ public interface FunIterable<T> extends Iterable<T>, Runnable {
     return FunctionalSet.copyOf(delegate());
   }
 
-  default Stream<T> asStream(boolean parallel) {
+  default Stream<T> stream() {
+    return stream(false);
+  }
+
+  default Stream<T> stream(boolean parallel) {
     return StreamSupport.stream(spliterator(), parallel);
   }
 
@@ -899,6 +909,42 @@ public interface FunIterable<T> extends Iterable<T>, Runnable {
                 ? visitor.apply(firstIterator.next(), secondIterator.next())
                 : endOfData();
       }
+    }
+  }
+
+  class TakeWhileIterator<T> extends AbstractIterator<T> {
+    private final Iterator<T> unfiltered;
+    private final Predicate<? super T> predicate;
+
+    public TakeWhileIterator(Iterator<T> iterator, Predicate<? super T> predicate) {
+      this.predicate = predicate;
+      unfiltered = iterator;
+    }
+
+    @Override
+    protected T computeNext() {
+      if (!unfiltered.hasNext()) return endOfData();
+      T next = unfiltered.next();
+      return predicate.test(next) ? next : endOfData();
+    }
+  }
+
+  class DropWhileIterable<T> implements Iterable<T> {
+    private final Iterable<T> source;
+    private final Predicate<? super T> predicate;
+
+    public DropWhileIterable(Iterable<T> source, Predicate<? super T> predicate) {
+      this.source = source;
+      this.predicate = predicate;
+    }
+
+    @Override
+    public Iterator<T> iterator() {
+      PeekingIterator<T> iter = Iterators.peekingIterator(source.iterator());
+      while (iter.hasNext() && predicate.test(iter.peek())) {
+        iter.next();
+      }
+      return iter;
     }
   }
 }

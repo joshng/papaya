@@ -3,7 +3,11 @@ package com.joshng.util.blocks;
 import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.joshng.util.collect.*;
+import com.joshng.util.collect.Either;
+import com.joshng.util.collect.FunIterable;
+import com.joshng.util.collect.Functional;
+import com.joshng.util.collect.Maybe;
+import com.joshng.util.collect.Pair;
 import com.joshng.util.concurrent.AsyncF;
 import com.joshng.util.concurrent.FunFuture;
 import com.joshng.util.exceptions.ExceptionPolicy;
@@ -11,6 +15,7 @@ import com.joshng.util.exceptions.ExceptionPolicy;
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -71,6 +76,15 @@ public interface F<I, O> extends Function<I, O>, com.google.common.base.Function
     return this;
   }
 
+  static <I, O> F<I, O> scanner(O zero, BiFunction<? super I, ? super O, ? extends O> scanner) {
+    return new F<I, O>() {
+      private O memo = zero;
+      @Override
+      public O apply(I input) {
+        return memo = scanner.apply(input, memo);
+      }
+    };
+  }
   default F<I, O> withSideEffect(final Runnable sideEffect) {
     final F<I, O> function = F.this;
     return input -> applyWithSideEffect(input, function, sideEffect);

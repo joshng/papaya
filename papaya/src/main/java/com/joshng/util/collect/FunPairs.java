@@ -8,8 +8,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
-import com.joshng.util.blocks.Pred;
 import com.joshng.util.blocks.F2;
+import com.joshng.util.blocks.Pred;
 import com.joshng.util.blocks.Pred2;
 
 import java.util.Comparator;
@@ -355,6 +355,20 @@ public interface FunPairs<K, V> extends FunIterable<Map.Entry<K, V>> {
   @Override
   default <N> Maybe.Pair<K, V> maxBy(Ordering<? super N> ordering, Function<? super Entry<K, V>, ? extends N> valueComputer) {
     return (Maybe.Pair<K, V>) FunIterable.super.maxBy(ordering, valueComputer);
+  }
+
+  @Override
+  default FunPairs<K, V> takeWhile(final Predicate<? super Entry<K, V>> predicate) {
+    return new FunctionalPairs<>((Iterable<Entry<K, V>>) () -> new TakeWhileIterator<>(delegate().iterator(), predicate));
+  }
+
+  @Override
+  default FunPairs<K, V> dropWhile(final Predicate<? super Entry<K, V>> predicate) {
+    return new FunctionalPairs<>(new DropWhileIterable<>(delegate(), predicate));
+  }
+
+  default FunPairs<K, V> dropWhileValues(Predicate<? super V> predicate) {
+    return dropWhile(e -> predicate.test(e.getValue()));
   }
 
   /**
