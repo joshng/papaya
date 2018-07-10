@@ -14,21 +14,21 @@ import java.util.concurrent.TimeUnit;
  * Date: Apr 21, 2011
  * Time: 10:46:13 AM
  */
-public class ThreadChoreographer<E extends Enum<E>> {
+public class ThreadOrchestrator<E extends Enum<E>> {
     private final CyclicBarrier barrier;
     private int currentStateIdx = -1;
     private final E[] stateSequence;
 
-    public static <E extends Enum<E>> ThreadChoreographer<E> create(int threadCount, Class<E> enumClass) {
-        return new ThreadChoreographer<E>(threadCount, enumClass);
+    public static <E extends Enum<E>> ThreadOrchestrator<E> create(int threadCount, Class<E> enumClass) {
+        return new ThreadOrchestrator<E>(threadCount, enumClass);
     }
 
-    public ThreadChoreographer(int threadCount, Class<E> enumClass) {
+    public ThreadOrchestrator(int threadCount, Class<E> enumClass) {
         this(threadCount, enumClass.getEnumConstants());
     }
 
     @SafeVarargs
-    public ThreadChoreographer(int threadCount, E... stateSequence) {
+    public ThreadOrchestrator(int threadCount, E... stateSequence) {
         this.stateSequence = stateSequence;
         barrier = new CyclicBarrier(threadCount, new Runnable() {
             public void run() {
