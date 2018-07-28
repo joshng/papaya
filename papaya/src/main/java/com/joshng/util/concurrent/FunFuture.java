@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -113,15 +114,27 @@ public interface FunFuture<T> extends ListenableFuture<T>, Cancellable {
     CompletablePromise<T> promise = new CompletablePromise<>();
     listenable.addListener(() -> promise.tryComplete(listenable::get), MoreExecutors.directExecutor());
     return promise;
-
   }
+
+  static <T> FunFuture<T> extend(CompletionStage<T> completionStage) {
+    Promise<T> promise = new Promise<>();
+    CompletableFuture<T> future = completionStage.toCompletableFuture();
+    promise.attachFutureCompletion(future);
+    future.whenComplete((v, e) -> {
+      if (e == null) {
+        promise.succeed(v);
+      } else {
+        promise.fail(e);
+      }
+    });
+    return promise;
+  }
+
   @SuppressWarnings("unchecked")
   static <T> Iterable<? extends ListenableFuture<? extends T>> unwrapFutureIterable(Iterable<? extends ListenableFuture<? extends T>> input) {
     // Guava copies to an immutable list; we may already have one wrapped in a FunList, so extract it here
     return input instanceof FunIterable ? ((FunIterable<ListenableFuture<T>>) input).toList().delegate() : input;
   }
-
-  static final F EXTENDER = (F<ListenableFuture, FunFuture>) FunFuture::extendFuture;
 
   @SuppressWarnings("unchecked")
   public static <T> F<Future<? extends T>, T> getFromFuture() {

@@ -375,6 +375,12 @@ public interface FunPairs<K, V> extends FunIterable<Map.Entry<K, V>> {
     return takeWhile(e -> predicate.test(e.getValue()));
   }
 
+  default FunPairs<K, V> takeWhile2(Pred2<? super K, ? super V> predicate) {
+    return takeWhile(predicate);
+  }
+
+
+
   /**
    * Builds an {@link ImmutableMap} from the entries in this sequence.<br/><br/>
    * <p>
