@@ -8,8 +8,10 @@ import com.joshng.util.exceptions.ExceptionPolicy;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.function.DoubleSupplier;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.function.ToDoubleFunction;
 
 /**
  * User: josh
@@ -70,6 +72,10 @@ public interface Source<T> extends F<Object, T>, Supplier<T>, com.google.common.
   default <U> Source<U> andThen(final Function<? super T, ? extends U> transformer) {
 //        return F.extendF(transformer).bindFrom(this);
     return () -> transformer.apply(get());
+  }
+
+  default DoubleSupplier toDouble(ToDoubleFunction<? super T> toDouble) {
+    return () -> toDouble.applyAsDouble(get());
   }
 
   default <U> Source<U> map(final Function<? super T, U> transformer) {
