@@ -60,16 +60,17 @@ public enum ManagedServicesModule implements Module {
       multibinder = Multibinder.newSetBinder(binder, MANAGED_SERVICE_KEY_TYPE);
     }
 
-    public void manage(Class<? extends BaseService<?>> implementation) {
-      manage(Key.get(implementation));
+    public ManagedServiceBinder manage(Class<? extends BaseService<?>> implementation) {
+      return manage(Key.get(implementation));
     }
 
-    public void manage(TypeLiteral<? extends BaseService<?>> implementation) {
-      manage(Key.get(implementation));
+    public ManagedServiceBinder manage(TypeLiteral<? extends BaseService<?>> implementation) {
+      return manage(Key.get(implementation));
     }
 
-    public void manage(Key<? extends BaseService<?>> targetKey) {
+    public ManagedServiceBinder manage(Key<? extends BaseService<?>> targetKey) {
       multibinder.addBinding().toInstance(Ref.of(targetKey));
+      return this;
     }
   }
 }
