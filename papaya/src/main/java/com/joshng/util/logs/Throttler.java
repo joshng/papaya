@@ -3,6 +3,8 @@ package com.joshng.util.logs;
 import com.google.common.base.Ticker;
 import org.slf4j.Logger;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -52,6 +54,12 @@ public class Throttler {
   }
 
   public void acquire() throws InterruptedException {
+    long timeToWait = acquisitionDelayMillis();
+
+    if (timeToWait > 0) Thread.sleep(timeToWait);
+  }
+
+  private long acquisitionDelayMillis() {
     long timeToWait;
 
     boolean acquired;
@@ -61,7 +69,13 @@ public class Throttler {
       timeToWait = whenAvailable - now;
       acquired = nextAvailableTime.compareAndSet(whenAvailable, (timeToWait <= 0 ? now : whenAvailable) + intervalMillis);
     } while (!acquired);
+    return timeToWait;
+  }
 
-    if (timeToWait > 0) Thread.sleep(timeToWait);
+  public CompletableFuture<Void> acquireAsync(ScheduledExecutorService executor) {
+    long delay = acquisitionDelayMillis();
+    CompletableFuture<Void> promise = new CompletableFuture<>();
+    executor.schedule(() -> promise.complete(null), delay, TimeUnit.MILLISECONDS);
+    return promise;
   }
 }
