@@ -1,11 +1,11 @@
 package com.joshng.util.collect;
 
-import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.joshng.util.blocks.F;
 import com.joshng.util.blocks.F2;
 import com.joshng.util.context.TransientContext;
 
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**

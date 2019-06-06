@@ -16,8 +16,20 @@ import com.joshng.util.string.StringUtils;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.*;
-import java.util.function.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.function.ToDoubleFunction;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -121,6 +133,10 @@ public abstract class Maybe<T> implements Iterable<T> {
 
   public <O> FunFutureMaybe<O> flatMapFuture(AsyncF<? super T, Maybe<O>> async) {
     return isDefined() ? AsyncMaybeF.extendMaybeF(async).apply(getOrThrow()) : FunFutureMaybe.futureMaybeNot();
+  }
+
+  public Stream<T> stream() {
+    return map(Stream::of).getOrElse(Stream.empty());
   }
 
   public abstract <K, V> Pair<K, V> mapPair(Function<? super T, ? extends Map.Entry<K, V>> pairComputer);
